@@ -64,6 +64,7 @@
     "StorePurchaseSuccess": "Purchase successful.",
     "StorePurchaseSuccessDetail": "Bought {0} for {1} credits. Balance: {2}",
     "CreditsBalance": "Your credits: {0}",
+    "CreditsLoading": "Loading your credits...",
     "AdminItemGranted": "Granted admin item: {0}",
 
     "AdminItemMenu": "Admin Arsenal",

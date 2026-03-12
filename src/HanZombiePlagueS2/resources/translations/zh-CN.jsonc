@@ -58,6 +58,7 @@
     "StorePurchaseSuccess": "购买成功。",
     "StorePurchaseSuccessDetail": "已购买 {0}, 花费 {1} 积分，剩余 {2}",
     "CreditsBalance": "你的积分: {0}",
+    "CreditsLoading": "正在读取你的积分...",
     "AdminItemGranted": "已发放管理员道具: {0}",
     "AdminItemMenu": "管理员道具菜单",
     "NoPermission": "没有管理员权限,无法使用",

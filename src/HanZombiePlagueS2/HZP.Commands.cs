@@ -122,7 +122,7 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return;
 
-        _storeMenu.OpenStoreMenu(player);
+        _ = _storeMenu.OpenStoreMenuAsync(player);
     }
 
     public void ShowCredits(ICommandContext context)
@@ -131,7 +131,20 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return;
 
-        int balance = _economyService.GetBalance(player.SteamID);
+        if (!_economyService.IsLoaded(player.SteamID))
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "CreditsLoading"));
+        }
+
+        _ = ShowCreditsAsync(player);
+    }
+
+    private async Task ShowCreditsAsync(IPlayer player)
+    {
+        int balance = await _economyService.EnsureLoadedAsync(player.SteamID);
+        if (player == null || !player.IsValid)
+            return;
+
         player.SendMessage(MessageType.Chat, _helpers.T(player, "CreditsBalance", balance));
     }
 

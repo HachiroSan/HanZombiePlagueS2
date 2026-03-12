@@ -35,6 +35,21 @@ public sealed class HZPEconomyService(
         return state.GetBalance(steamId);
     }
 
+    public bool IsLoaded(ulong steamId)
+    {
+        return state.IsLoaded(steamId);
+    }
+
+    public Task<int> EnsureLoadedAsync(ulong steamId, CancellationToken cancellationToken = default)
+    {
+        if (state.IsLoaded(steamId))
+        {
+            return Task.FromResult(state.GetBalance(steamId));
+        }
+
+        return LoadPlayerAsync(steamId, cancellationToken);
+    }
+
     public async Task<int> LoadPlayerAsync(ulong steamId, CancellationToken cancellationToken = default)
     {
         if (steamId == 0)

@@ -920,7 +920,16 @@ public partial class HZPEvents
 
         _globals.IsZombie[id] = _globals.GameStart;
 
-        _playerDataService.LoadPlayer(_core.PlayerManager.GetPlayer(id));
+        _core.Scheduler.DelayBySeconds(1.0f, () =>
+        {
+            var player = _core.PlayerManager.GetPlayer(id);
+            if (player == null || !player.IsValid || player.SteamID == 0)
+            {
+                return;
+            }
+
+            _playerDataService.LoadPlayer(player);
+        });
 
     }
 

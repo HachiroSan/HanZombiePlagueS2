@@ -10,7 +10,8 @@ public class HZPStoreMenu(
     ISwiftlyCore core,
     HZPMenuHelper menuHelper,
     HZPHelpers helpers,
-    HZPStoreService storeService)
+    HZPStoreService storeService,
+    HZPEconomyService economyService)
 {
     public IMenuAPI? OpenStoreMenu(IPlayer player)
     {
@@ -69,6 +70,22 @@ public class HZPStoreMenu(
 
         core.MenusAPI.OpenMenuForPlayer(player, menu);
         return menu;
+    }
+
+    public async Task OpenStoreMenuAsync(IPlayer player)
+    {
+        if (player == null || !player.IsValid)
+        {
+            return;
+        }
+
+        await economyService.EnsureLoadedAsync(player.SteamID);
+        if (player == null || !player.IsValid)
+        {
+            return;
+        }
+
+        OpenStoreMenu(player);
     }
 
     private async Task HandlePurchaseAsync(IPlayer player, HZPStoreItemEntry item)
