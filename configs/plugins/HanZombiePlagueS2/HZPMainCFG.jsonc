@@ -8,7 +8,7 @@
 		"Name": "Infection Mode",
 		"MotherZombieNames": "Primordial",
 		"MotherZombieCount": 1,
-		"Weight": 660,
+		"Weight": 1800,
 		"EnableInfiniteClipMode": false,
 		"ZombieCanReborn": false
 	},

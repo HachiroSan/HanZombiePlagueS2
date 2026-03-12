@@ -46,7 +46,8 @@
     "LoadoutSelectedMarker": "[Selected]",
     "LoadoutRememberMarker": "[Saved]",
 
-    "StoreTitle": "Zombie Store",
+    "StoreTitleHuman": "Human Store",
+    "StoreTitleZombie": "Zombie Store",
     "StoreBalance": "Credits: {0}",
     "StoreDisabled": "The store is disabled.",
     "StoreAliveOnly": "You must be alive to use the store.",

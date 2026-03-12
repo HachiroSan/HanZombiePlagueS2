@@ -11,7 +11,8 @@ public class HZPStoreMenu(
     HZPMenuHelper menuHelper,
     HZPHelpers helpers,
     HZPStoreService storeService,
-    HZPEconomyService economyService)
+    HZPEconomyService economyService,
+    HZPGlobals globals)
 {
     public IMenuAPI? OpenStoreMenu(IPlayer player)
     {
@@ -32,7 +33,9 @@ public class HZPStoreMenu(
             return null;
         }
 
-        IMenuAPI menu = menuHelper.CreateMenu(helpers.T(player, "StoreTitle"));
+        globals.IsZombie.TryGetValue(player.PlayerID, out bool isZombie);
+        string titleKey = isZombie ? "StoreTitleZombie" : "StoreTitleHuman";
+        IMenuAPI menu = menuHelper.CreateMenu(helpers.T(player, titleKey));
         menu.AddOption(new TextMenuOption(HtmlGradient.GenerateGradientText(
             helpers.T(player, "StoreBalance", storeService.GetBalance(player)),
             Color.Gold, Color.LightGreen, Color.Gold),
