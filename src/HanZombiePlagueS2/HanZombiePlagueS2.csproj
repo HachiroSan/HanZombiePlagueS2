@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -7,9 +7,16 @@
 		<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<PlatformTarget>x64</PlatformTarget>
+		<OutputPath>..\..\..\..\cs2\game\csgo\addons\swiftlys2\plugins\HanZombiePlagueS2\</OutputPath>
+		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 	</PropertyGroup>
 	<ItemGroup>
 	  <None Remove="HZPEvents.cs~RF10898a2.TMP" />
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="resources\**">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="SwiftlyS2.CS2" Version="1.1.5-beta.27" />
