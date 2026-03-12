@@ -17,6 +17,48 @@ public enum LoadoutStage
 
 public class HZPLoadoutMenu
 {
+    private static readonly HashSet<string> PrimaryWeaponNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "weapon_ak47",
+        "weapon_m4a1",
+        "weapon_m4a1_silencer",
+        "weapon_aug",
+        "weapon_sg556",
+        "weapon_famas",
+        "weapon_galilar",
+        "weapon_awp",
+        "weapon_ssg08",
+        "weapon_scar20",
+        "weapon_g3sg1",
+        "weapon_mp9",
+        "weapon_mac10",
+        "weapon_mp7",
+        "weapon_mp5sd",
+        "weapon_p90",
+        "weapon_ump45",
+        "weapon_bizon",
+        "weapon_mag7",
+        "weapon_nova",
+        "weapon_sawedoff",
+        "weapon_xm1014",
+        "weapon_negev",
+        "weapon_m249"
+    };
+
+    private static readonly HashSet<string> SecondaryWeaponNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "weapon_elite",
+        "weapon_fiveseven",
+        "weapon_glock",
+        "weapon_hkp2000",
+        "weapon_p250",
+        "weapon_tec9",
+        "weapon_cz75a",
+        "weapon_deagle",
+        "weapon_revolver",
+        "weapon_usp_silencer"
+    };
+
     private readonly ILogger<HZPLoadoutMenu> _logger;
     private readonly ISwiftlyCore _core;
     private readonly HZPMenuHelper _menuHelper;
@@ -196,7 +238,12 @@ public class HZPLoadoutMenu
             ? _helpers.T(player, "LoadoutRememberOn")
             : _helpers.T(player, "LoadoutRememberOff");
 
-        var button = new ButtonMenuOption($"{_helpers.T(player, "LoadoutRememberToggle")} {stateText}")
+        string fullText = $"{_helpers.T(player, "LoadoutRememberToggle")} {stateText}";
+        string coloredText = saved.RememberLoadout
+            ? $"<font color='#55ff55'>{fullText}</font>"
+            : $"<font color='#ff5555'>{fullText}</font>";
+
+        var button = new ButtonMenuOption(coloredText)
         {
             TextStyle = MenuOptionTextStyle.ScrollLeftLoop,
             CloseAfterClick = true,
@@ -410,9 +457,64 @@ public class HZPLoadoutMenu
             return false;
         }
 
-        weaponServices.DropWeaponBySlot(gearSlot);
+        CleanupDroppedWeaponInSlot(weaponServices, gearSlot);
         var weapon = itemServices.GiveItem<CCSWeaponBase>(entry.NativeWeaponClassName);
         return weapon != null && weapon.IsValid;
+    }
+
+    private void CleanupDroppedWeaponInSlot(CCSPlayer_WeaponServices weaponServices, gear_slot_t gearSlot)
+    {
+        var weaponsToCleanup = new List<CBasePlayerWeapon>();
+        var myWeapons = weaponServices.MyWeapons;
+        foreach (var weaponHandle in myWeapons)
+        {
+            var weapon = weaponHandle.Value;
+            if (weapon == null || !weapon.IsValid)
+            {
+                continue;
+            }
+
+            if (!IsWeaponInGearSlot(weapon.DesignerName, gearSlot))
+            {
+                continue;
+            }
+
+            weaponsToCleanup.Add(weapon);
+        }
+
+        if (weaponsToCleanup.Count == 0)
+        {
+            return;
+        }
+
+        weaponServices.DropWeaponBySlot(gearSlot);
+        _core.Scheduler.NextTick(() =>
+        {
+            foreach (var weapon in weaponsToCleanup)
+            {
+                if (weapon == null || !weapon.IsValid)
+                {
+                    continue;
+                }
+
+                weapon.AcceptInput("Kill", string.Empty);
+            }
+        });
+    }
+
+    private static bool IsWeaponInGearSlot(string? weaponName, gear_slot_t gearSlot)
+    {
+        if (string.IsNullOrWhiteSpace(weaponName))
+        {
+            return false;
+        }
+
+        return gearSlot switch
+        {
+            gear_slot_t.GEAR_SLOT_RIFLE => PrimaryWeaponNames.Contains(weaponName),
+            gear_slot_t.GEAR_SLOT_PISTOL => SecondaryWeaponNames.Contains(weaponName),
+            _ => false
+        };
     }
 
     private static bool TryGetGearSlot(int slot, out gear_slot_t gearSlot)
