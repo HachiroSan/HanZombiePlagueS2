@@ -13,20 +13,25 @@ public sealed class HZPMapVoteState
     public string CurrentWorkshopId { get; set; } = string.Empty;
     public string NextMapName { get; set; } = string.Empty;
     public string NextMapId { get; set; } = string.Empty;
+    public bool ChangeMapImmediately { get; set; }
     public DateTime VoteEndTimeUtc { get; set; }
     public Dictionary<string, int> Votes { get; } = new(StringComparer.OrdinalIgnoreCase);
     public Dictionary<int, string> PlayerVotes { get; } = new();
     public List<HZPMapVoteMapEntry> MapsInVote { get; } = [];
     public Queue<string> RecentMaps { get; } = new();
+    public HashSet<int> RtvVoters { get; } = [];
+    public Dictionary<int, string> Nominations { get; } = new();
 
     public void ResetVote()
     {
         VoteActive = false;
         VoteCompleted = false;
+        ChangeMapImmediately = false;
         VoteEndTimeUtc = DateTime.MinValue;
         Votes.Clear();
         PlayerVotes.Clear();
         MapsInVote.Clear();
+        RtvVoters.Clear();
     }
 
     public void ResetMapState(string currentMapId, string currentWorkshopId, float currentTime)
@@ -40,5 +45,6 @@ public sealed class HZPMapVoteState
         NextMapName = string.Empty;
         NextMapId = string.Empty;
         MapStartTime = currentTime;
+        Nominations.Clear();
     }
 }

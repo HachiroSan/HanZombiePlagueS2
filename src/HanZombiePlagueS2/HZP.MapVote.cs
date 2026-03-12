@@ -131,6 +131,109 @@ public sealed class HZPMapVoteService(
         return "MapVoteVoteRegistered";
     }
 
+    public string TryRtv(IPlayer player)
+    {
+        var cfg = mapVoteCFG.CurrentValue;
+        if (!cfg.Enable || !cfg.EnableRtv)
+        {
+            return "MapVoteRtvDisabled";
+        }
+
+        if (state.MapChangeScheduled)
+        {
+            return "MapVoteAlreadyScheduled";
+        }
+
+        if (state.VoteActive)
+        {
+            return CanPlayerVote(player) ? "MapVoteVoteOpenNow" : "MapVoteVoteDenied";
+        }
+
+        int voters = GetEligibleVoterCount();
+        if (voters < cfg.RtvMinPlayers)
+        {
+            return "MapVoteRtvMinPlayers";
+        }
+
+        if (state.RoundsPlayed < cfg.RtvMinRounds)
+        {
+            return "MapVoteRtvMinRounds";
+        }
+
+        if (!state.RtvVoters.Add(player.PlayerID))
+        {
+            return "MapVoteRtvAlreadyVoted";
+        }
+
+        int needed = GetRequiredRtvVotes(voters, cfg.RtvVotePercentage);
+        core.PlayerManager.SendChat(helpers.T(player, "MapVoteRtvProgress", player.Name, state.RtvVoters.Count, needed));
+        if (state.RtvVoters.Count >= needed)
+        {
+            StartVote(isRtv: true, changeMapImmediately: cfg.RtvChangeMapImmediately);
+            return "MapVoteRtvPassed";
+        }
+
+        return "MapVoteRtvRegistered";
+    }
+
+    public string TryUnRtv(IPlayer player)
+    {
+        if (state.RtvVoters.Remove(player.PlayerID))
+        {
+            return "MapVoteRtvRemoved";
+        }
+
+        return "MapVoteRtvNotFound";
+    }
+
+    public string TryNominate(IPlayer player, string query)
+    {
+        var cfg = mapVoteCFG.CurrentValue;
+        if (!cfg.Enable || !cfg.EnableNomination)
+        {
+            return "MapVoteNominateDisabled";
+        }
+
+        var map = FindMap(query);
+        if (map == null)
+        {
+            return "MapVoteNominateNotFound";
+        }
+
+        int playerCount = core.PlayerManager.GetAllPlayers().Count(p => p.IsValid && !p.IsFakeClient);
+        if (!map.IsValidForPlayerCount(playerCount))
+        {
+            return "MapVoteNominatePlayerCount";
+        }
+
+        if (IsCurrentMap(map, core.Engine.GlobalVars.MapName.ToString(), core.Engine.WorkshopId))
+        {
+            return "MapVoteNominateCurrentMap";
+        }
+
+        if (IsMapInCooldown(map))
+        {
+            return "MapVoteNominateCooldown";
+        }
+
+        state.Nominations[player.PlayerID] = map.Name;
+        core.PlayerManager.SendChat(helpers.T(player, "MapVoteNominateSuccess", player.Name, map.Name));
+        return "MapVoteNominateStored";
+    }
+
+    public HZPMapVoteMapEntry? FindMap(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return null;
+        }
+
+        return mapVoteCFG.CurrentValue.MapList.FirstOrDefault(map =>
+            map.Enable &&
+            (map.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || map.Id.Equals(query, StringComparison.OrdinalIgnoreCase)));
+    }
+
     public void CheckAutomatedVote(bool force = false)
     {
         var cfg = mapVoteCFG.CurrentValue;
@@ -148,7 +251,7 @@ public sealed class HZPMapVoteService(
         StartVote();
     }
 
-    private void StartVote()
+    private void StartVote(bool isRtv = false, bool changeMapImmediately = false)
     {
         var cfg = mapVoteCFG.CurrentValue;
         var maps = BuildVoteMapPool().ToList();
@@ -162,6 +265,7 @@ public sealed class HZPMapVoteService(
         state.VoteSessionId++;
         state.VoteActive = true;
         state.VoteCompleted = false;
+        state.ChangeMapImmediately = changeMapImmediately;
         state.VoteEndTimeUtc = DateTime.UtcNow.AddSeconds(cfg.VoteDuration);
         state.MapsInVote.AddRange(maps);
         foreach (var map in maps)
@@ -169,7 +273,7 @@ public sealed class HZPMapVoteService(
             state.Votes[map.Name] = 0;
         }
 
-        core.PlayerManager.SendChat(core.Localizer["MapVoteStarted", cfg.VoteDuration]);
+        core.PlayerManager.SendChat(core.Localizer[isRtv ? "MapVoteRtvStarted" : "MapVoteStarted", cfg.VoteDuration]);
         _menu?.OpenVoteMenuForEligiblePlayers(true);
 
         int sessionId = state.VoteSessionId;
@@ -189,8 +293,47 @@ public sealed class HZPMapVoteService(
             .Where(map => !IsMapInCooldown(map))
             .ToList();
 
+        var nominations = state.Nominations.Values
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(name => cfg.MapList.FirstOrDefault(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)))
+            .Where(m => m != null)
+            .Cast<HZPMapVoteMapEntry>()
+            .Where(map => map.IsValidForPlayerCount(playerCount))
+            .Where(map => !IsCurrentMap(map, currentMapId, workshopId))
+            .Where(map => !IsMapInCooldown(map))
+            .ToList();
+
         var random = new Random();
-        return eligible.OrderBy(_ => random.Next()).Take(Math.Max(1, cfg.MapsToShow));
+        var selected = new List<HZPMapVoteMapEntry>();
+        foreach (var nomination in nominations.OrderBy(_ => random.Next()))
+        {
+            if (selected.Any(x => string.Equals(x.Name, nomination.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            selected.Add(nomination);
+            if (selected.Count >= Math.Max(1, cfg.MapsToShow))
+            {
+                return selected;
+            }
+        }
+
+        foreach (var map in eligible.OrderBy(_ => random.Next()))
+        {
+            if (selected.Any(x => string.Equals(x.Name, map.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            selected.Add(map);
+            if (selected.Count >= Math.Max(1, cfg.MapsToShow))
+            {
+                break;
+            }
+        }
+
+        return selected;
     }
 
     private void FinishVote(int sessionId)
@@ -219,6 +362,10 @@ public sealed class HZPMapVoteService(
         state.NextMapId = winner.Id;
         state.MapChangeScheduled = true;
         core.PlayerManager.SendChat(core.Localizer["MapVoteWinner", winner.Name]);
+        if (state.ChangeMapImmediately)
+        {
+            ChangeMap();
+        }
     }
 
     public void ChangeMap()
@@ -260,7 +407,7 @@ public sealed class HZPMapVoteService(
             }
         }
 
-        var timeLimitConVar = core.ConVar.Find<int>("mp_timelimit");
+        var timeLimitConVar = core.ConVar.Find<float>("mp_timelimit");
         if (timeLimitConVar is { Value: > 0 } && cfg.TriggerSecondsBeforeEnd > 0)
         {
             float currentTime;
@@ -326,5 +473,20 @@ public sealed class HZPMapVoteService(
     private bool ContainsRecentMap(string mapId)
     {
         return state.RecentMaps.Any(x => string.Equals(x, mapId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private int GetEligibleVoterCount()
+    {
+        return core.PlayerManager.GetAllPlayers().Count(p => p != null && p.IsValid && !p.IsFakeClient && CanPlayerVote(p));
+    }
+
+    private static int GetRequiredRtvVotes(int totalPlayers, int percentage)
+    {
+        if (totalPlayers <= 0)
+        {
+            return 1;
+        }
+
+        return Math.Max(1, (int)Math.Ceiling(totalPlayers * (percentage / 100f)));
     }
 }

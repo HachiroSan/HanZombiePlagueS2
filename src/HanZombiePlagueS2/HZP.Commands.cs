@@ -24,6 +24,7 @@ public class HZPCommands
     private readonly HZPAdminItemMenu _hZPAdminItemMenu;
     private readonly HZPLoadoutMenu _hZPLoadoutMenu;
     private readonly HZPStoreMenu _storeMenu;
+    private readonly HZPMapVoteMenu _mapVoteMenu;
     private readonly HZPHelpers _helpers;
     private readonly IOptionsMonitor<HZPLoadoutCFG> _loadoutCFG;
     private readonly IOptionsMonitor<HZPStoreCFG> _storeCFG;
@@ -36,7 +37,7 @@ public class HZPCommands
         HZPServices services, IOptionsMonitor<HZPMainCFG> mainCFG,
         HZPGlobals globals, HZPAdminItemMenu hZPAdminItemMenu,
         HZPZombieClassMenu hZPZombieClassMenu, HZPLoadoutMenu hZPLoadoutMenu,
-        HZPStoreMenu storeMenu, HZPEconomyService economyService, HZPMapVoteService mapVoteService, HZPHelpers helpers,
+        HZPStoreMenu storeMenu, HZPMapVoteMenu mapVoteMenu, HZPEconomyService economyService, HZPMapVoteService mapVoteService, HZPHelpers helpers,
         IOptionsMonitor<HZPLoadoutCFG> loadoutCFG,
         IOptionsMonitor<HZPStoreCFG> storeCFG,
         IOptionsMonitor<HZPEconomyCFG> economyCFG,
@@ -51,6 +52,7 @@ public class HZPCommands
         _hZPZombieClassMenu = hZPZombieClassMenu;
         _hZPLoadoutMenu = hZPLoadoutMenu;
         _storeMenu = storeMenu;
+        _mapVoteMenu = mapVoteMenu;
         _economyService = economyService;
         _mapVoteService = mapVoteService;
         _helpers = helpers;
@@ -89,6 +91,30 @@ public class HZPCommands
         if (!string.IsNullOrWhiteSpace(nextMapCommand))
         {
             _core.Command.RegisterCommand(nextMapCommand, ShowNextMap, true);
+        }
+
+        var rtvCommand = _mapVoteCFG.CurrentValue.RtvCommand;
+        if (!string.IsNullOrWhiteSpace(rtvCommand))
+        {
+            _core.Command.RegisterCommand(rtvCommand, StartRtv, true);
+        }
+
+        var unRtvCommand = _mapVoteCFG.CurrentValue.UnRtvCommand;
+        if (!string.IsNullOrWhiteSpace(unRtvCommand))
+        {
+            _core.Command.RegisterCommand(unRtvCommand, RemoveRtv, true);
+        }
+
+        var nominateCommand = _mapVoteCFG.CurrentValue.NominateCommand;
+        if (!string.IsNullOrWhiteSpace(nominateCommand))
+        {
+            _core.Command.RegisterCommand(nominateCommand, NominateMap, true);
+        }
+
+        var revoteCommand = _mapVoteCFG.CurrentValue.RevoteCommand;
+        if (!string.IsNullOrWhiteSpace(revoteCommand))
+        {
+            _core.Command.RegisterCommand(revoteCommand, OpenRevoteMenu, true);
         }
     }
     public void SelectZombieClass(ICommandContext context)
@@ -164,6 +190,77 @@ public class HZPCommands
         }
 
         player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNextMap", nextMap));
+    }
+
+    public void StartRtv(ICommandContext context)
+    {
+        var player = context.Sender;
+        if (player == null || !player.IsValid)
+            return;
+
+        string result = _mapVoteService.TryRtv(player);
+        if (result == "MapVoteVoteOpenNow")
+        {
+            ServiceProviderSafeOpenRevote(player);
+            return;
+        }
+
+        player.SendMessage(MessageType.Chat, _helpers.T(player, result));
+    }
+
+    public void RemoveRtv(ICommandContext context)
+    {
+        var player = context.Sender;
+        if (player == null || !player.IsValid)
+            return;
+
+        player.SendMessage(MessageType.Chat, _helpers.T(player, _mapVoteService.TryUnRtv(player)));
+    }
+
+    public void NominateMap(ICommandContext context)
+    {
+        var player = context.Sender;
+        if (player == null || !player.IsValid)
+            return;
+
+        string query = string.Join(' ', context.Args ?? []);
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNominateUsage"));
+            return;
+        }
+
+        string result = _mapVoteService.TryNominate(player, query);
+        if (result != "MapVoteNominateStored")
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, result, query));
+        }
+    }
+
+    public void OpenRevoteMenu(ICommandContext context)
+    {
+        var player = context.Sender;
+        if (player == null || !player.IsValid)
+            return;
+
+        ServiceProviderSafeOpenRevote(player);
+    }
+
+    private void ServiceProviderSafeOpenRevote(IPlayer player)
+    {
+        if (!_mapVoteService.State.VoteActive)
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNotActive"));
+            return;
+        }
+
+        if (!_mapVoteService.CanPlayerVote(player))
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteVoteDenied"));
+            return;
+        }
+
+        _mapVoteMenu.OpenVoteMenu(player, true);
     }
 
     private async Task ShowCreditsAsync(IPlayer player)

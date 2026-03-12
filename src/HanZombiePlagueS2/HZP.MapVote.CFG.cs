@@ -29,6 +29,16 @@ public sealed class HZPMapVoteCFG
     public bool Enable { get; set; } = true;
     public bool EnableEndOfMapVote { get; set; } = true;
     public string NextMapCommand { get; set; } = "sw_nextmap";
+    public string RtvCommand { get; set; } = "sw_rtv";
+    public string UnRtvCommand { get; set; } = "sw_unrtv";
+    public string NominateCommand { get; set; } = "sw_nominate";
+    public string RevoteCommand { get; set; } = "sw_revote";
+    public bool EnableRtv { get; set; } = true;
+    public bool EnableNomination { get; set; } = true;
+    public int RtvMinPlayers { get; set; } = 2;
+    public int RtvMinRounds { get; set; } = 1;
+    public int RtvVotePercentage { get; set; } = 60;
+    public bool RtvChangeMapImmediately { get; set; } = false;
     public int MapsToShow { get; set; } = 5;
     public int VoteDuration { get; set; } = 20;
     public int ChangeMapDelay { get; set; } = 6;
