@@ -127,7 +127,7 @@ public sealed class HZPMapVoteService(
 
         state.PlayerVotes[player.PlayerID] = mapName;
         state.Votes[mapName] = state.Votes.TryGetValue(mapName, out var currentVotes) ? currentVotes + 1 : 1;
-        core.PlayerManager.SendChat(helpers.T(player, "MapVotePlayerVoted", player.Name, mapName, state.Votes[mapName]));
+        helpers.SendChatToAllT("MapVotePlayerVoted", player.Name, mapName, state.Votes[mapName]);
         return "MapVoteVoteRegistered";
     }
 
@@ -166,7 +166,7 @@ public sealed class HZPMapVoteService(
         }
 
         int needed = GetRequiredRtvVotes(voters, cfg.RtvVotePercentage);
-        core.PlayerManager.SendChat(helpers.T(player, "MapVoteRtvProgress", player.Name, state.RtvVoters.Count, needed));
+        helpers.SendChatToAllT("MapVoteRtvProgress", player.Name, state.RtvVoters.Count, needed);
         if (state.RtvVoters.Count >= needed)
         {
             StartVote(isRtv: true, changeMapImmediately: cfg.RtvChangeMapImmediately);
@@ -217,7 +217,7 @@ public sealed class HZPMapVoteService(
         }
 
         state.Nominations[player.PlayerID] = map.Name;
-        core.PlayerManager.SendChat(helpers.T(player, "MapVoteNominateSuccess", player.Name, map.Name));
+        helpers.SendChatToAllT("MapVoteNominateSuccess", player.Name, map.Name);
         return "MapVoteNominateStored";
     }
 
@@ -273,7 +273,7 @@ public sealed class HZPMapVoteService(
             state.Votes[map.Name] = 0;
         }
 
-        core.PlayerManager.SendChat(core.Localizer[isRtv ? "MapVoteRtvStarted" : "MapVoteStarted", cfg.VoteDuration]);
+        helpers.SendChatToAllT(isRtv ? "MapVoteRtvStarted" : "MapVoteStarted", cfg.VoteDuration);
         _menu?.OpenVoteMenuForEligiblePlayers(true);
 
         int sessionId = state.VoteSessionId;
@@ -361,7 +361,7 @@ public sealed class HZPMapVoteService(
         state.NextMapName = winner.Name;
         state.NextMapId = winner.Id;
         state.MapChangeScheduled = true;
-        core.PlayerManager.SendChat(core.Localizer["MapVoteWinner", winner.Name]);
+        helpers.SendChatToAllT("MapVoteWinner", winner.Name);
         if (state.ChangeMapImmediately)
         {
             ChangeMap();
@@ -377,7 +377,7 @@ public sealed class HZPMapVoteService(
 
         state.MapChangeInProgress = true;
         var cfg = mapVoteCFG.CurrentValue;
-        core.PlayerManager.SendChat(core.Localizer["MapVoteChanging", state.NextMapName, cfg.ChangeMapDelay]);
+        helpers.SendChatToAllT("MapVoteChanging", state.NextMapName, cfg.ChangeMapDelay);
         core.Scheduler.DelayBySeconds(cfg.ChangeMapDelay, () =>
         {
             string targetId = string.IsNullOrWhiteSpace(state.NextMapId) ? state.NextMapName : state.NextMapId;

@@ -136,7 +136,7 @@ public class HZPCommands
 
         if (!HasAdminMenuPermission(player))
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "NoPermission"));
+            _helpers.SendChatT(player, "NoPermission");
             return;
         }
             
@@ -170,7 +170,7 @@ public class HZPCommands
 
         if (!_economyService.IsLoaded(player.SteamID))
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "CreditsLoading"));
+            _helpers.SendChatT(player, "CreditsLoading");
         }
 
         _ = ShowCreditsAsync(player);
@@ -185,11 +185,11 @@ public class HZPCommands
         string nextMap = _mapVoteService.GetNextMapDisplayName();
         if (string.IsNullOrWhiteSpace(nextMap))
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNextMapUnknown"));
+            _helpers.SendChatT(player, "MapVoteNextMapUnknown");
             return;
         }
 
-        player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNextMap", nextMap));
+        _helpers.SendChatT(player, "MapVoteNextMap", nextMap);
     }
 
     public void StartRtv(ICommandContext context)
@@ -205,7 +205,7 @@ public class HZPCommands
             return;
         }
 
-        player.SendMessage(MessageType.Chat, _helpers.T(player, result));
+        _helpers.SendChatT(player, result);
     }
 
     public void RemoveRtv(ICommandContext context)
@@ -214,7 +214,7 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return;
 
-        player.SendMessage(MessageType.Chat, _helpers.T(player, _mapVoteService.TryUnRtv(player)));
+        _helpers.SendChatT(player, _mapVoteService.TryUnRtv(player));
     }
 
     public void NominateMap(ICommandContext context)
@@ -226,14 +226,14 @@ public class HZPCommands
         string query = string.Join(' ', context.Args ?? []);
         if (string.IsNullOrWhiteSpace(query))
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNominateUsage"));
+            _helpers.SendChatT(player, "MapVoteNominateUsage");
             return;
         }
 
         string result = _mapVoteService.TryNominate(player, query);
         if (result != "MapVoteNominateStored")
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, result, query));
+            _helpers.SendChatT(player, result, query);
         }
     }
 
@@ -250,13 +250,13 @@ public class HZPCommands
     {
         if (!_mapVoteService.State.VoteActive)
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNotActive"));
+            _helpers.SendChatT(player, "MapVoteNotActive");
             return;
         }
 
         if (!_mapVoteService.CanPlayerVote(player))
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteVoteDenied"));
+            _helpers.SendChatT(player, "MapVoteVoteDenied");
             return;
         }
 
@@ -269,7 +269,7 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return;
 
-        player.SendMessage(MessageType.Chat, _helpers.T(player, "CreditsBalance", balance));
+        _helpers.SendChatT(player, "CreditsBalance", balance);
     }
 
     private bool HasAdminMenuPermission(IPlayer player)

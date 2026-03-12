@@ -27,13 +27,15 @@ public partial class HZPHelpers
     private readonly ILogger<HZPHelpers> _logger;
     private readonly ISwiftlyCore _core;
     private readonly HZPGlobals _globals;
+    private readonly IOptionsMonitor<HZPChatCFG> _chatCFG;
 
     public HZPHelpers(ISwiftlyCore core, ILogger<HZPHelpers> logger,
-        HZPGlobals globals)
+        HZPGlobals globals, IOptionsMonitor<HZPChatCFG> chatCFG)
     {
         _core = core;
         _logger = logger;
         _globals = globals;
+        _chatCFG = chatCFG;
     }
 
     public int? ServerPlayerCount()
@@ -1071,8 +1073,43 @@ public partial class HZPHelpers
             if(player.IsFakeClient)
                 continue;
 
-            player.SendMessage(MessageType.Chat, T(player, key, args));
+            SendChatT(player, key, args);
         }
+    }
+
+    public void SendChatT(IPlayer? player, string key, params object[] args)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        player.SendMessage(MessageType.Chat, FormatChatMessage(T(player, key, args)));
+    }
+
+    public void SendChatRaw(IPlayer? player, string text)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        player.SendMessage(MessageType.Chat, FormatChatMessage(text));
+    }
+
+    public string FormatChatMessage(string text)
+    {
+        var cfg = _chatCFG.CurrentValue;
+        if (!cfg.EnableServerTag || string.IsNullOrWhiteSpace(cfg.ServerTag))
+            return text;
+
+        string tagColor = NormalizeChatToken(cfg.TagColorToken, "green");
+        string textColor = NormalizeChatToken(cfg.TextColorToken, "default");
+        return $"[{tagColor}]{cfg.ServerTag}[{textColor}] {text}";
+    }
+
+    private static string NormalizeChatToken(string? token, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+            return fallback;
+
+        return token.Trim().Trim('[', ']').ToLowerInvariant();
     }
 
     public void SendCenterToAllT(string key, params object[] args)

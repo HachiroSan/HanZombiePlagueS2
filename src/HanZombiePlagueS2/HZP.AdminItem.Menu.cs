@@ -47,11 +47,11 @@ public class HZPAdminItemMenu(
                     var result = storeService.TryGrantAdminItem(clicker, item);
                     if (!result.Success)
                     {
-                        clicker.SendMessage(MessageType.Chat, helpers.T(clicker, result.MessageKey));
+                        helpers.SendChatT(clicker, result.MessageKey);
                         return;
                     }
 
-                    clicker.SendMessage(MessageType.Chat, helpers.T(clicker, "AdminItemGranted", item.DisplayName));
+                    helpers.SendChatT(clicker, "AdminItemGranted", item.DisplayName);
                 });
             };
 

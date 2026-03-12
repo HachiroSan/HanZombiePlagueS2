@@ -85,7 +85,7 @@ public sealed class HZPMapVoteMenu(
                     }
 
                     var result = mapVoteService.TryVote(clicker, map.Name);
-                    clicker.SendMessage(MessageType.Chat, helpers.T(clicker, result));
+                    helpers.SendChatT(clicker, result);
                 });
             };
 

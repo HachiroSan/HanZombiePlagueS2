@@ -1,0 +1,8 @@
+{
+  "HZPChatCFG": {
+    "EnableServerTag": true,
+    "ServerTag": "ZM|",
+    "TagColorToken": "darkred",
+    "TextColorToken": "olive"
+  }
+}

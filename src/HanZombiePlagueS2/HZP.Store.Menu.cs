@@ -20,7 +20,7 @@ public class HZPStoreMenu(
         {
             if (player != null && player.IsValid && !string.IsNullOrWhiteSpace(denyKey))
             {
-                player.SendMessage(MessageType.Chat, helpers.T(player, denyKey));
+                helpers.SendChatT(player, denyKey);
             }
 
             return null;
@@ -29,7 +29,7 @@ public class HZPStoreMenu(
         var items = storeService.GetAvailableItemsForPlayer(player).ToList();
         if (items.Count == 0)
         {
-            player.SendMessage(MessageType.Chat, helpers.T(player, "StoreEmpty"));
+            helpers.SendChatT(player, "StoreEmpty");
             return null;
         }
 
@@ -96,10 +96,10 @@ public class HZPStoreMenu(
         var result = await storeService.TryPurchaseAsync(player, item);
         if (!result.Success)
         {
-            player.SendMessage(MessageType.Chat, helpers.T(player, result.MessageKey));
+            helpers.SendChatT(player, result.MessageKey);
             return;
         }
 
-        player.SendMessage(MessageType.Chat, helpers.T(player, "StorePurchaseSuccessDetail", item.DisplayName, item.Price, storeService.GetBalance(player)));
+        helpers.SendChatT(player, "StorePurchaseSuccessDetail", item.DisplayName, item.Price, storeService.GetBalance(player));
     }
 }

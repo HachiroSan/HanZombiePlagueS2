@@ -61,6 +61,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         {
             builder.AddJsonFile("HZPStoreCFG.jsonc", false, true);
         });
+        Core.Configuration.InitializeJsonWithModel<HZPChatCFG>("HZPChatCFG.jsonc", "HZPChatCFG").Configure(builder =>
+        {
+            builder.AddJsonFile("HZPChatCFG.jsonc", false, true);
+        });
         Core.Configuration.InitializeJsonWithModel<HZPMapVoteCFG>("HZPMapVoteCFG.jsonc", "HZPMapVoteCFG").Configure(builder =>
         {
             builder.AddJsonFile("HZPMapVoteCFG.jsonc", false, true);
@@ -103,6 +107,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         collection
             .AddOptionsWithValidateOnStart<HZPStoreCFG>()
             .BindConfiguration("HZPStoreCFG");
+
+        collection
+            .AddOptionsWithValidateOnStart<HZPChatCFG>()
+            .BindConfiguration("HZPChatCFG");
 
         collection
             .AddOptionsWithValidateOnStart<HZPMapVoteCFG>()

@@ -97,7 +97,7 @@ public class HZPLoadoutMenu
         {
             if (!string.IsNullOrWhiteSpace(denyKey) && player != null && player.IsValid)
             {
-                player.SendMessage(MessageType.Chat, _helpers.T(player, denyKey));
+                _helpers.SendChatT(player, denyKey);
             }
 
             return null;
@@ -165,7 +165,7 @@ public class HZPLoadoutMenu
 
         if (primaryGranted && secondaryGranted)
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutRememberApplied"));
+            _helpers.SendChatT(player, "LoadoutRememberApplied");
             return true;
         }
 
@@ -189,7 +189,7 @@ public class HZPLoadoutMenu
         var entries = GetEntries(stage).ToList();
         if (entries.Count == 0)
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuEmpty"));
+            _helpers.SendChatT(player, "LoadoutMenuEmpty");
             return null;
         }
 
@@ -341,7 +341,7 @@ public class HZPLoadoutMenu
         {
             if (!string.IsNullOrWhiteSpace(denyKey))
             {
-                player.SendMessage(MessageType.Chat, _helpers.T(player, denyKey));
+                _helpers.SendChatT(player, denyKey);
             }
 
             return;
@@ -349,13 +349,13 @@ public class HZPLoadoutMenu
 
         if (!IsModeAllowed(entry.AllowedModes))
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuModeLocked"));
+            _helpers.SendChatT(player, "LoadoutMenuModeLocked");
             return;
         }
 
         if (!TryGrantWeapon(player, entry))
         {
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuUnavailable"));
+            _helpers.SendChatT(player, "LoadoutMenuUnavailable");
             return;
         }
 
@@ -373,7 +373,7 @@ public class HZPLoadoutMenu
             _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
             _playerDataService.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
 
-            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutPrimarySelected", entry.DisplayName));
+            _helpers.SendChatT(player, "LoadoutPrimarySelected", entry.DisplayName);
             _core.Scheduler.NextTick(() =>
             {
                 if (player != null && player.IsValid)
@@ -389,8 +389,8 @@ public class HZPLoadoutMenu
 
         _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
         _playerDataService.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
-        player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutSecondarySelected", entry.DisplayName));
-        player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuReady"));
+        _helpers.SendChatT(player, "LoadoutSecondarySelected", entry.DisplayName);
+        _helpers.SendChatT(player, "LoadoutMenuReady");
     }
 
     private void ToggleRememberLoadout(IPlayer player, LoadoutStage stage)
@@ -404,7 +404,7 @@ public class HZPLoadoutMenu
         {
             if (!string.IsNullOrWhiteSpace(denyKey))
             {
-                player.SendMessage(MessageType.Chat, _helpers.T(player, denyKey));
+                _helpers.SendChatT(player, denyKey);
             }
 
             return;
@@ -416,7 +416,7 @@ public class HZPLoadoutMenu
         _playerDataService.SaveLoadoutPreference(player.SteamID, remember, saved.PrimaryLoadoutId, saved.SecondaryLoadoutId);
 
         string messageKey = remember ? "LoadoutRememberEnabled" : "LoadoutRememberDisabled";
-        player.SendMessage(MessageType.Chat, _helpers.T(player, messageKey));
+        _helpers.SendChatT(player, messageKey);
         OpenStageMenu(player, stage);
     }
 
