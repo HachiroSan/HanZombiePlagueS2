@@ -1,0 +1,287 @@
+{
+  "HZPWeaponMenuCFG": {
+    "Enable": true,
+    "LoadoutCommand": "sw_loadout",
+    "AutoOpenOnSpawnBeforeRoundStart": true,
+    "AllowOnlyAliveHuman": true,
+    "AllowDuringPrep": true,
+    "AllowAfterGameStart": false,
+    "DenySpecialHumans": true,
+    "PrimaryWeapons": [
+      {
+        "Id": "ak47",
+        "Enable": true,
+        "DisplayName": "AK-47",
+        "NativeWeaponClassName": "weapon_ak47",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 10
+      },
+      {
+        "Id": "m4a4",
+        "Enable": true,
+        "DisplayName": "M4A4",
+        "NativeWeaponClassName": "weapon_m4a1",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 20
+      },
+      {
+        "Id": "m4a1s",
+        "Enable": true,
+        "DisplayName": "M4A1-S",
+        "NativeWeaponClassName": "weapon_m4a1_silencer",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 30
+      },
+      {
+        "Id": "aug",
+        "Enable": true,
+        "DisplayName": "AUG",
+        "NativeWeaponClassName": "weapon_aug",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 40
+      },
+      {
+        "Id": "sg553",
+        "Enable": true,
+        "DisplayName": "SG 553",
+        "NativeWeaponClassName": "weapon_sg556",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 50
+      },
+      {
+        "Id": "famas",
+        "Enable": true,
+        "DisplayName": "FAMAS",
+        "NativeWeaponClassName": "weapon_famas",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 60
+      },
+      {
+        "Id": "galil",
+        "Enable": true,
+        "DisplayName": "Galil AR",
+        "NativeWeaponClassName": "weapon_galilar",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 70
+      },
+      {
+        "Id": "awp",
+        "Enable": true,
+        "DisplayName": "AWP",
+        "NativeWeaponClassName": "weapon_awp",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 80
+      },
+      {
+        "Id": "ssg08",
+        "Enable": true,
+        "DisplayName": "SSG 08",
+        "NativeWeaponClassName": "weapon_ssg08",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 90
+      },
+      {
+        "Id": "scar20",
+        "Enable": true,
+        "DisplayName": "SCAR-20",
+        "NativeWeaponClassName": "weapon_scar20",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 100
+      },
+      {
+        "Id": "g3sg1",
+        "Enable": true,
+        "DisplayName": "G3SG1",
+        "NativeWeaponClassName": "weapon_g3sg1",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 110
+      },
+      {
+        "Id": "mp9",
+        "Enable": true,
+        "DisplayName": "MP9",
+        "NativeWeaponClassName": "weapon_mp9",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 120
+      },
+      {
+        "Id": "mac10",
+        "Enable": true,
+        "DisplayName": "MAC-10",
+        "NativeWeaponClassName": "weapon_mac10",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 130
+      },
+      {
+        "Id": "mp7",
+        "Enable": true,
+        "DisplayName": "MP7",
+        "NativeWeaponClassName": "weapon_mp7",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 140
+      },
+      {
+        "Id": "mp5sd",
+        "Enable": true,
+        "DisplayName": "MP5-SD",
+        "NativeWeaponClassName": "weapon_mp5sd",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 150
+      },
+      {
+        "Id": "p90",
+        "Enable": true,
+        "DisplayName": "P90",
+        "NativeWeaponClassName": "weapon_p90",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 160
+      },
+      {
+        "Id": "ump45",
+        "Enable": true,
+        "DisplayName": "UMP-45",
+        "NativeWeaponClassName": "weapon_ump45",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 170
+      },
+      {
+        "Id": "bizon",
+        "Enable": true,
+        "DisplayName": "PP-Bizon",
+        "NativeWeaponClassName": "weapon_bizon",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 180
+      },
+      {
+        "Id": "mag7",
+        "Enable": true,
+        "DisplayName": "MAG-7",
+        "NativeWeaponClassName": "weapon_mag7",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 190
+      },
+      {
+        "Id": "nova",
+        "Enable": true,
+        "DisplayName": "Nova",
+        "NativeWeaponClassName": "weapon_nova",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 200
+      },
+      {
+        "Id": "sawedoff",
+        "Enable": true,
+        "DisplayName": "Sawed-Off",
+        "NativeWeaponClassName": "weapon_sawedoff",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 210
+      },
+      {
+        "Id": "xm1014",
+        "Enable": true,
+        "DisplayName": "XM1014",
+        "NativeWeaponClassName": "weapon_xm1014",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 220
+      },
+      {
+        "Id": "negev",
+        "Enable": true,
+        "DisplayName": "Negev",
+        "NativeWeaponClassName": "weapon_negev",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 230
+      },
+      {
+        "Id": "m249",
+        "Enable": true,
+        "DisplayName": "M249",
+        "NativeWeaponClassName": "weapon_m249",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 240
+      }
+    ],
+    "SecondaryWeapons": [
+      {
+        "Id": "elite",
+        "Enable": true,
+        "DisplayName": "Dual Berettas",
+        "NativeWeaponClassName": "weapon_elite",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 10
+      },
+      {
+        "Id": "fiveseven",
+        "Enable": true,
+        "DisplayName": "Five-SeveN",
+        "NativeWeaponClassName": "weapon_fiveseven",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 20
+      },
+      {
+        "Id": "glock",
+        "Enable": true,
+        "DisplayName": "Glock-18",
+        "NativeWeaponClassName": "weapon_glock",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 30
+      },
+      {
+        "Id": "p2000",
+        "Enable": true,
+        "DisplayName": "P2000",
+        "NativeWeaponClassName": "weapon_hkp2000",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 40
+      },
+      {
+        "Id": "p250",
+        "Enable": true,
+        "DisplayName": "P250",
+        "NativeWeaponClassName": "weapon_p250",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 50
+      },
+      {
+        "Id": "tec9",
+        "Enable": true,
+        "DisplayName": "Tec-9",
+        "NativeWeaponClassName": "weapon_tec9",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 60
+      },
+      {
+        "Id": "cz75a",
+        "Enable": true,
+        "DisplayName": "CZ75-Auto",
+        "NativeWeaponClassName": "weapon_cz75a",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 70
+      },
+      {
+        "Id": "deagle",
+        "Enable": true,
+        "DisplayName": "Desert Eagle",
+        "NativeWeaponClassName": "weapon_deagle",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 80
+      },
+      {
+        "Id": "revolver",
+        "Enable": true,
+        "DisplayName": "R8 Revolver",
+        "NativeWeaponClassName": "weapon_revolver",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 90
+      },
+      {
+        "Id": "usp_s",
+        "Enable": true,
+        "DisplayName": "USP-S",
+        "NativeWeaponClassName": "weapon_usp_silencer",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 100
+      }
+    ]
+  }
+}

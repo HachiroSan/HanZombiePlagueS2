@@ -1,0 +1,522 @@
+using System.Drawing;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using SwiftlyS2.Core.Menus.OptionsBase;
+using SwiftlyS2.Shared;
+using SwiftlyS2.Shared.Menus;
+using SwiftlyS2.Shared.Players;
+using SwiftlyS2.Shared.SchemaDefinitions;
+
+namespace HanZombiePlagueS2;
+
+public enum LoadoutStage
+{
+    Primary,
+    Secondary
+}
+
+public class HZPWeaponMenu
+{
+    private readonly ILogger<HZPWeaponMenu> _logger;
+    private readonly ISwiftlyCore _core;
+    private readonly HZPMenuHelper _menuHelper;
+    private readonly HZPHelpers _helpers;
+    private readonly HZPGlobals _globals;
+    private readonly HZPGameMode _gameMode;
+    private readonly HZPWeaponMenuState _state;
+    private readonly ZombiePlayerDataBridge _playerDataBridge;
+    private readonly IOptionsMonitor<HZPWeaponMenuCFG> _weaponMenuCFG;
+
+    public HZPWeaponMenu(
+        ISwiftlyCore core,
+        ILogger<HZPWeaponMenu> logger,
+        HZPMenuHelper menuHelper,
+        HZPHelpers helpers,
+        HZPGlobals globals,
+        HZPGameMode gameMode,
+        HZPWeaponMenuState state,
+        ZombiePlayerDataBridge playerDataBridge,
+        IOptionsMonitor<HZPWeaponMenuCFG> weaponMenuCFG)
+    {
+        _core = core;
+        _logger = logger;
+        _menuHelper = menuHelper;
+        _helpers = helpers;
+        _globals = globals;
+        _gameMode = gameMode;
+        _state = state;
+        _playerDataBridge = playerDataBridge;
+        _weaponMenuCFG = weaponMenuCFG;
+    }
+
+    public IMenuAPI? OpenLoadoutMenu(IPlayer player)
+    {
+        if (!CanUseLoadout(player, out var denyKey))
+        {
+            if (!string.IsNullOrWhiteSpace(denyKey) && player != null && player.IsValid)
+            {
+                player.SendMessage(MessageType.Chat, _helpers.T(player, denyKey));
+            }
+
+            return null;
+        }
+
+        var lifeState = _state.GetLifeState(player.PlayerID);
+        var stage = !lifeState.PrimarySelected || lifeState.SecondarySelected ? LoadoutStage.Primary : LoadoutStage.Secondary;
+        return OpenStageMenu(player, stage);
+    }
+
+    public bool TryHandleSpawnLoadout(IPlayer player)
+    {
+        var cfg = _weaponMenuCFG.CurrentValue;
+        if (!cfg.AutoOpenOnSpawnBeforeRoundStart || _globals.GameStart)
+        {
+            return false;
+        }
+
+        if (!CanUseLoadout(player, out _))
+        {
+            return false;
+        }
+
+        if (TryApplyRememberedLoadout(player))
+        {
+            return true;
+        }
+
+        return OpenStageMenu(player, LoadoutStage.Primary) != null;
+    }
+
+    private bool TryApplyRememberedLoadout(IPlayer player)
+    {
+        if (player == null || !player.IsValid || player.SteamID == 0)
+        {
+            return false;
+        }
+
+        var saved = _state.GetSavedPreference(player.SteamID);
+        if (!saved.RememberLoadout)
+        {
+            return false;
+        }
+
+        bool primaryGranted = false;
+        bool secondaryGranted = false;
+
+        var primaryEntry = FindEntryById(_weaponMenuCFG.CurrentValue.PrimaryWeapons, saved.PrimaryLoadoutId);
+        if (primaryEntry != null && TryGrantWeapon(player, primaryEntry))
+        {
+            var lifeState = _state.GetLifeState(player.PlayerID);
+            lifeState.PrimarySelected = true;
+            lifeState.PrimaryLoadoutId = ResolveEntryId(primaryEntry);
+            primaryGranted = true;
+        }
+
+        var secondaryEntry = FindEntryById(_weaponMenuCFG.CurrentValue.SecondaryWeapons, saved.SecondaryLoadoutId);
+        if (primaryGranted && secondaryEntry != null && TryGrantWeapon(player, secondaryEntry))
+        {
+            var lifeState = _state.GetLifeState(player.PlayerID);
+            lifeState.SecondarySelected = true;
+            lifeState.SecondaryLoadoutId = ResolveEntryId(secondaryEntry);
+            secondaryGranted = true;
+        }
+
+        if (primaryGranted && secondaryGranted)
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutRememberApplied"));
+            return true;
+        }
+
+        if (primaryGranted)
+        {
+            _core.Scheduler.NextTick(() =>
+            {
+                if (player != null && player.IsValid)
+                {
+                    OpenStageMenu(player, LoadoutStage.Secondary);
+                }
+            });
+            return true;
+        }
+
+        return false;
+    }
+
+    private IMenuAPI? OpenStageMenu(IPlayer player, LoadoutStage stage)
+    {
+        var entries = GetEntries(stage).ToList();
+        if (entries.Count == 0)
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuEmpty"));
+            return null;
+        }
+
+        var titleKey = stage == LoadoutStage.Primary ? "LoadoutMenuPrimaryTitle" : "LoadoutMenuSecondaryTitle";
+        var promptKey = stage == LoadoutStage.Primary ? "LoadoutMenuPrimarySelect" : "LoadoutMenuSecondarySelect";
+        IMenuAPI menu = _menuHelper.CreateMenu(_helpers.T(player, titleKey));
+
+        menu.AddOption(new TextMenuOption(HtmlGradient.GenerateGradientText(
+            _helpers.T(player, promptKey),
+            Color.Red, Color.LightBlue, Color.Red),
+            updateIntervalMs: 500, pauseIntervalMs: 100)
+        {
+            TextStyle = MenuOptionTextStyle.ScrollLeftLoop
+        });
+
+        menu.AddOption(CreateRememberToggleButton(player, stage));
+
+        foreach (var entry in entries)
+        {
+            string entryId = ResolveEntryId(entry);
+            string label = BuildEntryLabel(player, stage, entry, entryId);
+            var button = new ButtonMenuOption(label)
+            {
+                TextStyle = MenuOptionTextStyle.ScrollLeftLoop,
+                CloseAfterClick = true,
+                Tag = "extend"
+            };
+
+            button.Click += async (_, args) =>
+            {
+                var clicker = args.Player;
+                _core.Scheduler.NextTick(() => HandleSelection(clicker, stage, entry));
+            };
+
+            menu.AddOption(button);
+        }
+
+        _core.MenusAPI.OpenMenuForPlayer(player, menu);
+        return menu;
+    }
+
+    private ButtonMenuOption CreateRememberToggleButton(IPlayer player, LoadoutStage stage)
+    {
+        var saved = _state.GetSavedPreference(player.SteamID);
+        string stateText = saved.RememberLoadout
+            ? _helpers.T(player, "LoadoutRememberOn")
+            : _helpers.T(player, "LoadoutRememberOff");
+
+        var button = new ButtonMenuOption($"{_helpers.T(player, "LoadoutRememberToggle")} {stateText}")
+        {
+            TextStyle = MenuOptionTextStyle.ScrollLeftLoop,
+            CloseAfterClick = true,
+            Tag = "extend"
+        };
+
+        button.Click += async (_, args) =>
+        {
+            var clicker = args.Player;
+            _core.Scheduler.NextTick(() => ToggleRememberLoadout(clicker, stage));
+        };
+
+        return button;
+    }
+
+    private string BuildEntryLabel(IPlayer player, LoadoutStage stage, HZPWeaponMenuEntry entry, string entryId)
+    {
+        var saved = _state.GetSavedPreference(player.SteamID);
+        var life = _state.GetLifeState(player.PlayerID);
+
+        bool isSelected = stage == LoadoutStage.Primary
+            ? life.PrimarySelected && life.PrimaryLoadoutId == entryId
+            : life.SecondarySelected && life.SecondaryLoadoutId == entryId;
+
+        bool isRemembered = stage == LoadoutStage.Primary
+            ? saved.PrimaryLoadoutId == entryId
+            : saved.SecondaryLoadoutId == entryId;
+
+        if (isSelected)
+        {
+            return $"{entry.DisplayName} {_helpers.T(player, "LoadoutSelectedMarker")}";
+        }
+
+        if (saved.RememberLoadout && isRemembered)
+        {
+            return $"{entry.DisplayName} {_helpers.T(player, "LoadoutRememberMarker")}";
+        }
+
+        return entry.DisplayName;
+    }
+
+    private IEnumerable<HZPWeaponMenuEntry> GetEntries(LoadoutStage stage)
+    {
+        var source = stage == LoadoutStage.Primary
+            ? _weaponMenuCFG.CurrentValue.PrimaryWeapons
+            : _weaponMenuCFG.CurrentValue.SecondaryWeapons;
+
+        return source
+            .Where(entry => entry.Enable)
+            .Where(entry => !string.IsNullOrWhiteSpace(entry.DisplayName))
+            .Where(entry => HasGrantSource(entry))
+            .Where(entry => IsModeAllowed(entry.AllowedModes))
+            .OrderBy(entry => entry.SortOrder)
+            .ThenBy(entry => entry.DisplayName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static bool HasGrantSource(HZPWeaponMenuEntry entry)
+    {
+        return !string.IsNullOrWhiteSpace(entry.WeaponCommand)
+            || !string.IsNullOrWhiteSpace(entry.NativeWeaponClassName);
+    }
+
+    private bool IsModeAllowed(string allowedModes)
+    {
+        if (string.IsNullOrWhiteSpace(allowedModes))
+        {
+            return true;
+        }
+
+        foreach (var rawMode in allowedModes.Split(','))
+        {
+            var modeName = rawMode.Trim();
+            if (modeName.Length == 0)
+            {
+                continue;
+            }
+
+            if (Enum.TryParse<GameModeType>(modeName, true, out var mode) && mode == _gameMode.CurrentMode)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void HandleSelection(IPlayer player, LoadoutStage stage, HZPWeaponMenuEntry entry)
+    {
+        if (player == null || !player.IsValid)
+        {
+            return;
+        }
+
+        if (!CanUseLoadout(player, out var denyKey))
+        {
+            if (!string.IsNullOrWhiteSpace(denyKey))
+            {
+                player.SendMessage(MessageType.Chat, _helpers.T(player, denyKey));
+            }
+
+            return;
+        }
+
+        if (!IsModeAllowed(entry.AllowedModes))
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuModeLocked"));
+            return;
+        }
+
+        if (!TryGrantWeapon(player, entry))
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuUnavailable"));
+            return;
+        }
+
+        string entryId = ResolveEntryId(entry);
+        var lifeState = _state.GetLifeState(player.PlayerID);
+        var saved = _state.GetSavedPreference(player.SteamID);
+
+        if (stage == LoadoutStage.Primary)
+        {
+            lifeState.PrimarySelected = true;
+            lifeState.PrimaryLoadoutId = entryId;
+            lifeState.SecondarySelected = false;
+            lifeState.SecondaryLoadoutId = string.Empty;
+
+            _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
+            _playerDataBridge.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
+
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutPrimarySelected", entry.DisplayName));
+            _core.Scheduler.NextTick(() =>
+            {
+                if (player != null && player.IsValid)
+                {
+                    OpenStageMenu(player, LoadoutStage.Secondary);
+                }
+            });
+            return;
+        }
+
+        lifeState.SecondarySelected = true;
+        lifeState.SecondaryLoadoutId = entryId;
+
+        _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
+        _playerDataBridge.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
+        player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutSecondarySelected", entry.DisplayName));
+        player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuReady"));
+    }
+
+    private void ToggleRememberLoadout(IPlayer player, LoadoutStage stage)
+    {
+        if (player == null || !player.IsValid || player.SteamID == 0)
+        {
+            return;
+        }
+
+        if (!CanUseLoadout(player, out var denyKey))
+        {
+            if (!string.IsNullOrWhiteSpace(denyKey))
+            {
+                player.SendMessage(MessageType.Chat, _helpers.T(player, denyKey));
+            }
+
+            return;
+        }
+
+        var saved = _state.GetSavedPreference(player.SteamID);
+        bool remember = !saved.RememberLoadout;
+        _state.SetSavedPreference(player.SteamID, remember, saved.PrimaryLoadoutId, saved.SecondaryLoadoutId);
+        _playerDataBridge.SaveLoadoutPreference(player.SteamID, remember, saved.PrimaryLoadoutId, saved.SecondaryLoadoutId);
+
+        string messageKey = remember ? "LoadoutRememberEnabled" : "LoadoutRememberDisabled";
+        player.SendMessage(MessageType.Chat, _helpers.T(player, messageKey));
+        OpenStageMenu(player, stage);
+    }
+
+    private bool TryGrantWeapon(IPlayer player, HZPWeaponMenuEntry entry)
+    {
+        if (!string.IsNullOrWhiteSpace(entry.WeaponCommand))
+        {
+            player.ExecuteCommand(entry.WeaponCommand);
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(entry.NativeWeaponClassName))
+        {
+            return false;
+        }
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null || !pawn.IsValid)
+        {
+            return false;
+        }
+
+        var weaponServices = pawn.WeaponServices;
+        if (weaponServices == null || !weaponServices.IsValid)
+        {
+            return false;
+        }
+
+        var itemServices = pawn.ItemServices;
+        if (itemServices == null || !itemServices.IsValid)
+        {
+            return false;
+        }
+
+        if (!TryGetGearSlot(entry.NativeWeaponSlot, out var gearSlot))
+        {
+            _logger.LogWarning("Invalid native weapon slot {Slot} for {DisplayName}", entry.NativeWeaponSlot, entry.DisplayName);
+            return false;
+        }
+
+        weaponServices.DropWeaponBySlot(gearSlot);
+        var weapon = itemServices.GiveItem<CCSWeaponBase>(entry.NativeWeaponClassName);
+        return weapon != null && weapon.IsValid;
+    }
+
+    private static bool TryGetGearSlot(int slot, out gear_slot_t gearSlot)
+    {
+        gearSlot = slot switch
+        {
+            0 => gear_slot_t.GEAR_SLOT_RIFLE,
+            1 => gear_slot_t.GEAR_SLOT_PISTOL,
+            2 => gear_slot_t.GEAR_SLOT_KNIFE,
+            3 => gear_slot_t.GEAR_SLOT_GRENADES,
+            _ => gear_slot_t.GEAR_SLOT_RIFLE
+        };
+
+        return slot is >= 0 and <= 3;
+    }
+
+    private static string ResolveEntryId(HZPWeaponMenuEntry entry)
+    {
+        if (!string.IsNullOrWhiteSpace(entry.Id))
+        {
+            return entry.Id.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(entry.NativeWeaponClassName))
+        {
+            return entry.NativeWeaponClassName.Trim();
+        }
+
+        return entry.WeaponCommand.Trim();
+    }
+
+    private HZPWeaponMenuEntry? FindEntryById(IEnumerable<HZPWeaponMenuEntry> entries, string entryId)
+    {
+        if (string.IsNullOrWhiteSpace(entryId))
+        {
+            return null;
+        }
+
+        return entries
+            .Where(entry => entry.Enable)
+            .Where(entry => HasGrantSource(entry))
+            .Where(entry => IsModeAllowed(entry.AllowedModes))
+            .FirstOrDefault(entry => string.Equals(ResolveEntryId(entry), entryId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool CanUseLoadout(IPlayer player, out string denyKey)
+    {
+        denyKey = string.Empty;
+        var cfg = _weaponMenuCFG.CurrentValue;
+
+        if (!cfg.Enable)
+        {
+            denyKey = "LoadoutMenuDisabled";
+            return false;
+        }
+
+        if (player == null || !player.IsValid)
+        {
+            return false;
+        }
+
+        var controller = player.Controller;
+        if (controller == null || !controller.IsValid)
+        {
+            return false;
+        }
+
+        if (cfg.AllowOnlyAliveHuman && !controller.PawnIsAlive)
+        {
+            denyKey = "LoadoutMenuAliveOnly";
+            return false;
+        }
+
+        _globals.IsZombie.TryGetValue(player.PlayerID, out bool isZombie);
+        if (isZombie)
+        {
+            denyKey = "LoadoutMenuHumanOnly";
+            return false;
+        }
+
+        if (!_globals.GameStart && !cfg.AllowDuringPrep)
+        {
+            denyKey = "LoadoutMenuPrepLocked";
+            return false;
+        }
+
+        if (_globals.GameStart && !cfg.AllowAfterGameStart)
+        {
+            denyKey = "LoadoutMenuRoundLocked";
+            return false;
+        }
+
+        if (cfg.DenySpecialHumans)
+        {
+            _globals.IsSurvivor.TryGetValue(player.PlayerID, out bool isSurvivor);
+            _globals.IsSniper.TryGetValue(player.PlayerID, out bool isSniper);
+            _globals.IsHero.TryGetValue(player.PlayerID, out bool isHero);
+            if (isSurvivor || isSniper || isHero)
+            {
+                denyKey = "LoadoutMenuSpecialHumanLocked";
+                return false;
+            }
+        }
+
+        return true;
+    }
+}

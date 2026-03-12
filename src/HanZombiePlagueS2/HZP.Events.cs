@@ -37,6 +37,8 @@ public partial class HZPEvents
     private readonly PlayerZombieState _zombieState;
     private readonly HZPGameMode _gameMode;
     private readonly ZombiePlayerDataBridge _playerDataBridge;
+    private readonly HZPWeaponMenuState _weaponMenuState;
+    private readonly HZPWeaponMenu _weaponMenu;
 
     private readonly HanZombiePlagueAPI _api;
     public HZPEvents(ISwiftlyCore core, ILogger<HZPEvents> logger
@@ -46,6 +48,8 @@ public partial class HZPEvents
         IOptionsMonitor<HZPZombieClassCFG> zombieClassCFG,
         PlayerZombieState zombieState, HZPGameMode gameMode,
         ZombiePlayerDataBridge playerDataBridge,
+        HZPWeaponMenuState weaponMenuState,
+        HZPWeaponMenu weaponMenu,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
         HanZombiePlagueAPI api)
     {
@@ -61,6 +65,8 @@ public partial class HZPEvents
         _zombieState = zombieState;
         _gameMode = gameMode;
         _playerDataBridge = playerDataBridge;
+        _weaponMenuState = weaponMenuState;
+        _weaponMenu = weaponMenu;
         _SpecialClassCFG = specialClassCFG;
         _api = api;
     }
@@ -229,6 +235,7 @@ public partial class HZPEvents
 
     private HookResult OnTimerStart(EventRoundStart @event)
     {
+        _weaponMenuState.ResetAllLifeStates();
         _service.SetRoundEndTime();
         _globals.SafeRoundStart = true;
         var CFG = _mainCFG.CurrentValue;
@@ -247,6 +254,7 @@ public partial class HZPEvents
         
         _helpers.ClearAllBurns();
         _helpers.ClearAllLights();
+        _weaponMenuState.ResetAllLifeStates();
         _globals.GameInfiniteClipMode = false;
         _core.Scheduler.DelayBySeconds(2.0f, () =>
         {
@@ -426,6 +434,7 @@ public partial class HZPEvents
 
             var Id = player.PlayerID;
             ulong steamId = player.SteamID;
+            _weaponMenuState.ResetLifeState(Id);
 
             _core.Scheduler.NextWorldUpdate(() =>
             {
@@ -512,6 +521,21 @@ public partial class HZPEvents
                     _service.GiveSpawnGrenade(player, CFG);
                 });
 
+                _core.Scheduler.DelayBySeconds(0.5f, () =>
+                {
+                    try
+                    {
+                        if (player == null || !player.IsValid)
+                            return;
+
+                        _weaponMenu.TryHandleSpawnLoadout(player);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Auto open weapon menu error [{controller.PlayerName}]: {ex.Message}");
+                    }
+                });
+
                 
             }
 
@@ -545,6 +569,7 @@ public partial class HZPEvents
 
         var Id = player.PlayerID;
         var steamId = player.SteamID;
+        _weaponMenuState.ResetLifeState(Id);
 
         _playerDataBridge.RecordDeath(player);
 
@@ -916,6 +941,7 @@ public partial class HZPEvents
         _globals.StopZombieTimers.Remove(id);
         _globals.g_IsInvisible.Remove(id);
         _globals.ThrowerIsZombie.Remove(id);
+        _weaponMenuState.ResetLifeState(id);
 
         _globals.InSwing[id] = false;
 

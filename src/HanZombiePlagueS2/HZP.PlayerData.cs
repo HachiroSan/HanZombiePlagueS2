@@ -9,11 +9,15 @@ public sealed class ZombiePlayerDataBridge(
     ISwiftlyCore core,
     ILogger<ZombiePlayerDataBridge> logger,
     HZPGlobals globals,
-    PlayerZombieState zombieState)
+    PlayerZombieState zombieState,
+    HZPWeaponMenuState weaponMenuState)
 {
     public const string SharedInterfaceKey = "HanZombie.Database.v1";
 
     private const string ZombieClassPreferenceKey = "zombie_class";
+    private const string LoadoutRememberPreferenceKey = "loadout_remember";
+    private const string LoadoutPrimaryPreferenceKey = "loadout_primary";
+    private const string LoadoutSecondaryPreferenceKey = "loadout_secondary";
 
     private IZombiePlayerDataService? _dataService;
     private readonly HashSet<ulong> _roundParticipants = [];
@@ -56,6 +60,16 @@ public sealed class ZombiePlayerDataBridge(
         }
 
         _ = SavePreferenceAsync(steamId, className);
+    }
+
+    public void SaveLoadoutPreference(ulong steamId, bool rememberLoadout, string? primaryLoadoutId, string? secondaryLoadoutId)
+    {
+        if (steamId == 0)
+        {
+            return;
+        }
+
+        _ = SaveLoadoutPreferenceAsync(steamId, rememberLoadout, primaryLoadoutId, secondaryLoadoutId);
     }
 
     public void HandleGameStartChanged(bool gameStart)
@@ -170,8 +184,19 @@ public sealed class ZombiePlayerDataBridge(
         {
             await dataService.TouchPlayerAsync(player.SteamID, player.Name);
             var preference = await dataService.GetPlayerPreferenceAsync(player.SteamID, ZombieClassPreferenceKey);
+            var rememberLoadout = await dataService.GetPlayerPreferenceAsync(player.SteamID, LoadoutRememberPreferenceKey);
+            var primaryLoadout = await dataService.GetPlayerPreferenceAsync(player.SteamID, LoadoutPrimaryPreferenceKey);
+            var secondaryLoadout = await dataService.GetPlayerPreferenceAsync(player.SteamID, LoadoutSecondaryPreferenceKey);
 
-            core.Scheduler.NextTick(() => zombieState.SetPlayerPreference(player.SteamID, preference?.PreferenceValue));
+            core.Scheduler.NextTick(() =>
+            {
+                zombieState.SetPlayerPreference(player.SteamID, preference?.PreferenceValue);
+                weaponMenuState.SetSavedPreference(
+                    player.SteamID,
+                    ParseRememberLoadout(rememberLoadout?.PreferenceValue),
+                    primaryLoadout?.PreferenceValue,
+                    secondaryLoadout?.PreferenceValue);
+            });
         }
         catch (Exception ex)
         {
@@ -194,6 +219,26 @@ public sealed class ZombiePlayerDataBridge(
         catch (Exception ex)
         {
             logger.LogWarning(ex, "Failed to save zombie preference for SteamID {SteamId}.", steamId);
+        }
+    }
+
+    private async Task SaveLoadoutPreferenceAsync(ulong steamId, bool rememberLoadout, string? primaryLoadoutId, string? secondaryLoadoutId)
+    {
+        var dataService = _dataService;
+        if (dataService == null)
+        {
+            return;
+        }
+
+        try
+        {
+            await dataService.SavePlayerPreferenceAsync(steamId, LoadoutRememberPreferenceKey, rememberLoadout ? "1" : "0");
+            await dataService.SavePlayerPreferenceAsync(steamId, LoadoutPrimaryPreferenceKey, primaryLoadoutId);
+            await dataService.SavePlayerPreferenceAsync(steamId, LoadoutSecondaryPreferenceKey, secondaryLoadoutId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to save loadout preference for SteamID {SteamId}.", steamId);
         }
     }
 
@@ -232,4 +277,12 @@ public sealed class ZombiePlayerDataBridge(
     }
 
     private sealed record RoundPlayerSnapshot(ulong SteamId, string? Name, bool IsZombie);
+
+    private static bool ParseRememberLoadout(string? rawValue)
+    {
+        return string.Equals(rawValue, "1", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(rawValue, "true", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(rawValue, "yes", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(rawValue, "on", StringComparison.OrdinalIgnoreCase);
+    }
 }

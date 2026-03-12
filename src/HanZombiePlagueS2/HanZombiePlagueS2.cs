@@ -51,6 +51,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         {
             builder.AddJsonFile("HZPSpecialClassCFG.jsonc", false, true);
         });
+        Core.Configuration.InitializeJsonWithModel<HZPWeaponMenuCFG>("HZPWeaponMenuCFG.jsonc", "HZPWeaponMenuCFG").Configure(builder =>
+        {
+            builder.AddJsonFile("HZPWeaponMenuCFG.jsonc", false, true);
+        });
 
         
         var collection = new ServiceCollection();
@@ -74,6 +78,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
             .AddOptionsWithValidateOnStart<HZPSpecialClassCFG>()
             .BindConfiguration("HZPSpecialClassCFG");
 
+        collection
+            .AddOptionsWithValidateOnStart<HZPWeaponMenuCFG>()
+            .BindConfiguration("HZPWeaponMenuCFG");
+
         collection.AddSingleton<HZPGlobals>();
         collection.AddSingleton<HZPEvents>();
         collection.AddSingleton<HZPHelpers>();
@@ -84,6 +92,8 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HZPMenuHelper>();
         collection.AddSingleton<HZPZombieClassMenu>();
         collection.AddSingleton<HZPAdminItemMenu>();
+        collection.AddSingleton<HZPWeaponMenuState>();
+        collection.AddSingleton<HZPWeaponMenu>();
         collection.AddSingleton<HZPGameMode>();
 
 
