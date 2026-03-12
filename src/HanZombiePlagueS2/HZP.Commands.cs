@@ -22,15 +22,15 @@ public class HZPCommands
     private readonly HZPGlobals _globals;
     private readonly HZPZombieClassMenu _hZPZombieClassMenu;
     private readonly HZPAdminItemMenu _hZPAdminItemMenu;
-    private readonly HZPWeaponMenu _hZPWeaponMenu;
+    private readonly HZPLoadoutMenu _hZPLoadoutMenu;
     private readonly HZPHelpers _helpers;
-    private readonly IOptionsMonitor<HZPWeaponMenuCFG> _weaponMenuCFG;
+    private readonly IOptionsMonitor<HZPLoadoutCFG> _loadoutCFG;
 
     public HZPCommands(ISwiftlyCore core, ILogger<HZPCommands> logger,
         HZPServices services, IOptionsMonitor<HZPMainCFG> mainCFG,
         HZPGlobals globals, HZPAdminItemMenu hZPAdminItemMenu,
-        HZPZombieClassMenu hZPZombieClassMenu, HZPWeaponMenu hZPWeaponMenu,
-        HZPHelpers helpers, IOptionsMonitor<HZPWeaponMenuCFG> weaponMenuCFG)
+        HZPZombieClassMenu hZPZombieClassMenu, HZPLoadoutMenu hZPLoadoutMenu,
+        HZPHelpers helpers, IOptionsMonitor<HZPLoadoutCFG> loadoutCFG)
     {
         _core = core;
         _logger = logger;
@@ -39,9 +39,9 @@ public class HZPCommands
         _globals = globals;
         _hZPAdminItemMenu = hZPAdminItemMenu;
         _hZPZombieClassMenu = hZPZombieClassMenu;
-        _hZPWeaponMenu = hZPWeaponMenu;
+        _hZPLoadoutMenu = hZPLoadoutMenu;
         _helpers = helpers;
-        _weaponMenuCFG = weaponMenuCFG;
+        _loadoutCFG = loadoutCFG;
     }
 
     public void MenuCommands()
@@ -51,7 +51,7 @@ public class HZPCommands
 
         _core.Command.RegisterCommand(CFG.AdminMenuItemCommand, UseItemMenu, true);
 
-        var loadoutCommand = _weaponMenuCFG.CurrentValue.LoadoutCommand;
+        var loadoutCommand = _loadoutCFG.CurrentValue.LoadoutCommand;
         if (!string.IsNullOrWhiteSpace(loadoutCommand))
         {
             _core.Command.RegisterCommand(loadoutCommand, OpenWeaponMenu, true);
@@ -90,7 +90,7 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return;
 
-        _hZPWeaponMenu.OpenLoadoutMenu(player);
+        _hZPLoadoutMenu.OpenLoadoutMenu(player);
     }
 
     private bool HasAdminMenuPermission(IPlayer player)

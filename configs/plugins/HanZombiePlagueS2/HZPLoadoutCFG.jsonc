@@ -1,5 +1,5 @@
 {
-  "HZPWeaponMenuCFG": {
+  "HZPLoadoutCFG": {
     "Enable": true,
     "LoadoutCommand": "sw_loadout",
     "AutoOpenOnSpawnBeforeRoundStart": true,
@@ -79,22 +79,6 @@
         "NativeWeaponClassName": "weapon_ssg08",
         "NativeWeaponSlot": 0,
         "SortOrder": 90
-      },
-      {
-        "Id": "scar20",
-        "Enable": true,
-        "DisplayName": "SCAR-20",
-        "NativeWeaponClassName": "weapon_scar20",
-        "NativeWeaponSlot": 0,
-        "SortOrder": 100
-      },
-      {
-        "Id": "g3sg1",
-        "Enable": true,
-        "DisplayName": "G3SG1",
-        "NativeWeaponClassName": "weapon_g3sg1",
-        "NativeWeaponSlot": 0,
-        "SortOrder": 110
       },
       {
         "Id": "mp9",
@@ -183,40 +167,16 @@
         "NativeWeaponClassName": "weapon_xm1014",
         "NativeWeaponSlot": 0,
         "SortOrder": 220
-      },
-      {
-        "Id": "negev",
-        "Enable": true,
-        "DisplayName": "Negev",
-        "NativeWeaponClassName": "weapon_negev",
-        "NativeWeaponSlot": 0,
-        "SortOrder": 230
-      },
-      {
-        "Id": "m249",
-        "Enable": true,
-        "DisplayName": "M249",
-        "NativeWeaponClassName": "weapon_m249",
-        "NativeWeaponSlot": 0,
-        "SortOrder": 240
       }
     ],
     "SecondaryWeapons": [
       {
-        "Id": "elite",
+        "Id": "usp_s",
         "Enable": true,
-        "DisplayName": "Dual Berettas",
-        "NativeWeaponClassName": "weapon_elite",
+        "DisplayName": "USP-S",
+        "NativeWeaponClassName": "weapon_usp_silencer",
         "NativeWeaponSlot": 1,
-        "SortOrder": 10
-      },
-      {
-        "Id": "fiveseven",
-        "Enable": true,
-        "DisplayName": "Five-SeveN",
-        "NativeWeaponClassName": "weapon_fiveseven",
-        "NativeWeaponSlot": 1,
-        "SortOrder": 20
+        "SortOrder": 100
       },
       {
         "Id": "glock",
@@ -257,30 +217,6 @@
         "NativeWeaponClassName": "weapon_cz75a",
         "NativeWeaponSlot": 1,
         "SortOrder": 70
-      },
-      {
-        "Id": "deagle",
-        "Enable": true,
-        "DisplayName": "Desert Eagle",
-        "NativeWeaponClassName": "weapon_deagle",
-        "NativeWeaponSlot": 1,
-        "SortOrder": 80
-      },
-      {
-        "Id": "revolver",
-        "Enable": true,
-        "DisplayName": "R8 Revolver",
-        "NativeWeaponClassName": "weapon_revolver",
-        "NativeWeaponSlot": 1,
-        "SortOrder": 90
-      },
-      {
-        "Id": "usp_s",
-        "Enable": true,
-        "DisplayName": "USP-S",
-        "NativeWeaponClassName": "weapon_usp_silencer",
-        "NativeWeaponSlot": 1,
-        "SortOrder": 100
       }
     ]
   }

@@ -1,7 +1,0 @@
-{
-  // Shared zombie database provider settings.
-  "HanZombiePlayerDataCFG": {
-    "ConnectionKey": "zombies",
-    "BootstrapSchema": true
-  }
-}

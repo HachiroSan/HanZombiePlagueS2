@@ -15,7 +15,7 @@ public sealed class SavedLoadoutPreference
     public string SecondaryLoadoutId { get; set; } = string.Empty;
 }
 
-public class HZPWeaponMenuState
+public class HZPLoadoutState
 {
     private readonly Dictionary<int, PlayerLoadoutLifeState> _lifeStates = [];
     private readonly Dictionary<ulong, SavedLoadoutPreference> _savedPreferences = [];

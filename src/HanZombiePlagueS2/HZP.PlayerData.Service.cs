@@ -1,33 +1,25 @@
-using HanZombiePlayerData.Contracts;
 using Microsoft.Extensions.Logging;
 using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Players;
 
 namespace HanZombiePlagueS2;
 
-public sealed class ZombiePlayerDataBridge(
+public sealed class HZPPlayerDataService(
     ISwiftlyCore core,
-    ILogger<ZombiePlayerDataBridge> logger,
+    ILogger<HZPPlayerDataService> logger,
     HZPGlobals globals,
     PlayerZombieState zombieState,
-    HZPWeaponMenuState weaponMenuState)
+    HZPLoadoutState loadoutState,
+    HZPDatabaseService databaseService)
 {
-    public const string SharedInterfaceKey = "HanZombie.Database.v1";
-
     private const string ZombieClassPreferenceKey = "zombie_class";
     private const string LoadoutRememberPreferenceKey = "loadout_remember";
     private const string LoadoutPrimaryPreferenceKey = "loadout_primary";
     private const string LoadoutSecondaryPreferenceKey = "loadout_secondary";
 
-    private IZombiePlayerDataService? _dataService;
     private readonly HashSet<ulong> _roundParticipants = [];
     private bool _roundActive;
     private bool _roundOutcomeRecorded;
-
-    public void SetService(IZombiePlayerDataService? dataService)
-    {
-        _dataService = dataService;
-    }
 
     public void LoadOnlinePlayers()
     {
@@ -112,7 +104,7 @@ public sealed class ZombiePlayerDataBridge(
             _roundParticipants.Add(attacker.SteamID);
         }
 
-        QueueStatsUpdate(attacker.SteamID, attacker.Name, new ZombiePlayerStatsDelta
+        QueueStatsUpdate(attacker.SteamID, attacker.Name, new HZPPlayerStatsDelta
         {
             Infections = 1
         });
@@ -130,7 +122,7 @@ public sealed class ZombiePlayerDataBridge(
             _roundParticipants.Add(player.SteamID);
         }
 
-        QueueStatsUpdate(player.SteamID, player.Name, new ZombiePlayerStatsDelta
+        QueueStatsUpdate(player.SteamID, player.Name, new HZPPlayerStatsDelta
         {
             Deaths = 1
         });
@@ -162,7 +154,7 @@ public sealed class ZombiePlayerDataBridge(
                 continue;
             }
 
-            var delta = new ZombiePlayerStatsDelta
+            var delta = new HZPPlayerStatsDelta
             {
                 RoundsPlayed = 1,
                 RoundsWon = humanWon == !player.IsZombie ? 1 : 0
@@ -174,24 +166,18 @@ public sealed class ZombiePlayerDataBridge(
 
     private async Task LoadPlayerAsync(IPlayer player)
     {
-        var dataService = _dataService;
-        if (dataService == null)
-        {
-            return;
-        }
-
         try
         {
-            await dataService.TouchPlayerAsync(player.SteamID, player.Name);
-            var preference = await dataService.GetPlayerPreferenceAsync(player.SteamID, ZombieClassPreferenceKey);
-            var rememberLoadout = await dataService.GetPlayerPreferenceAsync(player.SteamID, LoadoutRememberPreferenceKey);
-            var primaryLoadout = await dataService.GetPlayerPreferenceAsync(player.SteamID, LoadoutPrimaryPreferenceKey);
-            var secondaryLoadout = await dataService.GetPlayerPreferenceAsync(player.SteamID, LoadoutSecondaryPreferenceKey);
+            await databaseService.TouchPlayerAsync(player.SteamID, player.Name);
+            var preference = await databaseService.GetPlayerPreferenceAsync(player.SteamID, ZombieClassPreferenceKey);
+            var rememberLoadout = await databaseService.GetPlayerPreferenceAsync(player.SteamID, LoadoutRememberPreferenceKey);
+            var primaryLoadout = await databaseService.GetPlayerPreferenceAsync(player.SteamID, LoadoutPrimaryPreferenceKey);
+            var secondaryLoadout = await databaseService.GetPlayerPreferenceAsync(player.SteamID, LoadoutSecondaryPreferenceKey);
 
             core.Scheduler.NextTick(() =>
             {
                 zombieState.SetPlayerPreference(player.SteamID, preference?.PreferenceValue);
-                weaponMenuState.SetSavedPreference(
+                loadoutState.SetSavedPreference(
                     player.SteamID,
                     ParseRememberLoadout(rememberLoadout?.PreferenceValue),
                     primaryLoadout?.PreferenceValue,
@@ -206,15 +192,9 @@ public sealed class ZombiePlayerDataBridge(
 
     private async Task SavePreferenceAsync(ulong steamId, string? className)
     {
-        var dataService = _dataService;
-        if (dataService == null)
-        {
-            return;
-        }
-
         try
         {
-            await dataService.SavePlayerPreferenceAsync(steamId, ZombieClassPreferenceKey, className);
+            await databaseService.SavePlayerPreferenceAsync(steamId, ZombieClassPreferenceKey, className);
         }
         catch (Exception ex)
         {
@@ -224,17 +204,11 @@ public sealed class ZombiePlayerDataBridge(
 
     private async Task SaveLoadoutPreferenceAsync(ulong steamId, bool rememberLoadout, string? primaryLoadoutId, string? secondaryLoadoutId)
     {
-        var dataService = _dataService;
-        if (dataService == null)
-        {
-            return;
-        }
-
         try
         {
-            await dataService.SavePlayerPreferenceAsync(steamId, LoadoutRememberPreferenceKey, rememberLoadout ? "1" : "0");
-            await dataService.SavePlayerPreferenceAsync(steamId, LoadoutPrimaryPreferenceKey, primaryLoadoutId);
-            await dataService.SavePlayerPreferenceAsync(steamId, LoadoutSecondaryPreferenceKey, secondaryLoadoutId);
+            await databaseService.SavePlayerPreferenceAsync(steamId, LoadoutRememberPreferenceKey, rememberLoadout ? "1" : "0");
+            await databaseService.SavePlayerPreferenceAsync(steamId, LoadoutPrimaryPreferenceKey, primaryLoadoutId);
+            await databaseService.SavePlayerPreferenceAsync(steamId, LoadoutSecondaryPreferenceKey, secondaryLoadoutId);
         }
         catch (Exception ex)
         {
@@ -242,7 +216,7 @@ public sealed class ZombiePlayerDataBridge(
         }
     }
 
-    private void QueueStatsUpdate(ulong steamId, string? playerName, ZombiePlayerStatsDelta delta)
+    private void QueueStatsUpdate(ulong steamId, string? playerName, HZPPlayerStatsDelta delta)
     {
         if (steamId == 0)
         {
@@ -257,18 +231,12 @@ public sealed class ZombiePlayerDataBridge(
         _ = SaveStatsAsync(steamId, playerName, delta);
     }
 
-    private async Task SaveStatsAsync(ulong steamId, string? playerName, ZombiePlayerStatsDelta delta)
+    private async Task SaveStatsAsync(ulong steamId, string? playerName, HZPPlayerStatsDelta delta)
     {
-        var dataService = _dataService;
-        if (dataService == null)
-        {
-            return;
-        }
-
         try
         {
-            await dataService.TouchPlayerAsync(steamId, playerName);
-            await dataService.IncrementPlayerStatsAsync(steamId, delta);
+            await databaseService.TouchPlayerAsync(steamId, playerName);
+            await databaseService.IncrementPlayerStatsAsync(steamId, delta);
         }
         catch (Exception ex)
         {

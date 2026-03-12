@@ -1,17 +1,15 @@
 using System.Data;
-using System.Data.Common;
 using Dapper;
-using HanZombiePlayerData.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SwiftlyS2.Shared;
 
-namespace HanZombiePlayerData.Provider;
+namespace HanZombiePlagueS2;
 
-public sealed class ZombiePlayerDataRepository(
+public sealed class HZPDatabaseRepository(
     ISwiftlyCore core,
-    ILogger<ZombiePlayerDataRepository> logger,
-    IOptionsMonitor<HanZombiePlayerDataConfig> configMonitor)
+    ILogger<HZPDatabaseRepository> logger,
+    IOptionsMonitor<HZPDatabaseConfig> configMonitor)
 {
     private enum SqlDialect
     {
@@ -37,7 +35,7 @@ public sealed class ZombiePlayerDataRepository(
         }
 
         logger.LogInformation(
-            "Zombie player data schema verified for connection key {ConnectionKey} using {Dialect}.",
+            "HZP database schema verified for connection key {ConnectionKey} using {Dialect}.",
             CurrentConfig.ConnectionKey,
             dialect);
     }
@@ -62,7 +60,7 @@ public sealed class ZombiePlayerDataRepository(
         await connection.ExecuteAsync(new CommandDefinition(sql, parameters, cancellationToken: cancellationToken));
     }
 
-    public async Task<ZombiePlayerPreferenceRecord?> GetPlayerPreferenceAsync(ulong steamId, string preferenceKey, CancellationToken cancellationToken = default)
+    public async Task<HZPPlayerPreferenceRecord?> GetPlayerPreferenceAsync(ulong steamId, string preferenceKey, CancellationToken cancellationToken = default)
     {
         ValidateScopedKey(preferenceKey, nameof(preferenceKey));
 
@@ -80,7 +78,7 @@ public sealed class ZombiePlayerDataRepository(
 
         using var connection = CreateConnection();
         await OpenAsync(connection, cancellationToken);
-        return await connection.QuerySingleOrDefaultAsync<ZombiePlayerPreferenceRecord>(
+        return await connection.QuerySingleOrDefaultAsync<HZPPlayerPreferenceRecord>(
             new CommandDefinition(
                 sql,
                 new { SteamId = steamId, PreferenceKey = preferenceKey },
@@ -107,7 +105,7 @@ public sealed class ZombiePlayerDataRepository(
                 cancellationToken: cancellationToken));
     }
 
-    public async Task<ZombiePlayerStatsRecord> GetPlayerStatsAsync(ulong steamId, CancellationToken cancellationToken = default)
+    public async Task<HZPPlayerStatsRecord> GetPlayerStatsAsync(ulong steamId, CancellationToken cancellationToken = default)
     {
         var sql = $"""
             SELECT
@@ -124,17 +122,17 @@ public sealed class ZombiePlayerDataRepository(
 
         using var connection = CreateConnection();
         await OpenAsync(connection, cancellationToken);
-        var record = await connection.QuerySingleOrDefaultAsync<ZombiePlayerStatsRecord>(
+        var record = await connection.QuerySingleOrDefaultAsync<HZPPlayerStatsRecord>(
             new CommandDefinition(sql, new { SteamId = steamId }, cancellationToken: cancellationToken));
 
-        return record ?? new ZombiePlayerStatsRecord
+        return record ?? new HZPPlayerStatsRecord
         {
             SteamId = steamId,
             UpdatedUtc = DateTime.UtcNow
         };
     }
 
-    public async Task IncrementPlayerStatsAsync(ulong steamId, ZombiePlayerStatsDelta delta, CancellationToken cancellationToken = default)
+    public async Task IncrementPlayerStatsAsync(ulong steamId, HZPPlayerStatsDelta delta, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(delta);
 
@@ -156,7 +154,7 @@ public sealed class ZombiePlayerDataRepository(
                 cancellationToken: cancellationToken));
     }
 
-    private HanZombiePlayerDataConfig CurrentConfig => configMonitor.CurrentValue;
+    private HZPDatabaseConfig CurrentConfig => configMonitor.CurrentValue;
 
     private IDbConnection CreateConnection()
     {
@@ -222,11 +220,11 @@ public sealed class ZombiePlayerDataRepository(
                 $"""
                 CREATE TABLE IF NOT EXISTS {PlayerPreferencesTable} (
                     steam_id BIGINT UNSIGNED NOT NULL,
-                    preference_key VARCHAR(128) NOT NULL,
+                    preference_key VARCHAR(64) NOT NULL,
                     preference_value VARCHAR(255) NULL,
                     updated_utc DATETIME(6) NOT NULL,
                     PRIMARY KEY (steam_id, preference_key),
-                    INDEX idx_player_preferences_steam_id (steam_id)
+                    KEY idx_player_preferences_steam_id (steam_id)
                 )
                 """,
                 $"""
@@ -245,100 +243,95 @@ public sealed class ZombiePlayerDataRepository(
 
     private static string GetTouchPlayerSql(SqlDialect dialect)
     {
-        var now = GetCurrentTimestampSql(dialect);
-
         return dialect switch
         {
             SqlDialect.Sqlite => $"""
                 INSERT INTO {PlayersTable} (steam_id, last_known_name, first_seen_utc, last_seen_utc)
-                VALUES (@SteamId, @LastKnownName, {now}, {now})
+                VALUES (@SteamId, @LastKnownName, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 ON CONFLICT(steam_id) DO UPDATE SET
                     last_known_name = excluded.last_known_name,
-                    last_seen_utc = excluded.last_seen_utc;
+                    last_seen_utc = CURRENT_TIMESTAMP
                 """,
             _ => $"""
                 INSERT INTO {PlayersTable} (steam_id, last_known_name, first_seen_utc, last_seen_utc)
-                VALUES (@SteamId, @LastKnownName, {now}, {now})
+                VALUES (@SteamId, @LastKnownName, UTC_TIMESTAMP(6), UTC_TIMESTAMP(6))
                 ON DUPLICATE KEY UPDATE
                     last_known_name = VALUES(last_known_name),
-                    last_seen_utc = VALUES(last_seen_utc);
+                    last_seen_utc = UTC_TIMESTAMP(6)
                 """
         };
     }
 
     private static string GetSavePlayerPreferenceSql(SqlDialect dialect)
     {
-        var now = GetCurrentTimestampSql(dialect);
-
         return dialect switch
         {
             SqlDialect.Sqlite => $"""
                 INSERT INTO {PlayerPreferencesTable} (steam_id, preference_key, preference_value, updated_utc)
-                VALUES (@SteamId, @PreferenceKey, @PreferenceValue, {now})
+                VALUES (@SteamId, @PreferenceKey, @PreferenceValue, CURRENT_TIMESTAMP)
                 ON CONFLICT(steam_id, preference_key) DO UPDATE SET
                     preference_value = excluded.preference_value,
-                    updated_utc = excluded.updated_utc;
+                    updated_utc = CURRENT_TIMESTAMP
                 """,
             _ => $"""
                 INSERT INTO {PlayerPreferencesTable} (steam_id, preference_key, preference_value, updated_utc)
-                VALUES (@SteamId, @PreferenceKey, @PreferenceValue, {now})
+                VALUES (@SteamId, @PreferenceKey, @PreferenceValue, UTC_TIMESTAMP(6))
                 ON DUPLICATE KEY UPDATE
                     preference_value = VALUES(preference_value),
-                    updated_utc = VALUES(updated_utc);
+                    updated_utc = UTC_TIMESTAMP(6)
                 """
         };
     }
 
     private static string GetIncrementPlayerStatsSql(SqlDialect dialect)
     {
-        var now = GetCurrentTimestampSql(dialect);
-
         return dialect switch
         {
             SqlDialect.Sqlite => $"""
-                INSERT INTO {PlayerStatsTable} (steam_id, infections, deaths, rounds_played, rounds_won, updated_utc)
-                VALUES (@SteamId, @Infections, @Deaths, @RoundsPlayed, @RoundsWon, {now})
+                INSERT INTO {PlayerStatsTable} (
+                    steam_id,
+                    infections,
+                    deaths,
+                    rounds_played,
+                    rounds_won,
+                    updated_utc)
+                VALUES (
+                    @SteamId,
+                    @Infections,
+                    @Deaths,
+                    @RoundsPlayed,
+                    @RoundsWon,
+                    CURRENT_TIMESTAMP)
                 ON CONFLICT(steam_id) DO UPDATE SET
-                    infections = {PlayerStatsTable}.infections + excluded.infections,
-                    deaths = {PlayerStatsTable}.deaths + excluded.deaths,
-                    rounds_played = {PlayerStatsTable}.rounds_played + excluded.rounds_played,
-                    rounds_won = {PlayerStatsTable}.rounds_won + excluded.rounds_won,
-                    updated_utc = excluded.updated_utc;
+                    infections = infections + excluded.infections,
+                    deaths = deaths + excluded.deaths,
+                    rounds_played = rounds_played + excluded.rounds_played,
+                    rounds_won = rounds_won + excluded.rounds_won,
+                    updated_utc = CURRENT_TIMESTAMP
                 """,
             _ => $"""
-                INSERT INTO {PlayerStatsTable} (steam_id, infections, deaths, rounds_played, rounds_won, updated_utc)
-                VALUES (@SteamId, @Infections, @Deaths, @RoundsPlayed, @RoundsWon, {now})
+                INSERT INTO {PlayerStatsTable} (
+                    steam_id,
+                    infections,
+                    deaths,
+                    rounds_played,
+                    rounds_won,
+                    updated_utc)
+                VALUES (
+                    @SteamId,
+                    @Infections,
+                    @Deaths,
+                    @RoundsPlayed,
+                    @RoundsWon,
+                    UTC_TIMESTAMP(6))
                 ON DUPLICATE KEY UPDATE
                     infections = infections + VALUES(infections),
                     deaths = deaths + VALUES(deaths),
                     rounds_played = rounds_played + VALUES(rounds_played),
                     rounds_won = rounds_won + VALUES(rounds_won),
-                    updated_utc = VALUES(updated_utc);
+                    updated_utc = UTC_TIMESTAMP(6)
                 """
         };
-    }
-
-    private static string GetCurrentTimestampSql(SqlDialect dialect)
-    {
-        return dialect == SqlDialect.Sqlite
-            ? "STRFTIME('%Y-%m-%d %H:%M:%f', 'now')"
-            : "UTC_TIMESTAMP(6)";
-    }
-
-    private static async Task OpenAsync(IDbConnection connection, CancellationToken cancellationToken)
-    {
-        if (connection.State == ConnectionState.Open)
-        {
-            return;
-        }
-
-        if (connection is DbConnection dbConnection)
-        {
-            await dbConnection.OpenAsync(cancellationToken);
-            return;
-        }
-
-        connection.Open();
     }
 
     private static string? TrimOrNull(string? value, int maxLength)
@@ -348,14 +341,39 @@ public sealed class ZombiePlayerDataRepository(
             return null;
         }
 
-        return value.Length <= maxLength ? value : value[..maxLength];
+        var trimmed = value.Trim();
+        if (trimmed.Length <= maxLength)
+        {
+            return trimmed;
+        }
+
+        return trimmed[..maxLength];
     }
 
-    private static void ValidateScopedKey(string value, string paramName)
+    private static void ValidateScopedKey(string key, string parameterName)
     {
-        if (string.IsNullOrWhiteSpace(value))
+        if (string.IsNullOrWhiteSpace(key))
         {
-            throw new ArgumentException("Value cannot be null or whitespace.", paramName);
+            throw new ArgumentException("Preference key is required.", parameterName);
         }
+
+        foreach (var ch in key)
+        {
+            if (!(char.IsAsciiLetterOrDigit(ch) || ch is '_' or '.' or '-'))
+            {
+                throw new ArgumentException("Preference key may only contain letters, digits, '_', '.', and '-'.", parameterName);
+            }
+        }
+    }
+
+    private static async Task OpenAsync(IDbConnection connection, CancellationToken cancellationToken)
+    {
+        if (connection is not System.Data.Common.DbConnection dbConnection)
+        {
+            connection.Open();
+            return;
+        }
+
+        await dbConnection.OpenAsync(cancellationToken);
     }
 }

@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace HanZombiePlayerData.Provider;
+namespace HanZombiePlagueS2;
 
-public sealed class HanZombiePlayerDataConfig
+public sealed class HZPDatabaseConfig
 {
     [Required]
     [RegularExpression("^[A-Za-z0-9_.-]+$")]

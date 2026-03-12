@@ -1,6 +1,6 @@
 namespace HanZombiePlagueS2;
 
-public class HZPWeaponMenuEntry
+public class HZPLoadoutEntry
 {
     public string Id { get; set; } = string.Empty;
     public bool Enable { get; set; } = true;
@@ -12,7 +12,7 @@ public class HZPWeaponMenuEntry
     public int SortOrder { get; set; } = 0;
 }
 
-public class HZPWeaponMenuCFG
+public class HZPLoadoutCFG
 {
     public bool Enable { get; set; } = true;
     public string LoadoutCommand { get; set; } = "sw_loadout";
@@ -21,6 +21,6 @@ public class HZPWeaponMenuCFG
     public bool AllowDuringPrep { get; set; } = true;
     public bool AllowAfterGameStart { get; set; } = false;
     public bool DenySpecialHumans { get; set; } = true;
-    public List<HZPWeaponMenuEntry> PrimaryWeapons { get; set; } = [];
-    public List<HZPWeaponMenuEntry> SecondaryWeapons { get; set; } = [];
+    public List<HZPLoadoutEntry> PrimaryWeapons { get; set; } = [];
+    public List<HZPLoadoutEntry> SecondaryWeapons { get; set; } = [];
 }

@@ -1,0 +1,6 @@
+{
+  "HZPDatabaseCFG": {
+    "ConnectionKey": "zombies",
+    "BootstrapSchema": true
+  }
+}

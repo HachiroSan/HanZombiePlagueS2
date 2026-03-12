@@ -3,11 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using HanZombiePlayerData.Contracts;
 using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.Plugins;
-using SwiftlyS2.Shared.Services;
 
 namespace HanZombiePlagueS2;
 
@@ -27,7 +25,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
     private HZPGlobals _Globals = null!;
     private HZPEvents _Events = null!;
     private HZPCommands _Commands = null!;
-    private ZombiePlayerDataBridge? _playerDataBridge;
+    private HZPPlayerDataService? _playerDataService;
 
     public override void ConfigureSharedInterface(IInterfaceManager interfaceManager)
     {
@@ -51,9 +49,13 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         {
             builder.AddJsonFile("HZPSpecialClassCFG.jsonc", false, true);
         });
-        Core.Configuration.InitializeJsonWithModel<HZPWeaponMenuCFG>("HZPWeaponMenuCFG.jsonc", "HZPWeaponMenuCFG").Configure(builder =>
+        Core.Configuration.InitializeJsonWithModel<HZPLoadoutCFG>("HZPLoadoutCFG.jsonc", "HZPLoadoutCFG").Configure(builder =>
         {
-            builder.AddJsonFile("HZPWeaponMenuCFG.jsonc", false, true);
+            builder.AddJsonFile("HZPLoadoutCFG.jsonc", false, true);
+        });
+        Core.Configuration.InitializeJsonWithModel<HZPDatabaseConfig>("HZPDatabaseCFG.jsonc", "HZPDatabaseCFG").Configure(builder =>
+        {
+            builder.AddJsonFile("HZPDatabaseCFG.jsonc", false, true);
         });
 
         
@@ -79,21 +81,27 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
             .BindConfiguration("HZPSpecialClassCFG");
 
         collection
-            .AddOptionsWithValidateOnStart<HZPWeaponMenuCFG>()
-            .BindConfiguration("HZPWeaponMenuCFG");
+            .AddOptionsWithValidateOnStart<HZPLoadoutCFG>()
+            .BindConfiguration("HZPLoadoutCFG");
+
+        collection
+            .AddOptionsWithValidateOnStart<HZPDatabaseConfig>()
+            .BindConfiguration("HZPDatabaseCFG");
 
         collection.AddSingleton<HZPGlobals>();
+        collection.AddSingleton<HZPDatabaseRepository>();
+        collection.AddSingleton<HZPDatabaseService>();
         collection.AddSingleton<HZPEvents>();
         collection.AddSingleton<HZPHelpers>();
         collection.AddSingleton<HZPServices>();
         collection.AddSingleton<HZPCommands>();
         collection.AddSingleton<PlayerZombieState>();
-        collection.AddSingleton<ZombiePlayerDataBridge>();
+        collection.AddSingleton<HZPPlayerDataService>();
         collection.AddSingleton<HZPMenuHelper>();
         collection.AddSingleton<HZPZombieClassMenu>();
         collection.AddSingleton<HZPAdminItemMenu>();
-        collection.AddSingleton<HZPWeaponMenuState>();
-        collection.AddSingleton<HZPWeaponMenu>();
+        collection.AddSingleton<HZPLoadoutState>();
+        collection.AddSingleton<HZPLoadoutMenu>();
         collection.AddSingleton<HZPGameMode>();
 
 
@@ -115,7 +123,12 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _Globals = ServiceProvider.GetRequiredService<HZPGlobals>();
         _Events = ServiceProvider.GetRequiredService<HZPEvents>();
         _Commands = ServiceProvider.GetRequiredService<HZPCommands>();
-        _playerDataBridge = ServiceProvider.GetRequiredService<ZombiePlayerDataBridge>();
+        _playerDataService = ServiceProvider.GetRequiredService<HZPPlayerDataService>();
+        var databaseConfig = ServiceProvider.GetRequiredService<IOptionsMonitor<HZPDatabaseConfig>>().CurrentValue;
+        if (databaseConfig.BootstrapSchema)
+        {
+            ServiceProvider.GetRequiredService<HZPDatabaseService>().EnsureSchemaAsync().GetAwaiter().GetResult();
+        }
 
         var ZriotCFGMonitor = ServiceProvider.GetRequiredService<IOptionsMonitor<HZPMainCFG>>();
         _HZPMainCFG = ZriotCFGMonitor.CurrentValue;
@@ -134,16 +147,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _apiInstance.HZP_OnGameStart += HandleGameStartChanged;
         _apiInstance.HZP_OnPlayerInfect += HandlePlayerInfect;
         _apiInstance.HZP_OnHumanWin += HandleRoundOutcome;
-    }
-
-    public override void UseSharedInterface(IInterfaceManager interfaceManager)
-    {
-        BindPlayerDataService(interfaceManager);
-    }
-
-    public override void OnSharedInterfaceInjected(IInterfaceManager interfaceManager)
-    {
-        BindPlayerDataService(interfaceManager);
+        _playerDataService.LoadOnlinePlayers();
     }
 
 
@@ -153,47 +157,28 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _apiInstance.HZP_OnGameStart -= HandleGameStartChanged;
         _apiInstance.HZP_OnPlayerInfect -= HandlePlayerInfect;
         _apiInstance.HZP_OnHumanWin -= HandleRoundOutcome;
-        _playerDataBridge?.SetService(null);
         _apiInstance!.Dispose();
         ServiceProvider!.Dispose();
     }
 
-    private void BindPlayerDataService(IInterfaceManager interfaceManager)
-    {
-        if (_playerDataBridge == null)
-        {
-            return;
-        }
-
-        if (!interfaceManager.HasSharedInterface(ZombiePlayerDataBridge.SharedInterfaceKey))
-        {
-            _playerDataBridge.SetService(null);
-            return;
-        }
-
-        var dataService = interfaceManager.GetSharedInterface<IZombiePlayerDataService>(ZombiePlayerDataBridge.SharedInterfaceKey);
-        _playerDataBridge.SetService(dataService);
-        _playerDataBridge.LoadOnlinePlayers();
-    }
-
     private void HandlePreferenceChanged(ulong steamId, string? className)
     {
-        _playerDataBridge?.SavePreference(steamId, className);
+        _playerDataService?.SavePreference(steamId, className);
     }
 
     private void HandleGameStartChanged(bool gameStart)
     {
-        _playerDataBridge?.HandleGameStartChanged(gameStart);
+        _playerDataService?.HandleGameStartChanged(gameStart);
     }
 
     private void HandlePlayerInfect(IPlayer attacker, IPlayer victim, bool grenade, string zombieClassName)
     {
-        _playerDataBridge?.RecordInfection(attacker, victim);
+        _playerDataService?.RecordInfection(attacker, victim);
     }
 
     private void HandleRoundOutcome(bool humanWon)
     {
-        _playerDataBridge?.RecordRoundOutcome(humanWon);
+        _playerDataService?.RecordRoundOutcome(humanWon);
     }
 
     

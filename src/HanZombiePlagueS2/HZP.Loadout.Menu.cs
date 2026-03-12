@@ -15,28 +15,28 @@ public enum LoadoutStage
     Secondary
 }
 
-public class HZPWeaponMenu
+public class HZPLoadoutMenu
 {
-    private readonly ILogger<HZPWeaponMenu> _logger;
+    private readonly ILogger<HZPLoadoutMenu> _logger;
     private readonly ISwiftlyCore _core;
     private readonly HZPMenuHelper _menuHelper;
     private readonly HZPHelpers _helpers;
     private readonly HZPGlobals _globals;
     private readonly HZPGameMode _gameMode;
-    private readonly HZPWeaponMenuState _state;
-    private readonly ZombiePlayerDataBridge _playerDataBridge;
-    private readonly IOptionsMonitor<HZPWeaponMenuCFG> _weaponMenuCFG;
+    private readonly HZPLoadoutState _state;
+    private readonly HZPPlayerDataService _playerDataService;
+    private readonly IOptionsMonitor<HZPLoadoutCFG> _loadoutCFG;
 
-    public HZPWeaponMenu(
+    public HZPLoadoutMenu(
         ISwiftlyCore core,
-        ILogger<HZPWeaponMenu> logger,
+        ILogger<HZPLoadoutMenu> logger,
         HZPMenuHelper menuHelper,
         HZPHelpers helpers,
         HZPGlobals globals,
         HZPGameMode gameMode,
-        HZPWeaponMenuState state,
-        ZombiePlayerDataBridge playerDataBridge,
-        IOptionsMonitor<HZPWeaponMenuCFG> weaponMenuCFG)
+        HZPLoadoutState state,
+        HZPPlayerDataService playerDataService,
+        IOptionsMonitor<HZPLoadoutCFG> loadoutCFG)
     {
         _core = core;
         _logger = logger;
@@ -45,8 +45,8 @@ public class HZPWeaponMenu
         _globals = globals;
         _gameMode = gameMode;
         _state = state;
-        _playerDataBridge = playerDataBridge;
-        _weaponMenuCFG = weaponMenuCFG;
+        _playerDataService = playerDataService;
+        _loadoutCFG = loadoutCFG;
     }
 
     public IMenuAPI? OpenLoadoutMenu(IPlayer player)
@@ -68,7 +68,7 @@ public class HZPWeaponMenu
 
     public bool TryHandleSpawnLoadout(IPlayer player)
     {
-        var cfg = _weaponMenuCFG.CurrentValue;
+        var cfg = _loadoutCFG.CurrentValue;
         if (!cfg.AutoOpenOnSpawnBeforeRoundStart || _globals.GameStart)
         {
             return false;
@@ -103,7 +103,7 @@ public class HZPWeaponMenu
         bool primaryGranted = false;
         bool secondaryGranted = false;
 
-        var primaryEntry = FindEntryById(_weaponMenuCFG.CurrentValue.PrimaryWeapons, saved.PrimaryLoadoutId);
+        var primaryEntry = FindEntryById(_loadoutCFG.CurrentValue.PrimaryWeapons, saved.PrimaryLoadoutId);
         if (primaryEntry != null && TryGrantWeapon(player, primaryEntry))
         {
             var lifeState = _state.GetLifeState(player.PlayerID);
@@ -112,7 +112,7 @@ public class HZPWeaponMenu
             primaryGranted = true;
         }
 
-        var secondaryEntry = FindEntryById(_weaponMenuCFG.CurrentValue.SecondaryWeapons, saved.SecondaryLoadoutId);
+        var secondaryEntry = FindEntryById(_loadoutCFG.CurrentValue.SecondaryWeapons, saved.SecondaryLoadoutId);
         if (primaryGranted && secondaryEntry != null && TryGrantWeapon(player, secondaryEntry))
         {
             var lifeState = _state.GetLifeState(player.PlayerID);
@@ -212,7 +212,7 @@ public class HZPWeaponMenu
         return button;
     }
 
-    private string BuildEntryLabel(IPlayer player, LoadoutStage stage, HZPWeaponMenuEntry entry, string entryId)
+    private string BuildEntryLabel(IPlayer player, LoadoutStage stage, HZPLoadoutEntry entry, string entryId)
     {
         var saved = _state.GetSavedPreference(player.SteamID);
         var life = _state.GetLifeState(player.PlayerID);
@@ -238,11 +238,11 @@ public class HZPWeaponMenu
         return entry.DisplayName;
     }
 
-    private IEnumerable<HZPWeaponMenuEntry> GetEntries(LoadoutStage stage)
+    private IEnumerable<HZPLoadoutEntry> GetEntries(LoadoutStage stage)
     {
         var source = stage == LoadoutStage.Primary
-            ? _weaponMenuCFG.CurrentValue.PrimaryWeapons
-            : _weaponMenuCFG.CurrentValue.SecondaryWeapons;
+            ? _loadoutCFG.CurrentValue.PrimaryWeapons
+            : _loadoutCFG.CurrentValue.SecondaryWeapons;
 
         return source
             .Where(entry => entry.Enable)
@@ -253,7 +253,7 @@ public class HZPWeaponMenu
             .ThenBy(entry => entry.DisplayName, StringComparer.OrdinalIgnoreCase);
     }
 
-    private static bool HasGrantSource(HZPWeaponMenuEntry entry)
+    private static bool HasGrantSource(HZPLoadoutEntry entry)
     {
         return !string.IsNullOrWhiteSpace(entry.WeaponCommand)
             || !string.IsNullOrWhiteSpace(entry.NativeWeaponClassName);
@@ -283,7 +283,7 @@ public class HZPWeaponMenu
         return false;
     }
 
-    private void HandleSelection(IPlayer player, LoadoutStage stage, HZPWeaponMenuEntry entry)
+    private void HandleSelection(IPlayer player, LoadoutStage stage, HZPLoadoutEntry entry)
     {
         if (player == null || !player.IsValid)
         {
@@ -324,7 +324,7 @@ public class HZPWeaponMenu
             lifeState.SecondaryLoadoutId = string.Empty;
 
             _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
-            _playerDataBridge.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
+            _playerDataService.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
 
             player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutPrimarySelected", entry.DisplayName));
             _core.Scheduler.NextTick(() =>
@@ -341,7 +341,7 @@ public class HZPWeaponMenu
         lifeState.SecondaryLoadoutId = entryId;
 
         _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
-        _playerDataBridge.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
+        _playerDataService.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
         player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutSecondarySelected", entry.DisplayName));
         player.SendMessage(MessageType.Chat, _helpers.T(player, "LoadoutMenuReady"));
     }
@@ -366,14 +366,14 @@ public class HZPWeaponMenu
         var saved = _state.GetSavedPreference(player.SteamID);
         bool remember = !saved.RememberLoadout;
         _state.SetSavedPreference(player.SteamID, remember, saved.PrimaryLoadoutId, saved.SecondaryLoadoutId);
-        _playerDataBridge.SaveLoadoutPreference(player.SteamID, remember, saved.PrimaryLoadoutId, saved.SecondaryLoadoutId);
+        _playerDataService.SaveLoadoutPreference(player.SteamID, remember, saved.PrimaryLoadoutId, saved.SecondaryLoadoutId);
 
         string messageKey = remember ? "LoadoutRememberEnabled" : "LoadoutRememberDisabled";
         player.SendMessage(MessageType.Chat, _helpers.T(player, messageKey));
         OpenStageMenu(player, stage);
     }
 
-    private bool TryGrantWeapon(IPlayer player, HZPWeaponMenuEntry entry)
+    private bool TryGrantWeapon(IPlayer player, HZPLoadoutEntry entry)
     {
         if (!string.IsNullOrWhiteSpace(entry.WeaponCommand))
         {
@@ -429,7 +429,7 @@ public class HZPWeaponMenu
         return slot is >= 0 and <= 3;
     }
 
-    private static string ResolveEntryId(HZPWeaponMenuEntry entry)
+    private static string ResolveEntryId(HZPLoadoutEntry entry)
     {
         if (!string.IsNullOrWhiteSpace(entry.Id))
         {
@@ -444,7 +444,7 @@ public class HZPWeaponMenu
         return entry.WeaponCommand.Trim();
     }
 
-    private HZPWeaponMenuEntry? FindEntryById(IEnumerable<HZPWeaponMenuEntry> entries, string entryId)
+    private HZPLoadoutEntry? FindEntryById(IEnumerable<HZPLoadoutEntry> entries, string entryId)
     {
         if (string.IsNullOrWhiteSpace(entryId))
         {
@@ -461,7 +461,7 @@ public class HZPWeaponMenu
     private bool CanUseLoadout(IPlayer player, out string denyKey)
     {
         denyKey = string.Empty;
-        var cfg = _weaponMenuCFG.CurrentValue;
+        var cfg = _loadoutCFG.CurrentValue;
 
         if (!cfg.Enable)
         {
