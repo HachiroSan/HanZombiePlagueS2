@@ -61,6 +61,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         {
             builder.AddJsonFile("HZPStoreCFG.jsonc", false, true);
         });
+        Core.Configuration.InitializeJsonWithModel<HZPMapVoteCFG>("HZPMapVoteCFG.jsonc", "HZPMapVoteCFG").Configure(builder =>
+        {
+            builder.AddJsonFile("HZPMapVoteCFG.jsonc", false, true);
+        });
         Core.Configuration.InitializeJsonWithModel<HZPDatabaseConfig>("HZPDatabaseCFG.jsonc", "HZPDatabaseCFG").Configure(builder =>
         {
             builder.AddJsonFile("HZPDatabaseCFG.jsonc", false, true);
@@ -101,6 +105,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
             .BindConfiguration("HZPStoreCFG");
 
         collection
+            .AddOptionsWithValidateOnStart<HZPMapVoteCFG>()
+            .BindConfiguration("HZPMapVoteCFG");
+
+        collection
             .AddOptionsWithValidateOnStart<HZPDatabaseConfig>()
             .BindConfiguration("HZPDatabaseCFG");
 
@@ -123,6 +131,9 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HZPStoreState>();
         collection.AddSingleton<HZPStoreService>();
         collection.AddSingleton<HZPStoreMenu>();
+        collection.AddSingleton<HZPMapVoteState>();
+        collection.AddSingleton<HZPMapVoteService>();
+        collection.AddSingleton<HZPMapVoteMenu>();
         collection.AddSingleton<HZPGameMode>();
 
 
@@ -144,6 +155,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _Globals = ServiceProvider.GetRequiredService<HZPGlobals>();
         _Events = ServiceProvider.GetRequiredService<HZPEvents>();
         _Commands = ServiceProvider.GetRequiredService<HZPCommands>();
+        ServiceProvider.GetRequiredService<HZPMapVoteService>().SetMenu(ServiceProvider.GetRequiredService<HZPMapVoteMenu>());
         _playerDataService = ServiceProvider.GetRequiredService<HZPPlayerDataService>();
         var databaseConfig = ServiceProvider.GetRequiredService<IOptionsMonitor<HZPDatabaseConfig>>().CurrentValue;
         if (databaseConfig.BootstrapSchema)

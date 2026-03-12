@@ -1,0 +1,37 @@
+{
+  "HZPMapVoteCFG": {
+    "Enable": true,
+    "EnableEndOfMapVote": true,
+    "NextMapCommand": "sw_nextmap",
+    "MapsToShow": 5,
+    "VoteDuration": 20,
+    "ChangeMapDelay": 6,
+    "TriggerSecondsBeforeEnd": 120,
+    "TriggerRoundsBeforeEnd": 2,
+    "MapsInCooldown": 3,
+    "AllowSpectatorsToVote": false,
+    "MapList": [
+      {
+        "Enable": true,
+        "Name": "zm_lila_epic_d",
+        "Id": "zm_lila_epic_d",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "de_dust2_night",
+        "Id": "de_dust2_night",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_silent_village",
+        "Id": "zm_silent_village",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      }
+    ]
+  }
+}

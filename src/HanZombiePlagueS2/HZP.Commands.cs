@@ -28,16 +28,19 @@ public class HZPCommands
     private readonly IOptionsMonitor<HZPLoadoutCFG> _loadoutCFG;
     private readonly IOptionsMonitor<HZPStoreCFG> _storeCFG;
     private readonly IOptionsMonitor<HZPEconomyCFG> _economyCFG;
+    private readonly IOptionsMonitor<HZPMapVoteCFG> _mapVoteCFG;
     private readonly HZPEconomyService _economyService;
+    private readonly HZPMapVoteService _mapVoteService;
 
     public HZPCommands(ISwiftlyCore core, ILogger<HZPCommands> logger,
         HZPServices services, IOptionsMonitor<HZPMainCFG> mainCFG,
         HZPGlobals globals, HZPAdminItemMenu hZPAdminItemMenu,
         HZPZombieClassMenu hZPZombieClassMenu, HZPLoadoutMenu hZPLoadoutMenu,
-        HZPStoreMenu storeMenu, HZPEconomyService economyService, HZPHelpers helpers,
+        HZPStoreMenu storeMenu, HZPEconomyService economyService, HZPMapVoteService mapVoteService, HZPHelpers helpers,
         IOptionsMonitor<HZPLoadoutCFG> loadoutCFG,
         IOptionsMonitor<HZPStoreCFG> storeCFG,
-        IOptionsMonitor<HZPEconomyCFG> economyCFG)
+        IOptionsMonitor<HZPEconomyCFG> economyCFG,
+        IOptionsMonitor<HZPMapVoteCFG> mapVoteCFG)
     {
         _core = core;
         _logger = logger;
@@ -49,10 +52,12 @@ public class HZPCommands
         _hZPLoadoutMenu = hZPLoadoutMenu;
         _storeMenu = storeMenu;
         _economyService = economyService;
+        _mapVoteService = mapVoteService;
         _helpers = helpers;
         _loadoutCFG = loadoutCFG;
         _storeCFG = storeCFG;
         _economyCFG = economyCFG;
+        _mapVoteCFG = mapVoteCFG;
     }
 
     public void MenuCommands()
@@ -78,6 +83,12 @@ public class HZPCommands
         if (!string.IsNullOrWhiteSpace(creditsCommand))
         {
             _core.Command.RegisterCommand(creditsCommand, ShowCredits, true);
+        }
+
+        var nextMapCommand = _mapVoteCFG.CurrentValue.NextMapCommand;
+        if (!string.IsNullOrWhiteSpace(nextMapCommand))
+        {
+            _core.Command.RegisterCommand(nextMapCommand, ShowNextMap, true);
         }
     }
     public void SelectZombieClass(ICommandContext context)
@@ -137,6 +148,22 @@ public class HZPCommands
         }
 
         _ = ShowCreditsAsync(player);
+    }
+
+    public void ShowNextMap(ICommandContext context)
+    {
+        var player = context.Sender;
+        if (player == null || !player.IsValid)
+            return;
+
+        string nextMap = _mapVoteService.GetNextMapDisplayName();
+        if (string.IsNullOrWhiteSpace(nextMap))
+        {
+            player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNextMapUnknown"));
+            return;
+        }
+
+        player.SendMessage(MessageType.Chat, _helpers.T(player, "MapVoteNextMap", nextMap));
     }
 
     private async Task ShowCreditsAsync(IPlayer player)

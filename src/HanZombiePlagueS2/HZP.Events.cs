@@ -41,6 +41,7 @@ public partial class HZPEvents
     private readonly HZPLoadoutMenu _loadoutMenu;
     private readonly HZPStoreState _storeState;
     private readonly HZPEconomyService _economyService;
+    private readonly HZPMapVoteService _mapVoteService;
 
     private readonly HanZombiePlagueAPI _api;
     public HZPEvents(ISwiftlyCore core, ILogger<HZPEvents> logger
@@ -54,6 +55,7 @@ public partial class HZPEvents
         HZPLoadoutMenu loadoutMenu,
         HZPStoreState storeState,
         HZPEconomyService economyService,
+        HZPMapVoteService mapVoteService,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
         HanZombiePlagueAPI api)
     {
@@ -73,6 +75,7 @@ public partial class HZPEvents
         _loadoutMenu = loadoutMenu;
         _storeState = storeState;
         _economyService = economyService;
+        _mapVoteService = mapVoteService;
         _SpecialClassCFG = specialClassCFG;
         _api = api;
     }
@@ -243,6 +246,7 @@ public partial class HZPEvents
     {
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
+        _mapVoteService.OnRoundStart();
         _service.SetRoundEndTime();
         _globals.SafeRoundStart = true;
         var CFG = _mainCFG.CurrentValue;
@@ -263,6 +267,7 @@ public partial class HZPEvents
         _helpers.ClearAllLights();
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
+        _mapVoteService.OnRoundEnd();
         _globals.GameInfiniteClipMode = false;
         _core.Scheduler.DelayBySeconds(2.0f, () =>
         {
@@ -814,6 +819,7 @@ public partial class HZPEvents
     private void Event_OnMapLoad(IOnMapLoadEvent @event)
     {
         _commands.ServerCvar();
+        _mapVoteService.ResetOnMapLoad(@event.MapName, _core.Engine.WorkshopId);
         var VoxCFG = _voxCFG.CurrentValue;
         var VoxList = VoxCFG.VoxList;
         if (_globals.RoundVoxGroup == null && VoxList != null)
