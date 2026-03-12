@@ -23,4 +23,10 @@
 		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="8.0.0" />
 		<ProjectReference Include="../IHanZombiePlagueAPI/IHanZombiePlagueAPI.csproj" />
 	</ItemGroup>
+	<Target Name="CopyConfigs" AfterTargets="Build">
+		<ItemGroup>
+			<ConfigFiles Include="..\..\configs\**\*.*" />
+		</ItemGroup>
+		<Copy SourceFiles="@(ConfigFiles)" DestinationFolder="..\..\..\..\cs2\game\csgo\addons\swiftlys2\configs\%(RecursiveDir)" SkipUnchangedFiles="true" />
+	</Target>
 </Project>
