@@ -79,14 +79,6 @@
     "ItemIncGrenade": "Fire Grenade",
     "ItemIncGrenadeSuccess": "Fire grenade acquired.",
 
-    "HudZombieClass": "Zombie Class:",
-    "HudPlayerName": "Player:",
-    "HudCause": "Cause",
-    "HudDamage": "Damage",
-    "HudHpRemaining": "Remaining",
-    "HudHP": "HP",
-    "HudMaxHP": "Max HP",
-
     "MenuButtonMove": "Move",
     "MenuButtonConfirm": "Confirm",
     "MenuButtonCancel": "Cancel",

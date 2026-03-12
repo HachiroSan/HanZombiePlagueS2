@@ -736,11 +736,7 @@ public partial class HZPServices
 
         var ZombieClassName = _zombieState.GetPlayerZombieClass(victim.PlayerID);
 
-        string message = $"<span><font color='red'>{_helpers.T(attacker, "HudZombieClass")} {ZombieClassName}</font></span><br>" +
-     $"<span><font color='red'>{_helpers.T(attacker, "HudPlayerName")} {victim.Name}</font></span><br>" +
-     $"<span><font color='orange'>{_helpers.T(attacker, "HudCause")} </font><font color='red'>{damage}</font><font color='orange'> {_helpers.T(attacker, "HudDamage")}</font></span><br>" +
-     $"<span><font color='green'>{_helpers.T(attacker, "HudHpRemaining")} </font><font color='red'>{health}</font><font color='green'> {_helpers.T(attacker, "HudHP")}</font></span><br>" +
-     $"<span><font color='green'>{_helpers.T(attacker, "HudMaxHP")} </font><font color='red'>{Maxhealth}</font><font color='green'> {_helpers.T(attacker, "HudHP")}</font></span><br>";
+        string message = $"<font size='-1'><font color='red'>{ZombieClassName}</font> | <font color='red'>{victim.Name}</font><br><font color='red'>{damage} DMG</font> → <font color='green'>{health}/{Maxhealth}</font></font>";
 
         attacker.SendCenterHTMLAsync(message);
 

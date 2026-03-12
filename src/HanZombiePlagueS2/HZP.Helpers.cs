@@ -1085,7 +1085,8 @@ public partial class HZPHelpers
             if (player.IsFakeClient)
                 continue;
 
-            player.SendMessage(MessageType.Center, T(player, key, args));
+            var message = $"<font size='-1'>{T(player, key, args)}</font>";
+            player.SendMessage(MessageType.Center, message);
         }
     }
 
