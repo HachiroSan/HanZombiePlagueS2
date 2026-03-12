@@ -3,7 +3,7 @@
     "ZombieClassList": 
 	[
 		{
-			"Name": "红骷髅",
+			"Name": "Crimson Reaper",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
 			"Stats": 
@@ -41,7 +41,7 @@
 			}
 		},
 		{
-			"Name": "白骷髅",
+			"Name": "Pale Phantom",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
 			"Stats": 
@@ -79,7 +79,7 @@
 			}
 		},
 		{
-			"Name": "frozen",
+			"Name": "Frostbite",
 			"Enable": false,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
 			"Stats": 
@@ -117,7 +117,7 @@
 			}
 		},
 		{
-			"Name": "胖子",
+			"Name": "Juggernaut",
 			"Enable": false,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
 			"Stats": 
@@ -155,7 +155,7 @@
 			}
 		},
 		{
-			"Name": "异形女王",
+			"Name": "Hive Queen",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayerstate.vsndevts",
 			"Stats": 
@@ -193,7 +193,7 @@
 			}
 		},
 		{
-			"Name": "女科学家丧尸",
+			"Name": "Plague Mistress",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayerstate.vsndevts",
 			"Stats": 

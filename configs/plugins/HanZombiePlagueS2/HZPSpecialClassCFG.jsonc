@@ -2,7 +2,7 @@
   "HZPSpecialClassCFG": {
     "SpecialClassList": [
 		{
-			"Name": "母体僵尸",
+			"Name": "Primordial",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayers.vsndevts",
 			"Stats": 
@@ -40,7 +40,7 @@
 			}
 		},
 		{
-			"Name": "复仇之神",
+			"Name": "Nemesis",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzombieplagueplayers.vsndevts",
 			"Stats": 
@@ -78,7 +78,7 @@
 			}
 		},
 		{
-			"Name": "暗杀者",
+			"Name": "Shadow Reaper",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayerstate.vsndevts",
 			"Stats": 
