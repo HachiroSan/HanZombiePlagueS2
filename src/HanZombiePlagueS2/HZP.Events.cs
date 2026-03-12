@@ -39,6 +39,8 @@ public partial class HZPEvents
     private readonly HZPPlayerDataService _playerDataService;
     private readonly HZPLoadoutState _loadoutState;
     private readonly HZPLoadoutMenu _loadoutMenu;
+    private readonly HZPStoreState _storeState;
+    private readonly HZPEconomyService _economyService;
 
     private readonly HanZombiePlagueAPI _api;
     public HZPEvents(ISwiftlyCore core, ILogger<HZPEvents> logger
@@ -50,6 +52,8 @@ public partial class HZPEvents
         HZPPlayerDataService playerDataService,
         HZPLoadoutState loadoutState,
         HZPLoadoutMenu loadoutMenu,
+        HZPStoreState storeState,
+        HZPEconomyService economyService,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
         HanZombiePlagueAPI api)
     {
@@ -67,6 +71,8 @@ public partial class HZPEvents
         _playerDataService = playerDataService;
         _loadoutState = loadoutState;
         _loadoutMenu = loadoutMenu;
+        _storeState = storeState;
+        _economyService = economyService;
         _SpecialClassCFG = specialClassCFG;
         _api = api;
     }
@@ -236,6 +242,7 @@ public partial class HZPEvents
     private HookResult OnTimerStart(EventRoundStart @event)
     {
         _loadoutState.ResetAllLifeStates();
+        _storeState.ResetRoundState();
         _service.SetRoundEndTime();
         _globals.SafeRoundStart = true;
         var CFG = _mainCFG.CurrentValue;
@@ -255,6 +262,7 @@ public partial class HZPEvents
         _helpers.ClearAllBurns();
         _helpers.ClearAllLights();
         _loadoutState.ResetAllLifeStates();
+        _storeState.ResetRoundState();
         _globals.GameInfiniteClipMode = false;
         _core.Scheduler.DelayBySeconds(2.0f, () =>
         {
@@ -435,6 +443,7 @@ public partial class HZPEvents
             var Id = player.PlayerID;
             ulong steamId = player.SteamID;
             _loadoutState.ResetLifeState(Id);
+            _storeState.ResetLifeState(Id);
 
             _core.Scheduler.NextWorldUpdate(() =>
             {
@@ -570,6 +579,7 @@ public partial class HZPEvents
         var Id = player.PlayerID;
         var steamId = player.SteamID;
         _loadoutState.ResetLifeState(Id);
+        _storeState.ResetLifeState(Id);
 
         _playerDataService.RecordDeath(player);
 
@@ -942,6 +952,8 @@ public partial class HZPEvents
         _globals.g_IsInvisible.Remove(id);
         _globals.ThrowerIsZombie.Remove(id);
         _loadoutState.ResetLifeState(id);
+        _storeState.ResetLifeState(id);
+        _economyService.ClearPlayer(_core.PlayerManager.GetPlayer(id));
 
         _globals.InSwing[id] = false;
 

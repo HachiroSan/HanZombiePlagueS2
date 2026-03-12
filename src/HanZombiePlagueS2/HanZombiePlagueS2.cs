@@ -53,6 +53,14 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         {
             builder.AddJsonFile("HZPLoadoutCFG.jsonc", false, true);
         });
+        Core.Configuration.InitializeJsonWithModel<HZPEconomyCFG>("HZPEconomyCFG.jsonc", "HZPEconomyCFG").Configure(builder =>
+        {
+            builder.AddJsonFile("HZPEconomyCFG.jsonc", false, true);
+        });
+        Core.Configuration.InitializeJsonWithModel<HZPStoreCFG>("HZPStoreCFG.jsonc", "HZPStoreCFG").Configure(builder =>
+        {
+            builder.AddJsonFile("HZPStoreCFG.jsonc", false, true);
+        });
         Core.Configuration.InitializeJsonWithModel<HZPDatabaseConfig>("HZPDatabaseCFG.jsonc", "HZPDatabaseCFG").Configure(builder =>
         {
             builder.AddJsonFile("HZPDatabaseCFG.jsonc", false, true);
@@ -85,12 +93,22 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
             .BindConfiguration("HZPLoadoutCFG");
 
         collection
+            .AddOptionsWithValidateOnStart<HZPEconomyCFG>()
+            .BindConfiguration("HZPEconomyCFG");
+
+        collection
+            .AddOptionsWithValidateOnStart<HZPStoreCFG>()
+            .BindConfiguration("HZPStoreCFG");
+
+        collection
             .AddOptionsWithValidateOnStart<HZPDatabaseConfig>()
             .BindConfiguration("HZPDatabaseCFG");
 
         collection.AddSingleton<HZPGlobals>();
         collection.AddSingleton<HZPDatabaseRepository>();
         collection.AddSingleton<HZPDatabaseService>();
+        collection.AddSingleton<HZPEconomyState>();
+        collection.AddSingleton<HZPEconomyService>();
         collection.AddSingleton<HZPEvents>();
         collection.AddSingleton<HZPHelpers>();
         collection.AddSingleton<HZPServices>();
@@ -102,6 +120,9 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HZPAdminItemMenu>();
         collection.AddSingleton<HZPLoadoutState>();
         collection.AddSingleton<HZPLoadoutMenu>();
+        collection.AddSingleton<HZPStoreState>();
+        collection.AddSingleton<HZPStoreService>();
+        collection.AddSingleton<HZPStoreMenu>();
         collection.AddSingleton<HZPGameMode>();
 
 

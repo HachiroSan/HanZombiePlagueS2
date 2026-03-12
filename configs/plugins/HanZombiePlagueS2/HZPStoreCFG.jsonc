@@ -1,0 +1,122 @@
+{
+  "HZPStoreCFG": {
+    "Enable": true,
+    "StoreCommand": "sw_store",
+    "AllowDuringPrep": true,
+    "AllowAfterGameStart": true,
+    "AliveOnly": true,
+    "ItemList": [
+      {
+        "Id": "admin_t_vaccine",
+        "Enable": true,
+        "DisplayName": "T-Virus Antidote",
+        "Price": 0,
+        "ShowInStore": false,
+        "ShowInAdminMenu": true,
+        "GrantType": "TVaccine",
+        "ZombieOnly": true,
+        "SortOrder": 1
+      },
+      {
+        "Id": "admin_t_virus",
+        "Enable": true,
+        "DisplayName": "T-Virus Serum",
+        "Price": 0,
+        "ShowInStore": false,
+        "ShowInAdminMenu": true,
+        "GrantType": "TVirus",
+        "HumanOnly": true,
+        "SortOrder": 2
+      },
+      {
+        "Id": "health_boost",
+        "Enable": true,
+        "DisplayName": "+200 Health",
+        "Price": 2,
+        "ShowInStore": true,
+        "ShowInAdminMenu": true,
+        "GrantType": "AddHealth",
+        "IntValue": 200,
+        "HumanOnly": true,
+        "DenySpecialHumans": true,
+        "MaxPerLife": 1,
+        "SortOrder": 10
+      },
+      {
+        "Id": "infinite_ammo",
+        "Enable": true,
+        "DisplayName": "Infinite Ammo (20s)",
+        "Price": 4,
+        "ShowInStore": true,
+        "ShowInAdminMenu": true,
+        "GrantType": "InfiniteAmmo",
+        "FloatValue": 20,
+        "HumanOnly": true,
+        "DenySpecialHumans": true,
+        "MaxPerLife": 1,
+        "SortOrder": 20
+      },
+      {
+        "Id": "admin_god_mode",
+        "Enable": true,
+        "DisplayName": "God Mode (20s)",
+        "Price": 0,
+        "ShowInStore": false,
+        "ShowInAdminMenu": true,
+        "GrantType": "GodMode",
+        "FloatValue": 20,
+        "HumanOnly": true,
+        "SortOrder": 25
+      },
+      {
+        "Id": "scba_suit",
+        "Enable": true,
+        "DisplayName": "Hazmat Suit",
+        "Price": 4,
+        "ShowInStore": true,
+        "ShowInAdminMenu": true,
+        "GrantType": "ScbaSuit",
+        "HumanOnly": true,
+        "DenySpecialHumans": true,
+        "MaxPerLife": 1,
+        "SortOrder": 30
+      },
+      {
+        "Id": "fire_grenade",
+        "Enable": true,
+        "DisplayName": "Incendiary Grenade",
+        "Price": 2,
+        "ShowInStore": true,
+        "ShowInAdminMenu": true,
+        "GrantType": "FireGrenade",
+        "HumanOnly": true,
+        "MaxPerLife": 1,
+        "SortOrder": 40
+      },
+      {
+        "Id": "freeze_grenade",
+        "Enable": true,
+        "DisplayName": "Freeze Grenade",
+        "Price": 3,
+        "ShowInStore": true,
+        "ShowInAdminMenu": true,
+        "GrantType": "FreezeGrenade",
+        "HumanOnly": true,
+        "MaxPerLife": 1,
+        "SortOrder": 50
+      },
+      {
+        "Id": "virus_grenade",
+        "Enable": true,
+        "DisplayName": "Virus Grenade",
+        "Price": 3,
+        "ShowInStore": true,
+        "ShowInAdminMenu": true,
+        "GrantType": "TVirusGrenade",
+        "ZombieOnly": true,
+        "MaxPerLife": 1,
+        "SortOrder": 60
+      }
+    ]
+  }
+}

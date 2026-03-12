@@ -1,0 +1,13 @@
+{
+  "HZPEconomyCFG": {
+    "Enable": true,
+    "CreditsCommand": "sw_credits",
+    "DisableNativeBuy": true,
+    "NativeStartMoney": 0,
+    "NativeMaxMoney": 0,
+    "InfectionReward": 2,
+    "HumanWinReward": 3,
+    "ZombieWinReward": 2,
+    "ParticipationReward": 1
+  }
+}

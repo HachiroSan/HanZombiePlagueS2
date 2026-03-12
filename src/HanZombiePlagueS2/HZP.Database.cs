@@ -31,4 +31,19 @@ public sealed class HZPDatabaseService(HZPDatabaseRepository repository)
     {
         return repository.IncrementPlayerStatsAsync(steamId, delta, cancellationToken);
     }
+
+    public Task<HZPPlayerCurrencyRecord> GetPlayerCurrencyAsync(ulong steamId, CancellationToken cancellationToken = default)
+    {
+        return repository.GetPlayerCurrencyAsync(steamId, cancellationToken);
+    }
+
+    public Task AddCurrencyAsync(ulong steamId, int amount, string reason, CancellationToken cancellationToken = default)
+    {
+        return repository.AddCurrencyAsync(steamId, amount, reason, cancellationToken);
+    }
+
+    public Task<bool> TrySpendCurrencyAsync(ulong steamId, int amount, string reason, CancellationToken cancellationToken = default)
+    {
+        return repository.TrySpendCurrencyAsync(steamId, amount, reason, cancellationToken);
+    }
 }

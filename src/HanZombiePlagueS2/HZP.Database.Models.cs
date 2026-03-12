@@ -25,3 +25,12 @@ public sealed class HZPPlayerStatsRecord
     public int RoundsWon { get; set; }
     public DateTime UpdatedUtc { get; set; }
 }
+
+public sealed class HZPPlayerCurrencyRecord
+{
+    public ulong SteamId { get; set; }
+    public int Balance { get; set; }
+    public int LifetimeEarned { get; set; }
+    public int LifetimeSpent { get; set; }
+    public DateTime UpdatedUtc { get; set; }
+}

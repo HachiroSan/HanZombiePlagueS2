@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Players;
 
@@ -10,7 +11,9 @@ public sealed class HZPPlayerDataService(
     HZPGlobals globals,
     PlayerZombieState zombieState,
     HZPLoadoutState loadoutState,
-    HZPDatabaseService databaseService)
+    HZPDatabaseService databaseService,
+    HZPEconomyService economyService,
+    IOptionsMonitor<HZPEconomyCFG> economyCFG)
 {
     private const string ZombieClassPreferenceKey = "zombie_class";
     private const string LoadoutRememberPreferenceKey = "loadout_remember";
@@ -41,6 +44,7 @@ public sealed class HZPPlayerDataService(
             _roundParticipants.Add(player.SteamID);
         }
 
+        economyService.LoadPlayer(player);
         _ = LoadPlayerAsync(player);
     }
 
@@ -108,6 +112,8 @@ public sealed class HZPPlayerDataService(
         {
             Infections = 1
         });
+
+        _ = economyService.AddCurrencyAsync(attacker.SteamID, economyCFG.CurrentValue.InfectionReward, "reward_infection");
     }
 
     public void RecordDeath(IPlayer? player)
@@ -161,6 +167,27 @@ public sealed class HZPPlayerDataService(
             };
 
             QueueStatsUpdate(player.SteamId, player.Name, delta);
+
+            int participationReward = economyCFG.CurrentValue.ParticipationReward;
+            if (participationReward > 0)
+            {
+                _ = economyService.AddCurrencyAsync(player.SteamId, participationReward, "reward_participation");
+            }
+
+            int winReward = 0;
+            if (humanWon && !player.IsZombie)
+            {
+                winReward = economyCFG.CurrentValue.HumanWinReward;
+            }
+            else if (!humanWon && player.IsZombie)
+            {
+                winReward = economyCFG.CurrentValue.ZombieWinReward;
+            }
+
+            if (winReward > 0)
+            {
+                _ = economyService.AddCurrencyAsync(player.SteamId, winReward, humanWon ? "reward_human_win" : "reward_zombie_win");
+            }
         }
     }
 

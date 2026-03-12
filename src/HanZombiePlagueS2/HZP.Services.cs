@@ -29,6 +29,7 @@ public partial class HZPServices
     private readonly PlayerZombieState _zombieState;
     private readonly HZPGameMode _gameMode;
     private readonly HZPLoadoutState _loadoutState;
+    private readonly HZPStoreState _storeState;
 
     private readonly HanZombiePlagueAPI _api;
     public HZPServices(ISwiftlyCore core, ILogger<HZPServices> logger,
@@ -37,6 +38,7 @@ public partial class HZPServices
         IOptionsMonitor<HZPZombieClassCFG> zombieClassCFG,
         PlayerZombieState zombieState, HZPGameMode gameMode,
         HZPLoadoutState loadoutState,
+        HZPStoreState storeState,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
         HanZombiePlagueAPI api)
     {
@@ -49,6 +51,7 @@ public partial class HZPServices
         _zombieState = zombieState;
         _gameMode = gameMode;
         _loadoutState = loadoutState;
+        _storeState = storeState;
         _specialClassCFG = specialClassCFG;
         _api = api;
     }
@@ -360,6 +363,7 @@ public partial class HZPServices
 
             var Id = zombie.PlayerID;
             _loadoutState.ResetLifeState(Id);
+            _storeState.ResetLifeState(Id);
 
             _helpers.RemoveSHumanClass(Id);
 

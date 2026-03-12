@@ -1,4 +1,5 @@
 using System.Data;
+using System.Data.Common;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -20,6 +21,8 @@ public sealed class HZPDatabaseRepository(
     private const string PlayersTable = "players";
     private const string PlayerPreferencesTable = "player_preferences";
     private const string PlayerStatsTable = "player_stats";
+    private const string PlayerCurrencyTable = "player_currency";
+    private const string PlayerCurrencyLedgerTable = "player_currency_ledger";
 
     public async Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
     {
@@ -154,6 +157,110 @@ public sealed class HZPDatabaseRepository(
                 cancellationToken: cancellationToken));
     }
 
+    public async Task<HZPPlayerCurrencyRecord> GetPlayerCurrencyAsync(ulong steamId, CancellationToken cancellationToken = default)
+    {
+        var sql = $"""
+            SELECT
+                steam_id AS SteamId,
+                balance AS Balance,
+                lifetime_earned AS LifetimeEarned,
+                lifetime_spent AS LifetimeSpent,
+                updated_utc AS UpdatedUtc
+            FROM {PlayerCurrencyTable}
+            WHERE steam_id = @SteamId
+            LIMIT 1;
+            """;
+
+        using var connection = CreateConnection();
+        await OpenAsync(connection, cancellationToken);
+        var record = await connection.QuerySingleOrDefaultAsync<HZPPlayerCurrencyRecord>(
+            new CommandDefinition(sql, new { SteamId = steamId }, cancellationToken: cancellationToken));
+
+        return record ?? new HZPPlayerCurrencyRecord
+        {
+            SteamId = steamId,
+            UpdatedUtc = DateTime.UtcNow
+        };
+    }
+
+    public async Task AddCurrencyAsync(ulong steamId, int amount, string reason, CancellationToken cancellationToken = default)
+    {
+        if (steamId == 0 || amount <= 0)
+        {
+            return;
+        }
+
+        using var connection = CreateDbConnection();
+        await OpenAsync(connection, cancellationToken);
+        using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var dialect = GetDialect(connection);
+            await EnsureCurrencyRowAsync(connection, transaction, dialect, steamId, cancellationToken);
+
+            var updateSql = GetAddCurrencySql(dialect);
+            await connection.ExecuteAsync(new CommandDefinition(
+                updateSql,
+                new { SteamId = steamId, Amount = amount },
+                transaction,
+                cancellationToken: cancellationToken));
+
+            await InsertCurrencyLedgerAsync(connection, transaction, dialect, steamId, amount, reason, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<bool> TrySpendCurrencyAsync(ulong steamId, int amount, string reason, CancellationToken cancellationToken = default)
+    {
+        if (steamId == 0)
+        {
+            return false;
+        }
+
+        if (amount <= 0)
+        {
+            return true;
+        }
+
+        using var connection = CreateDbConnection();
+        await OpenAsync(connection, cancellationToken);
+        using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var dialect = GetDialect(connection);
+            await EnsureCurrencyRowAsync(connection, transaction, dialect, steamId, cancellationToken);
+
+            var spendSql = GetSpendCurrencySql(dialect);
+            var affected = await connection.ExecuteAsync(new CommandDefinition(
+                spendSql,
+                new { SteamId = steamId, Amount = amount },
+                transaction,
+                cancellationToken: cancellationToken));
+
+            if (affected <= 0)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                return false;
+            }
+
+            await InsertCurrencyLedgerAsync(connection, transaction, dialect, steamId, -amount, reason, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
     private HZPDatabaseConfig CurrentConfig => configMonitor.CurrentValue;
 
     private IDbConnection CreateConnection()
@@ -205,6 +312,28 @@ public sealed class HZPDatabaseRepository(
                     rounds_won INTEGER NOT NULL DEFAULT 0,
                     updated_utc TEXT NOT NULL
                 )
+                """,
+                $"""
+                CREATE TABLE IF NOT EXISTS {PlayerCurrencyTable} (
+                    steam_id INTEGER NOT NULL PRIMARY KEY,
+                    balance INTEGER NOT NULL DEFAULT 0,
+                    lifetime_earned INTEGER NOT NULL DEFAULT 0,
+                    lifetime_spent INTEGER NOT NULL DEFAULT 0,
+                    updated_utc TEXT NOT NULL
+                )
+                """,
+                $"""
+                CREATE TABLE IF NOT EXISTS {PlayerCurrencyLedgerTable} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    steam_id INTEGER NOT NULL,
+                    reason TEXT NOT NULL,
+                    amount INTEGER NOT NULL,
+                    created_utc TEXT NOT NULL
+                )
+                """,
+                $"""
+                CREATE INDEX IF NOT EXISTS idx_player_currency_ledger_steam_id
+                    ON {PlayerCurrencyLedgerTable} (steam_id)
                 """
             ],
             _ =>
@@ -235,6 +364,25 @@ public sealed class HZPDatabaseRepository(
                     rounds_played INT NOT NULL DEFAULT 0,
                     rounds_won INT NOT NULL DEFAULT 0,
                     updated_utc DATETIME(6) NOT NULL
+                )
+                """,
+                $"""
+                CREATE TABLE IF NOT EXISTS {PlayerCurrencyTable} (
+                    steam_id BIGINT UNSIGNED NOT NULL PRIMARY KEY,
+                    balance INT NOT NULL DEFAULT 0,
+                    lifetime_earned INT NOT NULL DEFAULT 0,
+                    lifetime_spent INT NOT NULL DEFAULT 0,
+                    updated_utc DATETIME(6) NOT NULL
+                )
+                """,
+                $"""
+                CREATE TABLE IF NOT EXISTS {PlayerCurrencyLedgerTable} (
+                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    steam_id BIGINT UNSIGNED NOT NULL,
+                    reason VARCHAR(128) NOT NULL,
+                    amount INT NOT NULL,
+                    created_utc DATETIME(6) NOT NULL,
+                    KEY idx_player_currency_ledger_steam_id (steam_id)
                 )
                 """
             ]
@@ -334,6 +482,82 @@ public sealed class HZPDatabaseRepository(
         };
     }
 
+    private static string GetEnsureCurrencyRowSql(SqlDialect dialect)
+    {
+        return dialect switch
+        {
+            SqlDialect.Sqlite => $"""
+                INSERT INTO {PlayerCurrencyTable} (steam_id, balance, lifetime_earned, lifetime_spent, updated_utc)
+                VALUES (@SteamId, 0, 0, 0, CURRENT_TIMESTAMP)
+                ON CONFLICT(steam_id) DO NOTHING
+                """,
+            _ => $"""
+                INSERT INTO {PlayerCurrencyTable} (steam_id, balance, lifetime_earned, lifetime_spent, updated_utc)
+                VALUES (@SteamId, 0, 0, 0, UTC_TIMESTAMP(6))
+                ON DUPLICATE KEY UPDATE updated_utc = updated_utc
+                """
+        };
+    }
+
+    private static string GetAddCurrencySql(SqlDialect dialect)
+    {
+        return dialect switch
+        {
+            SqlDialect.Sqlite => $"""
+                UPDATE {PlayerCurrencyTable}
+                SET balance = balance + @Amount,
+                    lifetime_earned = lifetime_earned + @Amount,
+                    updated_utc = CURRENT_TIMESTAMP
+                WHERE steam_id = @SteamId
+                """,
+            _ => $"""
+                UPDATE {PlayerCurrencyTable}
+                SET balance = balance + @Amount,
+                    lifetime_earned = lifetime_earned + @Amount,
+                    updated_utc = UTC_TIMESTAMP(6)
+                WHERE steam_id = @SteamId
+                """
+        };
+    }
+
+    private static string GetSpendCurrencySql(SqlDialect dialect)
+    {
+        return dialect switch
+        {
+            SqlDialect.Sqlite => $"""
+                UPDATE {PlayerCurrencyTable}
+                SET balance = balance - @Amount,
+                    lifetime_spent = lifetime_spent + @Amount,
+                    updated_utc = CURRENT_TIMESTAMP
+                WHERE steam_id = @SteamId
+                  AND balance >= @Amount
+                """,
+            _ => $"""
+                UPDATE {PlayerCurrencyTable}
+                SET balance = balance - @Amount,
+                    lifetime_spent = lifetime_spent + @Amount,
+                    updated_utc = UTC_TIMESTAMP(6)
+                WHERE steam_id = @SteamId
+                  AND balance >= @Amount
+                """
+        };
+    }
+
+    private static string GetInsertCurrencyLedgerSql(SqlDialect dialect)
+    {
+        return dialect switch
+        {
+            SqlDialect.Sqlite => $"""
+                INSERT INTO {PlayerCurrencyLedgerTable} (steam_id, reason, amount, created_utc)
+                VALUES (@SteamId, @Reason, @Amount, CURRENT_TIMESTAMP)
+                """,
+            _ => $"""
+                INSERT INTO {PlayerCurrencyLedgerTable} (steam_id, reason, amount, created_utc)
+                VALUES (@SteamId, @Reason, @Amount, UTC_TIMESTAMP(6))
+                """
+        };
+    }
+
     private static string? TrimOrNull(string? value, int maxLength)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -375,5 +599,28 @@ public sealed class HZPDatabaseRepository(
         }
 
         await dbConnection.OpenAsync(cancellationToken);
+    }
+
+    private DbConnection CreateDbConnection()
+    {
+        return (DbConnection)CreateConnection();
+    }
+
+    private static async Task EnsureCurrencyRowAsync(DbConnection connection, DbTransaction transaction, SqlDialect dialect, ulong steamId, CancellationToken cancellationToken)
+    {
+        await connection.ExecuteAsync(new CommandDefinition(
+            GetEnsureCurrencyRowSql(dialect),
+            new { SteamId = steamId },
+            transaction,
+            cancellationToken: cancellationToken));
+    }
+
+    private static async Task InsertCurrencyLedgerAsync(DbConnection connection, DbTransaction transaction, SqlDialect dialect, ulong steamId, int amount, string reason, CancellationToken cancellationToken)
+    {
+        await connection.ExecuteAsync(new CommandDefinition(
+            GetInsertCurrencyLedgerSql(dialect),
+            new { SteamId = steamId, Amount = amount, Reason = TrimOrNull(reason, 128) ?? "unknown" },
+            transaction,
+            cancellationToken: cancellationToken));
     }
 }
