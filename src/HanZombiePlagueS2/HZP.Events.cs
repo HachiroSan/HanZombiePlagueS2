@@ -36,6 +36,7 @@ public partial class HZPEvents
     private readonly IOptionsMonitor<HZPSpecialClassCFG> _SpecialClassCFG;
     private readonly PlayerZombieState _zombieState;
     private readonly HZPGameMode _gameMode;
+    private readonly ZombiePlayerDataBridge _playerDataBridge;
 
     private readonly HanZombiePlagueAPI _api;
     public HZPEvents(ISwiftlyCore core, ILogger<HZPEvents> logger
@@ -44,6 +45,7 @@ public partial class HZPEvents
         IOptionsMonitor<HZPVoxCFG> voxCFG, HZPHelpers helpers, 
         IOptionsMonitor<HZPZombieClassCFG> zombieClassCFG,
         PlayerZombieState zombieState, HZPGameMode gameMode,
+        ZombiePlayerDataBridge playerDataBridge,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
         HanZombiePlagueAPI api)
     {
@@ -58,6 +60,7 @@ public partial class HZPEvents
         _zombieClassCFG = zombieClassCFG;
         _zombieState = zombieState;
         _gameMode = gameMode;
+        _playerDataBridge = playerDataBridge;
         _SpecialClassCFG = specialClassCFG;
         _api = api;
     }
@@ -543,6 +546,8 @@ public partial class HZPEvents
         var Id = player.PlayerID;
         var steamId = player.SteamID;
 
+        _playerDataBridge.RecordDeath(player);
+
         _helpers.ClearPlayerBurn(Id);
         _helpers.RemoveSHumanClass(Id);
         _helpers.RemoveSZombieClass(Id);
@@ -879,6 +884,8 @@ public partial class HZPEvents
         }
 
         _globals.IsZombie[id] = _globals.GameStart;
+
+        _playerDataBridge.LoadPlayer(_core.PlayerManager.GetPlayer(id));
 
     }
 

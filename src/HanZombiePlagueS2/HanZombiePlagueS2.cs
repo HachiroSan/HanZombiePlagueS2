@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using HanZombiePlayerData.Contracts;
 using SwiftlyS2.Shared;
 using SwiftlyS2.Shared.Players;
 using SwiftlyS2.Shared.Plugins;
@@ -26,6 +27,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
     private HZPGlobals _Globals = null!;
     private HZPEvents _Events = null!;
     private HZPCommands _Commands = null!;
+    private ZombiePlayerDataBridge? _playerDataBridge;
 
     public override void ConfigureSharedInterface(IInterfaceManager interfaceManager)
     {
@@ -78,6 +80,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HZPServices>();
         collection.AddSingleton<HZPCommands>();
         collection.AddSingleton<PlayerZombieState>();
+        collection.AddSingleton<ZombiePlayerDataBridge>();
         collection.AddSingleton<HZPMenuHelper>();
         collection.AddSingleton<HZPZombieClassMenu>();
         collection.AddSingleton<HZPAdminItemMenu>();
@@ -102,6 +105,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _Globals = ServiceProvider.GetRequiredService<HZPGlobals>();
         _Events = ServiceProvider.GetRequiredService<HZPEvents>();
         _Commands = ServiceProvider.GetRequiredService<HZPCommands>();
+        _playerDataBridge = ServiceProvider.GetRequiredService<ZombiePlayerDataBridge>();
 
         var ZriotCFGMonitor = ServiceProvider.GetRequiredService<IOptionsMonitor<HZPMainCFG>>();
         _HZPMainCFG = ZriotCFGMonitor.CurrentValue;
@@ -115,13 +119,71 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _Events.HookZombieSoundEvents();
         _Commands.Command();
         _Commands.MenuCommands();
+
+        _apiInstance.HZP_OnPreferenceChanged += HandlePreferenceChanged;
+        _apiInstance.HZP_OnGameStart += HandleGameStartChanged;
+        _apiInstance.HZP_OnPlayerInfect += HandlePlayerInfect;
+        _apiInstance.HZP_OnHumanWin += HandleRoundOutcome;
+    }
+
+    public override void UseSharedInterface(IInterfaceManager interfaceManager)
+    {
+        BindPlayerDataService(interfaceManager);
+    }
+
+    public override void OnSharedInterfaceInjected(IInterfaceManager interfaceManager)
+    {
+        BindPlayerDataService(interfaceManager);
     }
 
 
     public override void Unload()
     {
+        _apiInstance.HZP_OnPreferenceChanged -= HandlePreferenceChanged;
+        _apiInstance.HZP_OnGameStart -= HandleGameStartChanged;
+        _apiInstance.HZP_OnPlayerInfect -= HandlePlayerInfect;
+        _apiInstance.HZP_OnHumanWin -= HandleRoundOutcome;
+        _playerDataBridge?.SetService(null);
         _apiInstance!.Dispose();
         ServiceProvider!.Dispose();
+    }
+
+    private void BindPlayerDataService(IInterfaceManager interfaceManager)
+    {
+        if (_playerDataBridge == null)
+        {
+            return;
+        }
+
+        if (!interfaceManager.HasSharedInterface(ZombiePlayerDataBridge.SharedInterfaceKey))
+        {
+            _playerDataBridge.SetService(null);
+            return;
+        }
+
+        var dataService = interfaceManager.GetSharedInterface<IZombiePlayerDataService>(ZombiePlayerDataBridge.SharedInterfaceKey);
+        _playerDataBridge.SetService(dataService);
+        _playerDataBridge.LoadOnlinePlayers();
+    }
+
+    private void HandlePreferenceChanged(ulong steamId, string? className)
+    {
+        _playerDataBridge?.SavePreference(steamId, className);
+    }
+
+    private void HandleGameStartChanged(bool gameStart)
+    {
+        _playerDataBridge?.HandleGameStartChanged(gameStart);
+    }
+
+    private void HandlePlayerInfect(IPlayer attacker, IPlayer victim, bool grenade, string zombieClassName)
+    {
+        _playerDataBridge?.RecordInfection(attacker, victim);
+    }
+
+    private void HandleRoundOutcome(bool humanWon)
+    {
+        _playerDataBridge?.RecordRoundOutcome(humanWon);
     }
 
     
