@@ -5,18 +5,18 @@
 	"NormalInfection": 
 	{
 		"Enable": true,
-		"Name": "感染模式",
-		"MotherZombieNames": "母体僵尸",
+		"Name": "Infection Mode",
+		"MotherZombieNames": "Primordial",
 		"MotherZombieCount": 1,
-		"Weight": 50,
+		"Weight": 660,
 		"EnableInfiniteClipMode": false,
 		"ZombieCanReborn": false
 	},
 	"MultiInfection": 
 	{
 		"Enable": true,
-		"Name": "多重感染模式",
-		"MotherZombieNames": "母体僵尸",
+		"Name": "Multi Infection Mode",
+		"MotherZombieNames": "Primordial",
 		"MotherZombieCount": 5,
 		"Weight": 50,
 		"EnableInfiniteClipMode": true,
@@ -25,8 +25,8 @@
 	"Nemesis": 
 	{
 		"Enable": true,
-		"Name": "复仇之神模式",
-		"NemesisNames": "复仇之神",
+		"Name": "Nemesis Mode",
+		"NemesisNames": "Nemesis",
 		"Weight": 50,
 		"EnableInfiniteClipMode": true,
 		"ZombieCanReborn": true
@@ -34,15 +34,15 @@
 	"Survivor": 
 	{
 		"Enable": true,
-		"Name": "幸存者模式",
+		"Name": "Survivor Mode",
 		"Weight": 50,
-		"SurvivorNames": "幸存者",
+		"SurvivorNames": "Survivor",
 		"SurvivorHealth": 1000,
 		"SurvivorSpeed": 3.0,
 		"SurvivorGravity": 0.5,
 		"SurvivorDamage": 5.0,
 		"SurvivorWeapon": "weapon_m249",
-		"CustomWeaponName": "幸存者M249",
+		"CustomWeaponName": "Survivor M249",
 		"ModelsPath": "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl",
 		"EnableInfiniteClipMode": false,
 		"ZombieCanReborn": false
@@ -50,7 +50,7 @@
 	"Swarm": 
 	{
 		"Enable": true,
-		"Name": "军团模式",
+		"Name": "Swarm Mode",
 		"Weight": 50,
 		"EnableInfiniteClipMode": true,
 		"ZombieCanReborn": false
@@ -58,19 +58,19 @@
 	"Plague": 
 	{
 		"Enable": true,
-		"Name": "瘟疫模式",
+		"Name": "Plague Mode",
 		"Weight": 50,
-		"NemesisNames": "复仇之神",
-		"SurvivorNames": "幸存者",
+		"NemesisNames": "Nemesis",
+		"SurvivorNames": "Survivor",
 		"EnableInfiniteClipMode": true,
 		"ZombieCanReborn": true
 	},
 	"Assassin": 
 	{
 		"Enable": true,
-		"Name": "暗杀者模式",
+		"Name": "Assassin Mode",
 		"Weight": 50,
-		"AssassinNames": "暗杀者",
+		"AssassinNames": "Shadow Reaper",
 		"InvisibilityDist": 200.0,
 		"EnableInfiniteClipMode": false,
 		"ZombieCanReborn": true
@@ -78,15 +78,15 @@
 	"Sniper": 
 	{
 		"Enable": true,
-		"Name": "狙击手模式",
+		"Name": "Sniper Mode",
 		"Weight": 50,
-		"SniperNames": "狙击手",
+		"SniperNames": "Sniper",
 		"SniperHealth": 500,
 		"SniperSpeed": 3.0,
 		"SniperGravity": 0.6,
 		"SniperDamage": 10.0,
 		"SniperWeapon": "weapon_awp",
-		"CustomWeaponName": "狙击英雄AWP",
+		"CustomWeaponName": "Sniper Hero AWP",
 		"ModelsPath": "characters/models/tm_professional/tm_professional_varf4.vmdl",
 		"EnableInfiniteClipMode": false,
 		"ZombieCanReborn": true
@@ -94,20 +94,20 @@
 	"AVS": 
 	{
 		"Enable": true,
-		"Name": "狙击手VS暗杀者",
+		"Name": "Sniper vs Assassin",
 		"Weight": 50,
-		"AssassinNames": "暗杀者",
-		"SniperNames": "狙击手",
+		"AssassinNames": "Shadow Reaper",
+		"SniperNames": "Sniper",
 		"EnableInfiniteClipMode": true,
 		"ZombieCanReborn": true
 	},
 	"Hero": 
 	{
 		"Enable": true,
-		"Name": "英雄模式",
+		"Name": "Hero Mode",
 		"Weight": 50,
 		"HeroCount": 3,
-		"HeroNames": "英雄",
+		"HeroNames": "Hero",
 		"HeroHealth": 1500,
 		"HeroSpeed": 3.0,
 		"HeroGravity": 0.4,
