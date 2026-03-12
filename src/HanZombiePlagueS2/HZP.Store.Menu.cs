@@ -24,7 +24,7 @@ public class HZPStoreMenu(
             return null;
         }
 
-        var items = storeService.GetAvailableItems().ToList();
+        var items = storeService.GetAvailableItemsForPlayer(player).ToList();
         if (items.Count == 0)
         {
             player.SendMessage(MessageType.Chat, helpers.T(player, "StoreEmpty"));

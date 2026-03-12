@@ -15,24 +15,30 @@ public sealed class HZPStoreService(
     IOptionsMonitor<HZPStoreCFG> storeCFG,
     ILogger<HZPStoreService> logger)
 {
-    public IEnumerable<HZPStoreItemEntry> GetAvailableItems()
+    public IEnumerable<HZPStoreItemEntry> GetAvailableItemsForPlayer(IPlayer player)
     {
-        return GetCatalogItems(item => item.ShowInStore);
+        return GetCatalogItemsForPlayer(player, item => item.ShowInStore);
     }
 
-    public IEnumerable<HZPStoreItemEntry> GetAdminItems()
+    public IEnumerable<HZPStoreItemEntry> GetAdminItemsForPlayer(IPlayer player)
     {
-        return GetCatalogItems(item => item.ShowInAdminMenu);
+        return GetCatalogItemsForPlayer(player, item => item.ShowInAdminMenu);
     }
 
-    private IEnumerable<HZPStoreItemEntry> GetCatalogItems(Func<HZPStoreItemEntry, bool> predicate)
+    private IEnumerable<HZPStoreItemEntry> GetCatalogItemsForPlayer(IPlayer player, Func<HZPStoreItemEntry, bool> predicate)
     {
+        if (player == null || !player.IsValid)
+        {
+            return [];
+        }
+
         return storeCFG.CurrentValue.ItemList
             .Where(item => item.Enable)
             .Where(predicate)
             .Where(item => !string.IsNullOrWhiteSpace(item.Id))
             .Where(item => !string.IsNullOrWhiteSpace(item.DisplayName))
             .Where(item => IsModeAllowed(item.AllowedModes))
+            .Where(item => IsItemVisibleToPlayer(player, item))
             .OrderBy(item => item.SortOrder)
             .ThenBy(item => item.DisplayName, StringComparer.OrdinalIgnoreCase);
     }
@@ -145,6 +151,11 @@ public sealed class HZPStoreService(
         }
 
         return (true, "StorePurchaseSuccess");
+    }
+
+    private bool IsItemVisibleToPlayer(IPlayer player, HZPStoreItemEntry item)
+    {
+        return IsItemAllowed(player, item, out _);
     }
 
     private bool IsItemAllowed(IPlayer player, HZPStoreItemEntry item, out string denyKey)

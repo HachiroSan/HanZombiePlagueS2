@@ -24,7 +24,7 @@ public class HZPAdminItemMenu(
             TextStyle = MenuOptionTextStyle.ScrollLeftLoop
         });
 
-        var items = storeService.GetAdminItems().ToList();
+        var items = storeService.GetAdminItemsForPlayer(player).ToList();
         foreach (var item in items)
         {
             var button = new ButtonMenuOption(item.DisplayName)
