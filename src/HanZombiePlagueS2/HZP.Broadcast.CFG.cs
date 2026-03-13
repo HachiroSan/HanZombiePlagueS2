@@ -26,13 +26,13 @@ public sealed class HZPBroadcastCFG
     public float AdInterval { get; set; } = 45f;
     public List<HZPBroadcastMessage> WelcomeMessages { get; set; } =
     [
-        new() { Type = HZPBroadcastMessageType.Chat, Message = "Welcome, {PLAYER}!" },
-        new() { Type = HZPBroadcastMessageType.Chat, Message = "{PLAYER} connected from {COUNTRY}" }
+        new() { Type = HZPBroadcastMessageType.Chat, Message = "Welcome to the outbreak, {PLAYER}." },
+        new() { Type = HZPBroadcastMessageType.Chat, Message = "{PLAYER} arrived from {COUNTRY}." }
     ];
     public List<HZPBroadcastMessage> Ads { get; set; } =
     [
-        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use !loadout before the round starts." },
-        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use !store to spend your cash on extra gear." },
-        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use !nextmap, !rtv and !nominate to help pick the next map." }
+        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use [gold]!loadout[olive] before the round starts." },
+        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use [gold]!store[olive] to spend your [gold]cash[olive] on extra gear." },
+        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use [gold]!nextmap[olive], [gold]!rtv[olive], and [gold]!nominate[olive] to help decide the next battlefield." }
     ];
 }

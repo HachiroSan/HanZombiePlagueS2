@@ -203,7 +203,7 @@ public class HZPCommands
             return;
         }
 
-        _helpers.SendChatRaw(player, $"[default]Next map: [gold]{nextMap}[olive]");
+        _helpers.SendChatT(player, "MapVoteNextMap", nextMap);
     }
 
     public void StartRtv(ICommandContext context)

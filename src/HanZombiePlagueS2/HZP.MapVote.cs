@@ -166,7 +166,7 @@ public sealed class HZPMapVoteService(
         }
 
         int needed = GetRequiredRtvVotes(voters, cfg.RtvVotePercentage);
-        helpers.SendChatRawToAll($"[default]{player.Name}[olive] voted RTV ([red]{state.RtvVoters.Count}[olive]/[gold]{needed}[olive])");
+        helpers.SendChatToAllT("MapVoteRtvProgress", player.Name, state.RtvVoters.Count, needed);
         if (state.RtvVoters.Count >= needed)
         {
             StartVote(isRtv: true, changeMapImmediately: cfg.RtvChangeMapImmediately);
@@ -217,7 +217,7 @@ public sealed class HZPMapVoteService(
         }
 
         state.Nominations[player.PlayerID] = map.Name;
-        helpers.SendChatRawToAll($"[default]{player.Name}[olive] nominated [gold]{map.Name}[olive]");
+        helpers.SendChatToAllT("MapVoteNominateSuccess", player.Name, map.Name);
         return "MapVoteNominateStored";
     }
 

@@ -147,11 +147,14 @@ public sealed class HZPBroadcastService(
     private string ReplacePlaceholders(string message, IPlayer? player, string countryName)
     {
         int playerCount = core.PlayerManager.GetAllPlayers().Count(p => p != null && p.IsValid && !p.IsFakeClient);
+        string coloredPlayer = player == null || !player.IsValid
+            ? "Player"
+            : $"[lightblue]{player.Name}[olive]";
         string coloredCountry = string.IsNullOrWhiteSpace(countryName) ? string.Empty : $"[gold]{countryName}[olive]";
         string nextMap = GetNextMapValue();
         string coloredNextMap = string.IsNullOrWhiteSpace(nextMap) ? string.Empty : $"[gold]{nextMap}[olive]";
         return message
-            .Replace("{PLAYER}", player?.Name ?? "Player", StringComparison.OrdinalIgnoreCase)
+            .Replace("{PLAYER}", coloredPlayer, StringComparison.OrdinalIgnoreCase)
             .Replace("{COUNTRY}", coloredCountry, StringComparison.OrdinalIgnoreCase)
             .Replace("{TIME}", DateTime.Now.ToString("HH:mm:ss"), StringComparison.OrdinalIgnoreCase)
             .Replace("{DATE}", DateTime.Now.ToString("dd.MM.yyyy"), StringComparison.OrdinalIgnoreCase)
