@@ -155,7 +155,7 @@ public class HZPMainCFG
     public string ScbaSuitGetSound { get; set; } = string.Empty;
     public string ScbaSuitBrokenSound { get; set; } = string.Empty;
     public string ZombieClassCommand { get; set; } = "sw_zclass";
-    public string AdminMenuItemCommand { get; set; } = "sw_zmenu";
+    public string AdminMenuItemCommand { get; set; } = "sw_admin";
     public string AdminMenuPermission { get; set; } = "";
     public string AmbSound { get; set; } = string.Empty;
     public float AmbSoundLoopTime { get; set; } = 60.0f;
