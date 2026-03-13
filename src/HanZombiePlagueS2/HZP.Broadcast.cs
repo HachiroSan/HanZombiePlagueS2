@@ -103,6 +103,7 @@ public sealed class HZPBroadcastService(
                 countryName = await countryService.GetCountryDisplayNameAsync(player, broadcastCFG.CurrentValue.AnnounceUnknownCountry);
             }
 
+            var renderedMessages = new List<(string Message, HZPBroadcastMessageType Type, bool Broadcast)>();
             foreach (var message in broadcastCFG.CurrentValue.WelcomeMessages)
             {
                 if (string.IsNullOrWhiteSpace(message.Message))
@@ -116,8 +117,24 @@ public sealed class HZPBroadcastService(
                 }
 
                 string rendered = ReplacePlaceholders(message.Message, player, countryName);
-                SendMessage(player, rendered, message.Type, broadcast: message.Message.Contains("{COUNTRY}", StringComparison.OrdinalIgnoreCase));
+                renderedMessages.Add((
+                    rendered,
+                    message.Type,
+                    message.Message.Contains("{COUNTRY}", StringComparison.OrdinalIgnoreCase)));
             }
+
+            core.Scheduler.NextTick(() =>
+            {
+                if (player == null || !player.IsValid)
+                {
+                    return;
+                }
+
+                foreach (var message in renderedMessages)
+                {
+                    SendMessage(player, message.Message, message.Type, message.Broadcast);
+                }
+            });
         }
         catch (Exception ex)
         {

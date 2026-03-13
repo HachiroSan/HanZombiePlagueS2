@@ -283,7 +283,13 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return;
 
-        _helpers.SendChatT(player, "CashBalance", _helpers.FormatCurrency(balance));
+        _core.Scheduler.NextTick(() =>
+        {
+            if (player == null || !player.IsValid)
+                return;
+
+            _helpers.SendChatT(player, "CashBalance", _helpers.FormatCurrency(balance));
+        });
     }
 
     private bool HasAdminMenuPermission(IPlayer player)

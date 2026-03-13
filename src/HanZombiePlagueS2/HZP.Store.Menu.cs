@@ -88,24 +88,40 @@ public class HZPStoreMenu(
             return;
         }
 
-        OpenStoreMenu(player);
+        core.Scheduler.NextTick(() =>
+        {
+            if (player == null || !player.IsValid)
+            {
+                return;
+            }
+
+            OpenStoreMenu(player);
+        });
     }
 
     private async Task HandlePurchaseAsync(IPlayer player, HZPStoreItemEntry item)
     {
         var result = await storeService.TryPurchaseAsync(player, item);
-        if (!result.Success)
+        core.Scheduler.NextTick(() =>
         {
-            helpers.SendChatT(player, result.MessageKey);
-            return;
-        }
+            if (player == null || !player.IsValid)
+            {
+                return;
+            }
 
-        int balance = storeService.GetBalance(player);
-        helpers.SendChatT(
-            player,
-            "StorePurchaseSuccessDetail",
-            item.DisplayName,
-            helpers.FormatCurrency(item.Price),
-            helpers.FormatCurrency(balance));
+            if (!result.Success)
+            {
+                helpers.SendChatT(player, result.MessageKey);
+                return;
+            }
+
+            int balance = storeService.GetBalance(player);
+            helpers.SendChatT(
+                player,
+                "StorePurchaseSuccessDetail",
+                item.DisplayName,
+                helpers.FormatCurrency(item.Price),
+                helpers.FormatCurrency(balance));
+        });
     }
 }
