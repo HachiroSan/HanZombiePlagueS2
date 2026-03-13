@@ -65,6 +65,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         {
             builder.AddJsonFile("HZPChatCFG.jsonc", false, true);
         });
+        Core.Configuration.InitializeJsonWithModel<HZPBroadcastCFG>("HZPBroadcastCFG.jsonc", "HZPBroadcastCFG").Configure(builder =>
+        {
+            builder.AddJsonFile("HZPBroadcastCFG.jsonc", false, true);
+        });
         Core.Configuration.InitializeJsonWithModel<HZPMapVoteCFG>("HZPMapVoteCFG.jsonc", "HZPMapVoteCFG").Configure(builder =>
         {
             builder.AddJsonFile("HZPMapVoteCFG.jsonc", false, true);
@@ -113,6 +117,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
             .BindConfiguration("HZPChatCFG");
 
         collection
+            .AddOptionsWithValidateOnStart<HZPBroadcastCFG>()
+            .BindConfiguration("HZPBroadcastCFG");
+
+        collection
             .AddOptionsWithValidateOnStart<HZPMapVoteCFG>()
             .BindConfiguration("HZPMapVoteCFG");
 
@@ -139,6 +147,10 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HZPStoreState>();
         collection.AddSingleton<HZPStoreService>();
         collection.AddSingleton<HZPStoreMenu>();
+        collection.AddSingleton<HZPBroadcastGeoIpService>();
+        collection.AddSingleton<HZPBroadcastCountryService>();
+        collection.AddSingleton<HZPBroadcastState>();
+        collection.AddSingleton<HZPBroadcastService>();
         collection.AddSingleton<HZPMapVoteState>();
         collection.AddSingleton<HZPMapVoteService>();
         collection.AddSingleton<HZPMapVoteMenu>();
@@ -164,6 +176,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _Events = ServiceProvider.GetRequiredService<HZPEvents>();
         _Commands = ServiceProvider.GetRequiredService<HZPCommands>();
         ServiceProvider.GetRequiredService<HZPMapVoteService>().SetMenu(ServiceProvider.GetRequiredService<HZPMapVoteMenu>());
+        ServiceProvider.GetRequiredService<HZPBroadcastService>().Start();
         _playerDataService = ServiceProvider.GetRequiredService<HZPPlayerDataService>();
         var databaseConfig = ServiceProvider.GetRequiredService<IOptionsMonitor<HZPDatabaseConfig>>().CurrentValue;
         if (databaseConfig.BootstrapSchema)

@@ -72,6 +72,7 @@
     "MapVoteNominateCooldown": "该地图当前处于冷却中。",
     "MapVoteNominateSuccess": "{0} 提名了地图 {1}",
     "MapVoteNominateStored": "你的地图提名已保存。",
+    "CountryAnnounceConnected": "{0} 来自 {1} 并已连接服务器",
     "StoreTitleHuman": "人类商店",
     "StoreTitleZombie": "僵尸商店",
     "StoreBalance": "积分: {0}",

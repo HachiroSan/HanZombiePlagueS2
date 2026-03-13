@@ -78,6 +78,7 @@
     "MapVoteNominateCooldown": "That map is currently in cooldown.",
     "MapVoteNominateSuccess": "{0} nominated {1}",
     "MapVoteNominateStored": "Your nomination has been stored.",
+    "CountryAnnounceConnected": "{0} connected from {1}",
 
     "StoreTitleHuman": "Human Store",
     "StoreTitleZombie": "Zombie Store",

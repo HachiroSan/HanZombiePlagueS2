@@ -41,6 +41,7 @@ public partial class HZPEvents
     private readonly HZPLoadoutMenu _loadoutMenu;
     private readonly HZPStoreState _storeState;
     private readonly HZPEconomyService _economyService;
+    private readonly HZPBroadcastService _broadcastService;
     private readonly HZPMapVoteService _mapVoteService;
 
     private readonly HanZombiePlagueAPI _api;
@@ -55,6 +56,7 @@ public partial class HZPEvents
         HZPLoadoutMenu loadoutMenu,
         HZPStoreState storeState,
         HZPEconomyService economyService,
+        HZPBroadcastService broadcastService,
         HZPMapVoteService mapVoteService,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
         HanZombiePlagueAPI api)
@@ -75,6 +77,7 @@ public partial class HZPEvents
         _loadoutMenu = loadoutMenu;
         _storeState = storeState;
         _economyService = economyService;
+        _broadcastService = broadcastService;
         _mapVoteService = mapVoteService;
         _SpecialClassCFG = specialClassCFG;
         _api = api;
@@ -100,6 +103,7 @@ public partial class HZPEvents
         _core.Event.OnPrecacheResource += Event_OnPrecacheResource;
         _core.Event.OnTick += Event_OnTickSpeed;
         _core.Event.OnTick += Event_OnTickNoRecoil;
+        _core.Event.OnTick += Event_OnTickBroadcast;
 
         _core.GameEvent.HookPre<EventWeaponFire>(OnHumanWeaponFire);
         _core.Event.OnEntityTakeDamage += Event_OnHumanTakeDamage;
@@ -935,8 +939,14 @@ public partial class HZPEvents
             }
 
             _playerDataService.LoadPlayer(player);
+            _broadcastService.QueueWelcome(player);
         });
 
+    }
+
+    private void Event_OnTickBroadcast()
+    {
+        _broadcastService.ProcessPendingWelcomes();
     }
 
     private void Event_OnClientDisconnected(SwiftlyS2.Shared.Events.IOnClientDisconnectedEvent @event)
