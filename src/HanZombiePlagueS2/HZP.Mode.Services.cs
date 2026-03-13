@@ -44,6 +44,7 @@ public partial class HZPServices
         {
             PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
             posszombie(player, selectedClass, isMother);
+            SendZombieClassReveal(player, selectedClass);
 
             if (_api != null)
                 _api.NotifyMotherZombieSelected(player);
@@ -367,6 +368,7 @@ public partial class HZPServices
             var zombieClass = new ZombieClass
             {
                 Name = MotherZombieClass.Name,
+                AbilitySummary = MotherZombieClass.AbilitySummary,
                 Stats = new ZombieStats
                 {
                     MotherZombieHealth = MotherZombieClass.Stats.MotherZombieHealth,
@@ -402,6 +404,7 @@ public partial class HZPServices
                 }
             };
             posszombie(player, zombieClass, true);
+            SendZombieClassReveal(player, zombieClass);
 
             if (_api != null)
                 _api.NotifyMotherZombieSelected(player);
@@ -425,6 +428,7 @@ public partial class HZPServices
             var zombieClass = new ZombieClass
             {
                 Name = nemesisClass.Name,
+                AbilitySummary = nemesisClass.AbilitySummary,
                 Stats = new ZombieStats
                 {
                     MotherZombieHealth = nemesisClass.Stats.MotherZombieHealth,
@@ -460,6 +464,7 @@ public partial class HZPServices
                 }
             };
             posszombie(player, zombieClass, true);
+            SendZombieClassReveal(player, zombieClass);
 
             _core.Scheduler.NextWorldUpdate(() => 
             {
@@ -493,6 +498,7 @@ public partial class HZPServices
             var zombieClass = new ZombieClass
             {
                 Name = AssassinClass.Name,
+                AbilitySummary = AssassinClass.AbilitySummary,
                 Stats = new ZombieStats
                 {
                     MotherZombieHealth = AssassinClass.Stats.MotherZombieHealth,
@@ -528,6 +534,7 @@ public partial class HZPServices
                 }
             };
             posszombie(player, zombieClass, true);
+            SendZombieClassReveal(player, zombieClass);
 
             _helpers.SendChatToAllT("GameInfoBecomeAssassin", player.Name);
 

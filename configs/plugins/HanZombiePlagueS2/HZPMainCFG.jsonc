@@ -161,6 +161,7 @@
 	"ScbaSuitGetSound": "Player.PickupPistol",
 	"ScbaSuitBrokenSound": "Breakable.Flesh",
 	"ZombieClassCommand": "sw_zclass",
+	"ZombieInfoCommand": "sw_zinfo",
 	"AdminMenuItemCommand": "sw_admin",
 	"AdminMenuPermission": "hzp.adminmenu",
 	"AmbSound": "han.zombie.amb.zriot,han.zombie.amb.classicA,han.zombie.amb.classicB,han.zombie.amb.classicC,han.zombie.amb.classicD",

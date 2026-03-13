@@ -6,6 +6,7 @@
 			"Name": "Stalker",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityStalker",
 			"Stats": 
 			{
 			  "Health": 8000,
@@ -44,6 +45,7 @@
 			"Name": "Runner",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityRunner",
 			"Stats": 
 			{
 			  "Health": 3000,
@@ -82,6 +84,7 @@
 			"Name": "Regenerator",
 			"Enable": false,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityRegenerator",
 			"Stats": 
 			{
 			  "Health": 5000,
@@ -120,6 +123,7 @@
 			"Name": "Brute",
 			"Enable": false,
 			"PrecacheSoundEvent": "soundevents/hanhl1zombies.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityBrute",
 			"Stats": 
 			{
 			  "Health": 5000,
@@ -158,6 +162,7 @@
 			"Name": "Leaper",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayerstate.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityLeaper",
 			"Stats": 
 			{
 			  "Health": 2500,
@@ -196,6 +201,7 @@
 			"Name": "Skirmisher",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayerstate.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilitySkirmisher",
 			"Stats": 
 			{
 			  "Health": 1800,

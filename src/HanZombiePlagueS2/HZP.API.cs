@@ -660,7 +660,8 @@ public partial class HanZombiePlagueAPI : IHanZombiePlagueAPI, IDisposable
             EnableRegen = zombieClass.Stats.EnableRegen,
             HpRegenSec = zombieClass.Stats.HpRegenSec,
             HpRegenHp = zombieClass.Stats.HpRegenHp,
-            ModelPath = zombieClass.Models.ModelPath
+            ModelPath = zombieClass.Models.ModelPath,
+            AbilitySummary = zombieClass.AbilitySummary
         };
     }
 

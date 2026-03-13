@@ -67,6 +67,11 @@ public class HZPCommands
         var CFG = _mainCFG.CurrentValue;
         _core.Command.RegisterCommand(CFG.ZombieClassCommand, SelectZombieClass, true);
 
+        if (!string.IsNullOrWhiteSpace(CFG.ZombieInfoCommand))
+        {
+            _core.Command.RegisterCommand(CFG.ZombieInfoCommand, ShowZombieInfo, true);
+        }
+
         _core.Command.RegisterCommand(CFG.AdminMenuItemCommand, UseItemMenu, true);
 
         var loadoutCommand = _loadoutCFG.CurrentValue.LoadoutCommand;
@@ -125,6 +130,15 @@ public class HZPCommands
 
         _hZPZombieClassMenu.OpenZombieClassMenu(player);
 
+    }
+
+    public void ShowZombieInfo(ICommandContext context)
+    {
+        var player = context.Sender;
+        if (player == null || !player.IsValid)
+            return;
+
+        _services.ShowCurrentZombieClassInfo(player);
     }
 
     public void UseItemMenu(ICommandContext context)

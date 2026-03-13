@@ -146,6 +146,7 @@ public partial class HZPServices
             {
                 PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
                 posszombie(victim, selectedClass, false);
+                SendZombieClassReveal(victim, selectedClass);
                 CreateFakeKill(attacker, victim, grenade);
                 CheckRoundWinConditions();
 
@@ -200,6 +201,7 @@ public partial class HZPServices
         {
             PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
             posszombie(Infecter, selectedClass, false);
+            SendZombieClassReveal(Infecter, selectedClass);
             CreateFakeKill(Infecter, Infecter, false);
             CheckRoundWinConditions();
 
@@ -247,6 +249,7 @@ public partial class HZPServices
             {
                 PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
                 posszombie(player, selectedClass, false);
+                SendZombieClassReveal(player, selectedClass);
                 CreateFakeKill(player, player, false);
                 CheckRoundWinConditions();
             }
@@ -748,6 +751,154 @@ public partial class HZPServices
 
         attacker.SendCenterHTMLAsync(message);
 
+    }
+
+    public void ShowCurrentZombieClassInfo(IPlayer player)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        var id = player.PlayerID;
+        _globals.IsZombie.TryGetValue(id, out bool isZombie);
+        if (!isZombie)
+        {
+            _helpers.SendChatT(player, "ZombieInfoNotZombie", FormatCommandLabel(_mainCFG.CurrentValue.ZombieClassCommand));
+            return;
+        }
+
+        var zombie = _zombieState.GetZombieClass(
+            id,
+            _zombieClassCFG.CurrentValue.ZombieClassList,
+            _specialClassCFG.CurrentValue.SpecialClassList);
+
+        if (zombie == null)
+        {
+            _helpers.SendChatT(player, "ZombieInfoUnavailable");
+            return;
+        }
+
+        SendZombieClassInfo(player, zombie, false);
+    }
+
+    private void SendZombieClassReveal(IPlayer player, ZombieClass zombieClass)
+    {
+        SendZombieClassInfo(player, zombieClass, true);
+    }
+
+    private void SendZombieClassInfo(IPlayer player, ZombieClass zombieClass, bool includeCenter)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        string className = zombieClass.Name;
+        if (includeCenter)
+        {
+            string centerMessage = $"<font size='-1'>{_helpers.T(player, "ZombieInfoBecome", className)}</font>";
+            player.SendMessage(MessageType.Center, centerMessage);
+        }
+
+        _helpers.SendChatT(player, "ZombieInfoCurrent", className);
+        _helpers.SendChatT(player, "ZombieInfoAbility", BuildZombieAbilitySummary(player, zombieClass));
+        _helpers.SendChatT(player, "ZombieInfoHint", FormatCommandLabel(_mainCFG.CurrentValue.ZombieInfoCommand));
+    }
+
+    private string BuildZombieAbilitySummary(IPlayer player, ZombieClass zombieClass)
+    {
+        string configuredSummary = ResolveConfiguredAbilitySummary(player, zombieClass.AbilitySummary);
+        if (!string.IsNullOrWhiteSpace(configuredSummary))
+            return configuredSummary;
+
+        var traits = new List<string>();
+        var stats = zombieClass.Stats;
+
+        if (stats.Health >= 12000)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitMassiveHealth"));
+        }
+        else if (stats.Health >= 6000)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitDurable"));
+        }
+        else if (stats.Health <= 2200)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitFragile"));
+        }
+
+        if (stats.Speed >= 2.2f)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitExtremeSpeed"));
+        }
+        else if (stats.Speed >= 1.5f)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitFast"));
+        }
+
+        if (stats.Gravity <= 0.35f)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitExtremeJump"));
+        }
+        else if (stats.Gravity <= 0.55f)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitHighJump"));
+        }
+
+        if (stats.EnableRegen)
+        {
+            if (stats.HpRegenSec <= 2.0f || stats.HpRegenHp >= 50)
+            {
+                traits.Add(_helpers.T(player, "ZombieTraitStrongRegen", stats.HpRegenHp, stats.HpRegenSec));
+            }
+            else
+            {
+                traits.Add(_helpers.T(player, "ZombieTraitRegen", stats.HpRegenHp, stats.HpRegenSec));
+            }
+        }
+
+        if (stats.Damage >= 120.0f)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitHeavyDamage"));
+        }
+        else if (stats.Damage >= 75.0f)
+        {
+            traits.Add(_helpers.T(player, "ZombieTraitHardHitting"));
+        }
+
+        if (traits.Count == 0)
+            return _helpers.T(player, "ZombieTraitBalanced");
+
+        return string.Join(", ", traits.Distinct().Take(4));
+    }
+
+    private string ResolveConfiguredAbilitySummary(IPlayer player, string? configuredSummary)
+    {
+        if (string.IsNullOrWhiteSpace(configuredSummary))
+            return string.Empty;
+
+        string trimmed = configuredSummary.Trim();
+        const string localizePrefix = "loc:";
+        if (trimmed.StartsWith(localizePrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            string key = trimmed[localizePrefix.Length..].Trim();
+            if (!string.IsNullOrWhiteSpace(key))
+                return _helpers.T(player, key);
+        }
+
+        return trimmed;
+    }
+
+    private static string FormatCommandLabel(string? command)
+    {
+        if (string.IsNullOrWhiteSpace(command))
+            return "zinfo";
+
+        string trimmed = command.Trim();
+        if (trimmed.StartsWith('!'))
+            return trimmed;
+
+        if (trimmed.StartsWith("sw_", StringComparison.OrdinalIgnoreCase) && trimmed.Length > 3)
+            return $"!{trimmed[3..]}";
+
+        return trimmed;
     }
 
     public void RandomSpawnPoint(IPlayer player, bool isZombie)

@@ -5,6 +5,7 @@
 			"Name": "Primordial",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayers.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityPrimordial",
 			"Stats": 
 			{
 			  "Health": 15000,
@@ -43,6 +44,7 @@
 			"Name": "Nemesis",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzombieplagueplayers.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityNemesis",
 			"Stats": 
 			{
 			  "Health": 30000,
@@ -81,6 +83,7 @@
 			"Name": "Shadow Reaper",
 			"Enable": true,
 			"PrecacheSoundEvent": "soundevents/hanzbplayerstate.vsndevts",
+			"AbilitySummary": "loc:ZombieAbilityShadowReaper",
 			"Stats": 
 			{
 			  "Health": 15000,

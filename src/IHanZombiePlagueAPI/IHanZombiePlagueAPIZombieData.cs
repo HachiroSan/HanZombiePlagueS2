@@ -65,4 +65,10 @@ public class ZombiePropertySnapshot
     /// Model path used for this zombie class (the visual model in-game).
     /// </summary>
     public string ModelPath { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional short ability/playstyle summary configured for this zombie class.
+    /// 可选的丧尸职业能力/玩法简介。
+    /// </summary>
+    public string AbilitySummary { get; set; } = string.Empty;
 }

@@ -49,6 +49,7 @@ public class HZPSpecialClassCFG
         public string Name { get; set; } = string.Empty;
         public bool Enable { get; set; } = true;
         public string PrecacheSoundEvent { get; set; } = string.Empty;
+        public string AbilitySummary { get; set; } = string.Empty;
 
         public SpecialZombieStats Stats { get; set; } = new();
         public SpecialZombieModels Models { get; set; } = new();

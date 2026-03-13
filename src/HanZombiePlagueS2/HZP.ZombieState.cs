@@ -127,6 +127,7 @@ public class PlayerZombieState
             Name = specialClass.Name,
             Enable = specialClass.Enable,
             PrecacheSoundEvent = specialClass.PrecacheSoundEvent,
+            AbilitySummary = specialClass.AbilitySummary,
             Stats = new HZPZombieClassCFG.ZombieStats
             {
                 Health = specialClass.Stats.Health,
