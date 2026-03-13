@@ -4,12 +4,12 @@
     "ServerGameHumanWin": "Humans Survived",
     "ServerGameZombieWin": "Zombies Overrun the Humans",
 
-    "GameInfoBecomeHero": "{0} has risen as the Hero!",
-    "GameInfoBecomeSurvivor": "{0} is now the Survivor!",
-    "GameInfoBecomeSniper": "{0} is now the Sniper!",
-    "GameInfoBecomeNemesis": "{0} has mutated into the Nemesis!",
-    "GameInfoBecomeAssassin": "{0} has evolved into the Assassin!",
-    "GameInfoBecomeMother": "{0} has become the Mother Zombie!",
+    "GameInfoBecomeHero": "[lightblue]{0}[olive] stands against the horde as the [gold]Hero[olive]!",
+    "GameInfoBecomeSurvivor": "[lightblue]{0}[olive] endures the outbreak as the [gold]Survivor[olive]!",
+    "GameInfoBecomeSniper": "[lightblue]{0}[olive] takes the high ground as the [gold]Sniper[olive]!",
+    "GameInfoBecomeNemesis": "[lightblue]{0}[olive] has mutated into the [lightred]Nemesis[olive]!",
+    "GameInfoBecomeAssassin": "[lightblue]{0}[olive] slips into the shadows as the [lightred]Assassin[olive]!",
+    "GameInfoBecomeMother": "[lightblue]{0}[olive] has risen as the [lightred]Mother Zombie[olive]!",
 
     "GameModeBecomeHero": "You are the Hero",
     "ZombieInfoBecome": "You mutated into: {0}",
