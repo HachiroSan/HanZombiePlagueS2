@@ -44,9 +44,9 @@
 
     "ZClassMenu": "Zombie Mutation",
     "ZClassMenuSelect": "Class will apply on next respawn",
-    "ZClassMenuSelectInfo": "Selected:",
+    "ZClassMenuSelectInfo": "Your next zombie is [lightred]{0}[olive].",
     "ZClassMenuRandomSelect": "Random Mutation",
-    "ZClassMenuRandomSelectInfo": "Mutation set to random",
+    "ZClassMenuRandomSelectInfo": "Your next zombie will be [lightred]random[olive].",
 
     "LoadoutMenuPrimaryTitle": "Primary Loadout",
     "LoadoutMenuSecondaryTitle": "Secondary Loadout",

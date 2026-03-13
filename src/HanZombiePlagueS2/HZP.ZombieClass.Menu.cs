@@ -74,7 +74,7 @@ public class HZPZombieClassMenu
                 if (_api != null)
                     _api.NotifyUpdatePreferenceFromMenu(clicker.PlayerID, clicker.SteamID, null);
 
-                clicker.SendMessage(MessageType.Chat, _helpers.T(player, "ZClassMenuRandomSelectInfo"));
+                _helpers.SendChatT(clicker, "ZClassMenuRandomSelectInfo");
             });
         };
 
@@ -108,7 +108,7 @@ public class HZPZombieClassMenu
                         if (_api != null)
                             _api.NotifyUpdatePreferenceFromMenu(clicker.PlayerID, clicker.SteamID, Cfg.Name);
 
-                        clicker.SendMessage(MessageType.Chat, $"{_helpers.T(player, "ZClassMenuSelectInfo")} {Cfg.Name}");
+                        _helpers.SendChatT(clicker, "ZClassMenuSelectInfo", Cfg.Name);
 
                         
                     });
