@@ -1093,6 +1093,17 @@ public partial class HZPHelpers
         player.SendMessage(MessageType.Chat, FormatChatMessage(text));
     }
 
+    public void SendChatRawToAll(string text)
+    {
+        foreach (var player in _core.PlayerManager.GetAllPlayers())
+        {
+            if (player == null || !player.IsValid || player.IsFakeClient)
+                continue;
+
+            SendChatRaw(player, text);
+        }
+    }
+
     public string FormatChatMessage(string text)
     {
         var cfg = _chatCFG.CurrentValue;

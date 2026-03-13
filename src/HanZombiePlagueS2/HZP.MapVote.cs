@@ -361,7 +361,7 @@ public sealed class HZPMapVoteService(
         state.NextMapName = winner.Name;
         state.NextMapId = winner.Id;
         state.MapChangeScheduled = true;
-        helpers.SendChatToAllT("MapVoteWinner", winner.Name);
+        helpers.SendChatRawToAll($"[default]Next map selected: [gold]{winner.Name}[olive]");
         if (state.ChangeMapImmediately)
         {
             ChangeMap();
@@ -377,7 +377,7 @@ public sealed class HZPMapVoteService(
 
         state.MapChangeInProgress = true;
         var cfg = mapVoteCFG.CurrentValue;
-        helpers.SendChatToAllT("MapVoteChanging", state.NextMapName, cfg.ChangeMapDelay);
+        helpers.SendChatRawToAll($"[default]Changing map to [gold]{state.NextMapName}[olive] in [red]{cfg.ChangeMapDelay}[olive] seconds.");
         core.Scheduler.DelayBySeconds(cfg.ChangeMapDelay, () =>
         {
             string targetId = string.IsNullOrWhiteSpace(state.NextMapId) ? state.NextMapName : state.NextMapId;
