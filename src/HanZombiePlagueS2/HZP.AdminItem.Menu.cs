@@ -51,7 +51,7 @@ public class HZPAdminItemMenu(
                         return;
                     }
 
-                    helpers.SendChatT(clicker, "AdminItemGranted", item.DisplayName);
+                    helpers.SendChatRaw(clicker, $"[default]Granted admin item: [gold]{item.DisplayName}[olive]");
                 });
             };
 

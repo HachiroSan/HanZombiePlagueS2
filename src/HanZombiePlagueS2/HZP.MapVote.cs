@@ -127,7 +127,7 @@ public sealed class HZPMapVoteService(
 
         state.PlayerVotes[player.PlayerID] = mapName;
         state.Votes[mapName] = state.Votes.TryGetValue(mapName, out var currentVotes) ? currentVotes + 1 : 1;
-        helpers.SendChatToAllT("MapVotePlayerVoted", player.Name, mapName, state.Votes[mapName]);
+        helpers.SendChatRawToAll($"[default]{player.Name}[olive] voted for [gold]{mapName}[olive] ([red]{state.Votes[mapName]}[olive])");
         return "MapVoteVoteRegistered";
     }
 
@@ -166,7 +166,7 @@ public sealed class HZPMapVoteService(
         }
 
         int needed = GetRequiredRtvVotes(voters, cfg.RtvVotePercentage);
-        helpers.SendChatToAllT("MapVoteRtvProgress", player.Name, state.RtvVoters.Count, needed);
+        helpers.SendChatRawToAll($"[default]{player.Name}[olive] voted RTV ([red]{state.RtvVoters.Count}[olive]/[gold]{needed}[olive])");
         if (state.RtvVoters.Count >= needed)
         {
             StartVote(isRtv: true, changeMapImmediately: cfg.RtvChangeMapImmediately);
@@ -217,7 +217,7 @@ public sealed class HZPMapVoteService(
         }
 
         state.Nominations[player.PlayerID] = map.Name;
-        helpers.SendChatToAllT("MapVoteNominateSuccess", player.Name, map.Name);
+        helpers.SendChatRawToAll($"[default]{player.Name}[olive] nominated [gold]{map.Name}[olive]");
         return "MapVoteNominateStored";
     }
 
