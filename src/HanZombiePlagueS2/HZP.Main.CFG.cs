@@ -121,7 +121,7 @@ public class HZPMainCFG
     public float HumanKnockBackAirMultiply { get; set; } = 0.5f;
     public float HumanHeroKnockBackMultiply { get; set; } = 1.0f;
     public bool EnableInfiniteReserveAmmo { get; set; } = true;
-    public bool EnableWeaponNoRecoil { get; set; } = true;
+    public bool EnableWeaponNoRecoil { get; set; } = false;
     public string HumanSpawnPoints { get; set; } = string.Empty;
     public string ZombieSpawnPoints { get; set; } = string.Empty;
     public float KnockZombieForce { get; set; } = 250f;

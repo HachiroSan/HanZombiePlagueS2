@@ -127,7 +127,7 @@
 	"HumanHeroKnockBackMultiply": 1.0,
 	"EnableDamageHud": false,
 	"EnableInfiniteReserveAmmo": true,
-	"EnableWeaponNoRecoil": true,
+	"EnableWeaponNoRecoil": false,
 	"HumanSpawnPoints": "CT,T,DM",
 	"ZombieSpawnPoints": "CT,T,DM",
 	"KnockZombieForce": 250.0,
