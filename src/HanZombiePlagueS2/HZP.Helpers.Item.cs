@@ -116,7 +116,7 @@ public partial class HZPHelpers
         _globals.ScbaSuit.TryGetValue(Id, out bool IsHaveScbaSuit);
         if (IsHaveScbaSuit)
         {
-            player.SendMessage(MessageType.Chat, T(player, "ItemSCBASuitAlready"));
+            SendChatT(player, "ItemSCBASuitAlready");
             return;
         }
 
@@ -137,7 +137,7 @@ public partial class HZPHelpers
 
         _globals.ScbaSuit[Id] = false;
         EmitSoundFormPlayer(player, sound, 1.0f);
-        player.SendMessage(MessageType.Chat, T(player, "ItemSCBASuitBroken"));
+        SendChatT(player, "ItemSCBASuitBroken");
     }
 
     public void SetGodState(IPlayer player, float time)
@@ -150,7 +150,7 @@ public partial class HZPHelpers
         _globals.GodState.TryGetValue(Id, out bool IsGodState);
         if (IsGodState)
         {
-            player.SendMessage(MessageType.Chat, T(player, "ItemGodModeAlready"));
+            SendChatT(player, "ItemGodModeAlready");
             return;
         }
 
@@ -173,7 +173,7 @@ public partial class HZPHelpers
             return;
 
         _globals.GodState[Id] = false;
-        player.SendMessage(MessageType.Chat, T(player, "ItemGodModeEnd"));
+        SendChatT(player, "ItemGodModeEnd");
     }
 
 
@@ -215,7 +215,7 @@ public partial class HZPHelpers
         _globals.InfiniteAmmoState.TryGetValue(Id, out bool IsInfiniteAmmoState);
         if (IsInfiniteAmmoState)
         {
-            player.SendMessage(MessageType.Chat, T(player, "ItemInfiniteAmmoAlready"));
+            SendChatT(player, "ItemInfiniteAmmoAlready");
             return;
         }
 
@@ -238,7 +238,7 @@ public partial class HZPHelpers
             return;
 
         _globals.InfiniteAmmoState[Id] = false;
-        player.SendMessage(MessageType.Chat, T(player, "ItemInfiniteAmmoEnd"));
+        SendChatT(player, "ItemInfiniteAmmoEnd");
     }
 
     
