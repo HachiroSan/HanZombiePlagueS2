@@ -269,7 +269,9 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return;
 
-        _helpers.SendChatT(player, "CreditsBalance", balance);
+        string textColor = "olive";
+        string message = $"[default]Your credits: [gold]{balance}[{textColor}]";
+        _helpers.SendChatRaw(player, message);
     }
 
     private bool HasAdminMenuPermission(IPlayer player)
