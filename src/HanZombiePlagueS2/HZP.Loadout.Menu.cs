@@ -373,7 +373,7 @@ public class HZPLoadoutMenu
             _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
             _playerDataService.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, entryId, saved.SecondaryLoadoutId);
 
-            _helpers.SendChatT(player, "LoadoutPrimarySelected", entry.DisplayName);
+            _helpers.SendChatRaw(player, $"[default]Primary selected: [gold]{entry.DisplayName}[olive]");
             _core.Scheduler.NextTick(() =>
             {
                 if (player != null && player.IsValid)
@@ -389,7 +389,7 @@ public class HZPLoadoutMenu
 
         _state.SetSavedPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
         _playerDataService.SaveLoadoutPreference(player.SteamID, saved.RememberLoadout, saved.PrimaryLoadoutId, entryId);
-        _helpers.SendChatT(player, "LoadoutSecondarySelected", entry.DisplayName);
+        _helpers.SendChatRaw(player, $"[default]Secondary selected: [gold]{entry.DisplayName}[olive]");
         _helpers.SendChatT(player, "LoadoutMenuReady");
     }
 

@@ -100,6 +100,7 @@ public class HZPStoreMenu(
             return;
         }
 
-        helpers.SendChatT(player, "StorePurchaseSuccessDetail", item.DisplayName, item.Price, storeService.GetBalance(player));
+        int balance = storeService.GetBalance(player);
+        helpers.SendChatRaw(player, $"[default]Bought [gold]{item.DisplayName}[olive] for [red]{item.Price}[olive] credits. Balance: [gold]{balance}[olive]");
     }
 }
