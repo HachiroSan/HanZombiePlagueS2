@@ -121,6 +121,8 @@
     "CashBalance": "你的现金: [gold]{0}[olive]",
     "CashLoading": "正在读取你的 [gold]现金[olive]...",
     "CashRewardInfection": "感染奖励: [gold]+{0}[olive]。当前现金: [gold]{1}[olive]",
+    "CashRewardHumanKillZombie": "击杀奖励: [gold]+{0}[olive] 击杀丧尸。当前现金: [gold]{1}[olive]",
+    "CashRewardZombieKillHuman": "击杀奖励: [gold]+{0}[olive] 击杀人类。当前现金: [gold]{1}[olive]",
     "CashRewardParticipationOnly": "回合奖励: [gold]+{0}[olive] 参与奖励。当前现金: [gold]{1}[olive]",
     "CashRewardHumanWinOnly": "回合奖励: [gold]+{0}[olive] 人类胜利奖励。当前现金: [gold]{1}[olive]",
     "CashRewardZombieWinOnly": "回合奖励: [gold]+{0}[olive] 丧尸胜利奖励。当前现金: [gold]{1}[olive]",

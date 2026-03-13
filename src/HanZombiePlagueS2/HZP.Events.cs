@@ -592,6 +592,12 @@ public partial class HZPEvents
 
         _playerDataService.RecordDeath(player);
 
+        var attacker = _core.PlayerManager.GetPlayer(@event.Attacker);
+        if (attacker != null && attacker.IsValid)
+        {
+            _playerDataService.RecordKill(attacker, player);
+        }
+
         _helpers.ClearPlayerBurn(Id);
         _helpers.RemoveSHumanClass(Id);
         _helpers.RemoveSZombieClass(Id);

@@ -128,6 +128,8 @@
     "CashBalance": "Your cash: [gold]{0}[olive]",
     "CashLoading": "Loading your [gold]cash[olive]...",
     "CashRewardInfection": "Infection reward: [gold]+{0}[olive]. Cash: [gold]{1}[olive]",
+    "CashRewardHumanKillZombie": "Kill reward: [gold]+{0}[olive] zombie kill. Cash: [gold]{1}[olive]",
+    "CashRewardZombieKillHuman": "Kill reward: [gold]+{0}[olive] human kill. Cash: [gold]{1}[olive]",
     "CashRewardParticipationOnly": "Round reward: [gold]+{0}[olive] participation. Cash: [gold]{1}[olive]",
     "CashRewardHumanWinOnly": "Round reward: [gold]+{0}[olive] human victory. Cash: [gold]{1}[olive]",
     "CashRewardZombieWinOnly": "Round reward: [gold]+{0}[olive] zombie victory. Cash: [gold]{1}[olive]",

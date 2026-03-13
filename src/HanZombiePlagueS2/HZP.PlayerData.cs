@@ -10,10 +10,12 @@ public sealed class HZPPlayerDataService(
     ILogger<HZPPlayerDataService> logger,
     HZPHelpers helpers,
     HZPGlobals globals,
+    HZPGameMode gameMode,
     PlayerZombieState zombieState,
     HZPLoadoutState loadoutState,
     HZPDatabaseService databaseService,
     HZPEconomyService economyService,
+    IOptionsMonitor<HZPMainCFG> mainCFG,
     IOptionsMonitor<HZPEconomyCFG> economyCFG)
 {
     private const string ZombieClassPreferenceKey = "zombie_class";
@@ -135,6 +137,49 @@ public sealed class HZPPlayerDataService(
         });
     }
 
+    public void RecordKill(IPlayer? attacker, IPlayer? victim)
+    {
+        if (!_roundActive || attacker == null || !attacker.IsValid || attacker.SteamID == 0)
+        {
+            return;
+        }
+
+        if (victim == null || !victim.IsValid || victim.SteamID == 0 || victim.SteamID == attacker.SteamID)
+        {
+            return;
+        }
+
+        _roundParticipants.Add(attacker.SteamID);
+        _roundParticipants.Add(victim.SteamID);
+
+        globals.IsZombie.TryGetValue(attacker.PlayerID, out bool attackerIsZombie);
+        globals.IsZombie.TryGetValue(victim.PlayerID, out bool victimIsZombie);
+
+        int reward = 0;
+        string reason = string.Empty;
+        string messageKey = string.Empty;
+
+        if (!attackerIsZombie && victimIsZombie)
+        {
+            reward = ResolveReward(GetCurrentModeRewards().HumanKillZombieReward, 0);
+            reason = "reward_human_kill_zombie";
+            messageKey = "CashRewardHumanKillZombie";
+        }
+        else if (attackerIsZombie && !victimIsZombie)
+        {
+            reward = ResolveReward(GetCurrentModeRewards().ZombieKillHumanReward, 0);
+            reason = "reward_zombie_kill_human";
+            messageKey = "CashRewardZombieKillHuman";
+        }
+
+        if (reward <= 0 || string.IsNullOrWhiteSpace(messageKey))
+        {
+            return;
+        }
+
+        _ = GrantKillRewardAsync(attacker.SteamID, reward, reason, messageKey);
+    }
+
     public void RecordRoundOutcome(bool humanWon)
     {
         if (!_roundActive || _roundOutcomeRecorded)
@@ -175,7 +220,7 @@ public sealed class HZPPlayerDataService(
 
     private async Task GrantInfectionRewardAsync(ulong steamId)
     {
-        int reward = economyCFG.CurrentValue.InfectionReward;
+        int reward = ResolveReward(GetCurrentModeRewards().InfectionReward, economyCFG.CurrentValue.InfectionReward);
         if (reward <= 0)
         {
             return;
@@ -192,9 +237,28 @@ public sealed class HZPPlayerDataService(
         NotifyOnlinePlayer(steamId, player => helpers.SendChatT(player, "CashRewardInfection", amount, balance));
     }
 
+    private async Task GrantKillRewardAsync(ulong steamId, int reward, string reason, string messageKey)
+    {
+        if (reward <= 0)
+        {
+            return;
+        }
+
+        bool added = await economyService.AddCurrencyAsync(steamId, reward, reason);
+        if (!added)
+        {
+            return;
+        }
+
+        string amount = helpers.FormatCurrency(reward);
+        string balance = helpers.FormatCurrency(economyService.GetBalance(steamId));
+        NotifyOnlinePlayer(steamId, player => helpers.SendChatT(player, messageKey, amount, balance));
+    }
+
     private async Task GrantRoundRewardsAsync(RoundPlayerSnapshot player, bool humanWon)
     {
-        int participationReward = economyCFG.CurrentValue.ParticipationReward;
+        var rewards = GetCurrentModeRewards();
+        int participationReward = ResolveReward(rewards.ParticipationReward, economyCFG.CurrentValue.ParticipationReward);
         int grantedParticipation = 0;
         if (participationReward > 0)
         {
@@ -208,11 +272,11 @@ public sealed class HZPPlayerDataService(
         int winReward = 0;
         if (humanWon && !player.IsZombie)
         {
-            winReward = economyCFG.CurrentValue.HumanWinReward;
+            winReward = ResolveReward(rewards.HumanWinReward, economyCFG.CurrentValue.HumanWinReward);
         }
         else if (!humanWon && player.IsZombie)
         {
-            winReward = economyCFG.CurrentValue.ZombieWinReward;
+            winReward = ResolveReward(rewards.ZombieWinReward, economyCFG.CurrentValue.ZombieWinReward);
         }
 
         int grantedWin = 0;
@@ -271,6 +335,31 @@ public sealed class HZPPlayerDataService(
 
             notify(player);
         });
+    }
+
+    private ModeRewardConfig GetCurrentModeRewards()
+    {
+        var config = mainCFG.CurrentValue;
+        return gameMode.CurrentMode switch
+        {
+            GameModeType.Normal => config.NormalInfection.Rewards,
+            GameModeType.NormalInfection => config.NormalInfection.Rewards,
+            GameModeType.MultiInfection => config.MultiInfection.Rewards,
+            GameModeType.Nemesis => config.Nemesis.Rewards,
+            GameModeType.Survivor => config.Survivor.Rewards,
+            GameModeType.Swarm => config.Swarm.Rewards,
+            GameModeType.Plague => config.Plague.Rewards,
+            GameModeType.Assassin => config.Assassin.Rewards,
+            GameModeType.Sniper => config.Sniper.Rewards,
+            GameModeType.AVS => config.AVS.Rewards,
+            GameModeType.Hero => config.Hero.Rewards,
+            _ => config.NormalInfection.Rewards
+        };
+    }
+
+    private static int ResolveReward(int configuredValue, int fallbackValue)
+    {
+        return configuredValue >= 0 ? configuredValue : fallbackValue;
     }
 
     private async Task LoadPlayerAsync(IPlayer player)

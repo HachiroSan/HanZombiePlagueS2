@@ -10,7 +10,15 @@
 		"MotherZombieCount": 1,
 		"Weight": 1800,
 		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": false
+		"ZombieCanReborn": false,
+		"Rewards": {
+			"InfectionReward": 2,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 0,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"MultiInfection": 
 	{
@@ -20,7 +28,15 @@
 		"MotherZombieCount": 5,
 		"Weight": 50,
 		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true
+		"ZombieCanReborn": true,
+		"Rewards": {
+			"InfectionReward": 2,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 0,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"Nemesis": 
 	{
@@ -29,7 +45,15 @@
 		"NemesisNames": "Nemesis",
 		"Weight": 50,
 		"EnableInfiniteClipMode": true,
-		"ZombieCanReborn": true
+		"ZombieCanReborn": true,
+		"Rewards": {
+			"InfectionReward": 0,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 2,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"Survivor": 
 	{
@@ -45,7 +69,15 @@
 		"CustomWeaponName": "Survivor M249",
 		"ModelsPath": "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl",
 		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": false
+		"ZombieCanReborn": false,
+		"Rewards": {
+			"InfectionReward": 0,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 2,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"Swarm": 
 	{
@@ -53,7 +85,15 @@
 		"Name": "Swarm Mode",
 		"Weight": 50,
 		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": false
+		"ZombieCanReborn": false,
+		"Rewards": {
+			"InfectionReward": 0,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 2,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"Plague": 
 	{
@@ -63,7 +103,15 @@
 		"NemesisNames": "Nemesis",
 		"SurvivorNames": "Survivor",
 		"EnableInfiniteClipMode": true,
-		"ZombieCanReborn": true
+		"ZombieCanReborn": true,
+		"Rewards": {
+			"InfectionReward": 0,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 2,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"Assassin": 
 	{
@@ -73,7 +121,15 @@
 		"AssassinNames": "Shadow Reaper",
 		"InvisibilityDist": 200.0,
 		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true
+		"ZombieCanReborn": true,
+		"Rewards": {
+			"InfectionReward": 0,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 2,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"Sniper": 
 	{
@@ -89,7 +145,15 @@
 		"CustomWeaponName": "Sniper Hero AWP",
 		"ModelsPath": "characters/models/tm_professional/tm_professional_varf4.vmdl",
 		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true
+		"ZombieCanReborn": true,
+		"Rewards": {
+			"InfectionReward": 0,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 2,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"AVS": 
 	{
@@ -99,7 +163,15 @@
 		"AssassinNames": "Shadow Reaper",
 		"SniperNames": "Sniper",
 		"EnableInfiniteClipMode": true,
-		"ZombieCanReborn": true
+		"ZombieCanReborn": true,
+		"Rewards": {
+			"InfectionReward": 0,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 2,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"Hero": 
 	{
@@ -114,7 +186,15 @@
 		"HeroDamage": 50.0,
 		"ModelsPath": "characters/models/ctm_heavy/ctm_heavy.vmdl",
 		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true
+		"ZombieCanReborn": true,
+		"Rewards": {
+			"InfectionReward": 2,
+			"HumanKillZombieReward": 5,
+			"ZombieKillHumanReward": 0,
+			"ParticipationReward": 1,
+			"HumanWinReward": 3,
+			"ZombieWinReward": 2
+		}
 	},
 	"HumandefaultModel": "characters/models/ctm_st6/ctm_st6_variante.vmdl",
 	"HumanMaxHealth": 225,

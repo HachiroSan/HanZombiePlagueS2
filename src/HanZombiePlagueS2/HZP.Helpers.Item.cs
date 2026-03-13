@@ -292,6 +292,7 @@ public partial class HZPHelpers
         SendCenterToAllT("ServerGameHumanWin");
         SetTeamScore(Team.CT);
         TerminateRound(RoundEndReason.CTsWin, 5.0f);
+        _api.NotifyHumanWin(true);
     }
     public void helperszombiewin()
     {
@@ -311,6 +312,7 @@ public partial class HZPHelpers
         SendCenterToAllT("ServerGameZombieWin");
         SetTeamScore(Team.T);
         TerminateRound(RoundEndReason.TerroristsWin, 5.0f);
+        _api.NotifyHumanWin(false);
     }
 
     public void GiveFireGrenade(IPlayer player)

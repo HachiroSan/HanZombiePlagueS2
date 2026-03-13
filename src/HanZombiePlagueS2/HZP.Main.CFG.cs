@@ -14,6 +14,17 @@ public enum GameModeType
     AVS,
     Hero
 }
+
+public class ModeRewardConfig
+{
+    public int InfectionReward { get; set; } = -1;
+    public int HumanKillZombieReward { get; set; } = -1;
+    public int ZombieKillHumanReward { get; set; } = -1;
+    public int ParticipationReward { get; set; } = -1;
+    public int HumanWinReward { get; set; } = -1;
+    public int ZombieWinReward { get; set; } = -1;
+}
+
 public class GameModeConfig
 {
     public bool Enable { get; set; } = true;
@@ -21,7 +32,7 @@ public class GameModeConfig
     public int Weight { get; set; } = 100;
     public bool EnableInfiniteClipMode { get; set; } = true;
     public bool ZombieCanReborn { get; set; } = true;
-    
+    public ModeRewardConfig Rewards { get; set; } = new();
 }
 
 public class NemesisModeConfig : GameModeConfig

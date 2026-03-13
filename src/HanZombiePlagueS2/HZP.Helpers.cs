@@ -27,14 +27,16 @@ public partial class HZPHelpers
 {
     private readonly ILogger<HZPHelpers> _logger;
     private readonly ISwiftlyCore _core;
+    private readonly HanZombiePlagueAPI _api;
     private readonly HZPGlobals _globals;
     private readonly IOptionsMonitor<HZPChatCFG> _chatCFG;
 
     public HZPHelpers(ISwiftlyCore core, ILogger<HZPHelpers> logger,
-        HZPGlobals globals, IOptionsMonitor<HZPChatCFG> chatCFG)
+        HanZombiePlagueAPI api, HZPGlobals globals, IOptionsMonitor<HZPChatCFG> chatCFG)
     {
         _core = core;
         _logger = logger;
+        _api = api;
         _globals = globals;
         _chatCFG = chatCFG;
     }
