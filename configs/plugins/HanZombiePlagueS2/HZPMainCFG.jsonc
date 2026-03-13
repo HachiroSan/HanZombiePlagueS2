@@ -19,7 +19,7 @@
 		"MotherZombieNames": "Primordial",
 		"MotherZombieCount": 5,
 		"Weight": 50,
-		"EnableInfiniteClipMode": true,
+		"EnableInfiniteClipMode": false,
 		"ZombieCanReborn": true
 	},
 	"Nemesis": 
@@ -52,7 +52,7 @@
 		"Enable": true,
 		"Name": "Swarm Mode",
 		"Weight": 50,
-		"EnableInfiniteClipMode": true,
+		"EnableInfiniteClipMode": false,
 		"ZombieCanReborn": false
 	},
 	"Plague": 
@@ -126,7 +126,7 @@
 	"HumanKnockBackAirMultiply": 0.5,
 	"HumanHeroKnockBackMultiply": 1.0,
 	"EnableDamageHud": false,
-	"EnableInfiniteReserveAmmo": true,
+	"EnableInfiniteReserveAmmo": false,
 	"EnableWeaponNoRecoil": false,
 	"HumanSpawnPoints": "CT,T,DM",
 	"ZombieSpawnPoints": "CT,T,DM",
