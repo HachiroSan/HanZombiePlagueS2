@@ -127,6 +127,12 @@
     "StorePurchaseSuccessDetail": "Bought [gold]{0}[olive] for [red]{1}[olive]. Cash left: [gold]{2}[olive]",
     "CashBalance": "Your cash: [gold]{0}[olive]",
     "CashLoading": "Loading your [gold]cash[olive]...",
+    "CashRewardInfection": "Infection reward: [gold]+{0}[olive]. Cash: [gold]{1}[olive]",
+    "CashRewardParticipationOnly": "Round reward: [gold]+{0}[olive] participation. Cash: [gold]{1}[olive]",
+    "CashRewardHumanWinOnly": "Round reward: [gold]+{0}[olive] human victory. Cash: [gold]{1}[olive]",
+    "CashRewardZombieWinOnly": "Round reward: [gold]+{0}[olive] zombie victory. Cash: [gold]{1}[olive]",
+    "CashRewardRoundHumanWin": "Round rewards: [gold]+{0}[olive] participation, [gold]+{1}[olive] human victory. Cash: [gold]{2}[olive]",
+    "CashRewardRoundZombieWin": "Round rewards: [gold]+{0}[olive] participation, [gold]+{1}[olive] zombie victory. Cash: [gold]{2}[olive]",
     "AdminItemGranted": "Granted admin item: [gold]{0}[olive]",
 
     "AdminItemMenu": "Admin Arsenal",

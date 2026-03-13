@@ -8,6 +8,7 @@ namespace HanZombiePlagueS2;
 public sealed class HZPPlayerDataService(
     ISwiftlyCore core,
     ILogger<HZPPlayerDataService> logger,
+    HZPHelpers helpers,
     HZPGlobals globals,
     PlayerZombieState zombieState,
     HZPLoadoutState loadoutState,
@@ -113,7 +114,7 @@ public sealed class HZPPlayerDataService(
             Infections = 1
         });
 
-        _ = economyService.AddCurrencyAsync(attacker.SteamID, economyCFG.CurrentValue.InfectionReward, "reward_infection");
+        _ = GrantInfectionRewardAsync(attacker.SteamID);
     }
 
     public void RecordDeath(IPlayer? player)
@@ -168,27 +169,108 @@ public sealed class HZPPlayerDataService(
 
             QueueStatsUpdate(player.SteamId, player.Name, delta);
 
-            int participationReward = economyCFG.CurrentValue.ParticipationReward;
-            if (participationReward > 0)
-            {
-                _ = economyService.AddCurrencyAsync(player.SteamId, participationReward, "reward_participation");
-            }
+            _ = GrantRoundRewardsAsync(player, humanWon);
+        }
+    }
 
-            int winReward = 0;
-            if (humanWon && !player.IsZombie)
-            {
-                winReward = economyCFG.CurrentValue.HumanWinReward;
-            }
-            else if (!humanWon && player.IsZombie)
-            {
-                winReward = economyCFG.CurrentValue.ZombieWinReward;
-            }
+    private async Task GrantInfectionRewardAsync(ulong steamId)
+    {
+        int reward = economyCFG.CurrentValue.InfectionReward;
+        if (reward <= 0)
+        {
+            return;
+        }
 
-            if (winReward > 0)
+        bool added = await economyService.AddCurrencyAsync(steamId, reward, "reward_infection");
+        if (!added)
+        {
+            return;
+        }
+
+        string amount = helpers.FormatCurrency(reward);
+        string balance = helpers.FormatCurrency(economyService.GetBalance(steamId));
+        NotifyOnlinePlayer(steamId, player => helpers.SendChatT(player, "CashRewardInfection", amount, balance));
+    }
+
+    private async Task GrantRoundRewardsAsync(RoundPlayerSnapshot player, bool humanWon)
+    {
+        int participationReward = economyCFG.CurrentValue.ParticipationReward;
+        int grantedParticipation = 0;
+        if (participationReward > 0)
+        {
+            bool addedParticipation = await economyService.AddCurrencyAsync(player.SteamId, participationReward, "reward_participation");
+            if (addedParticipation)
             {
-                _ = economyService.AddCurrencyAsync(player.SteamId, winReward, humanWon ? "reward_human_win" : "reward_zombie_win");
+                grantedParticipation = participationReward;
             }
         }
+
+        int winReward = 0;
+        if (humanWon && !player.IsZombie)
+        {
+            winReward = economyCFG.CurrentValue.HumanWinReward;
+        }
+        else if (!humanWon && player.IsZombie)
+        {
+            winReward = economyCFG.CurrentValue.ZombieWinReward;
+        }
+
+        int grantedWin = 0;
+        if (winReward > 0)
+        {
+            bool addedWin = await economyService.AddCurrencyAsync(player.SteamId, winReward, humanWon ? "reward_human_win" : "reward_zombie_win");
+            if (addedWin)
+            {
+                grantedWin = winReward;
+            }
+        }
+
+        if (grantedParticipation <= 0 && grantedWin <= 0)
+        {
+            return;
+        }
+
+        string balance = helpers.FormatCurrency(economyService.GetBalance(player.SteamId));
+        NotifyOnlinePlayer(player.SteamId, target =>
+        {
+            if (grantedParticipation > 0 && grantedWin > 0)
+            {
+                string key = humanWon ? "CashRewardRoundHumanWin" : "CashRewardRoundZombieWin";
+                helpers.SendChatT(target, key, helpers.FormatCurrency(grantedParticipation), helpers.FormatCurrency(grantedWin), balance);
+                return;
+            }
+
+            if (grantedWin > 0)
+            {
+                string key = humanWon ? "CashRewardHumanWinOnly" : "CashRewardZombieWinOnly";
+                helpers.SendChatT(target, key, helpers.FormatCurrency(grantedWin), balance);
+                return;
+            }
+
+            helpers.SendChatT(target, "CashRewardParticipationOnly", helpers.FormatCurrency(grantedParticipation), balance);
+        });
+    }
+
+    private void NotifyOnlinePlayer(ulong steamId, Action<IPlayer> notify)
+    {
+        if (steamId == 0)
+        {
+            return;
+        }
+
+        core.Scheduler.NextTick(() =>
+        {
+            var player = core.PlayerManager
+                .GetAllPlayers()
+                .FirstOrDefault(p => p != null && p.IsValid && !p.IsFakeClient && p.SteamID == steamId);
+
+            if (player == null)
+            {
+                return;
+            }
+
+            notify(player);
+        });
     }
 
     private async Task LoadPlayerAsync(IPlayer player)
