@@ -3,7 +3,18 @@ namespace HanZombiePlagueS2;
 public class HZPEconomyCFG
 {
     public bool Enable { get; set; } = true;
-    public string CreditsCommand { get; set; } = "sw_credits";
+    public string CashCommand { get; set; } = "sw_cash";
+
+    public string CreditsCommand
+    {
+        get => CashCommand;
+        set
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                CashCommand = value;
+        }
+    }
+
     public bool DisableNativeBuy { get; set; } = true;
     public int NativeStartMoney { get; set; } = 0;
     public int NativeMaxMoney { get; set; } = 0;

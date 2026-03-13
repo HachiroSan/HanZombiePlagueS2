@@ -86,10 +86,10 @@ public class HZPCommands
             _core.Command.RegisterCommand(storeCommand, OpenStoreMenu, true);
         }
 
-        var creditsCommand = _economyCFG.CurrentValue.CreditsCommand;
-        if (!string.IsNullOrWhiteSpace(creditsCommand))
+        var cashCommand = _economyCFG.CurrentValue.CashCommand;
+        if (!string.IsNullOrWhiteSpace(cashCommand))
         {
-            _core.Command.RegisterCommand(creditsCommand, ShowCredits, true);
+            _core.Command.RegisterCommand(cashCommand, ShowCash, true);
         }
 
         var nextMapCommand = _mapVoteCFG.CurrentValue.NextMapCommand;
@@ -176,7 +176,7 @@ public class HZPCommands
         _ = _storeMenu.OpenStoreMenuAsync(player);
     }
 
-    public void ShowCredits(ICommandContext context)
+    public void ShowCash(ICommandContext context)
     {
         var player = context.Sender;
         if (player == null || !player.IsValid)
@@ -184,10 +184,10 @@ public class HZPCommands
 
         if (!_economyService.IsLoaded(player.SteamID))
         {
-            _helpers.SendChatT(player, "CreditsLoading");
+            _helpers.SendChatT(player, "CashLoading");
         }
 
-        _ = ShowCreditsAsync(player);
+        _ = ShowCashAsync(player);
     }
 
     public void ShowNextMap(ICommandContext context)
@@ -277,15 +277,13 @@ public class HZPCommands
         _mapVoteMenu.OpenVoteMenu(player, true);
     }
 
-    private async Task ShowCreditsAsync(IPlayer player)
+    private async Task ShowCashAsync(IPlayer player)
     {
         int balance = await _economyService.EnsureLoadedAsync(player.SteamID);
         if (player == null || !player.IsValid)
             return;
 
-        string textColor = "olive";
-        string message = $"[default]Your credits: [gold]{balance}[{textColor}]";
-        _helpers.SendChatRaw(player, message);
+        _helpers.SendChatT(player, "CashBalance", _helpers.FormatCurrency(balance));
     }
 
     private bool HasAdminMenuPermission(IPlayer player)

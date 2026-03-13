@@ -37,7 +37,7 @@ public class HZPStoreMenu(
         string titleKey = isZombie ? "StoreTitleZombie" : "StoreTitleHuman";
         IMenuAPI menu = menuHelper.CreateMenu(helpers.T(player, titleKey));
         menu.AddOption(new TextMenuOption(HtmlGradient.GenerateGradientText(
-            helpers.T(player, "StoreBalance", storeService.GetBalance(player)),
+            helpers.T(player, "StoreBalance", helpers.FormatCurrency(storeService.GetBalance(player))),
             Color.Gold, Color.LightGreen, Color.Gold),
             updateIntervalMs: 500, pauseIntervalMs: 100)
         {
@@ -46,7 +46,7 @@ public class HZPStoreMenu(
 
         foreach (var item in items)
         {
-            string label = $"{item.DisplayName} [{item.Price}]";
+            string label = $"{item.DisplayName} [{helpers.FormatCurrency(item.Price)}]";
             var button = new ButtonMenuOption(label)
             {
                 TextStyle = MenuOptionTextStyle.ScrollLeftLoop,
@@ -101,6 +101,11 @@ public class HZPStoreMenu(
         }
 
         int balance = storeService.GetBalance(player);
-        helpers.SendChatRaw(player, $"[default]Bought [gold]{item.DisplayName}[olive] for [red]{item.Price}[olive] credits. Balance: [gold]{balance}[olive]");
+        helpers.SendChatT(
+            player,
+            "StorePurchaseSuccessDetail",
+            item.DisplayName,
+            helpers.FormatCurrency(item.Price),
+            helpers.FormatCurrency(balance));
     }
 }

@@ -109,13 +109,13 @@ public sealed class HZPStoreService(
 
         if (economyService.GetBalance(player.SteamID) < item.Price)
         {
-            return (false, "StoreNotEnoughCredits");
+            return (false, "StoreNotEnoughCash");
         }
 
         bool spent = await economyService.TrySpendCurrencyAsync(player.SteamID, item.Price, $"store:{itemId}");
         if (!spent)
         {
-            return (false, "StoreNotEnoughCredits");
+            return (false, "StoreNotEnoughCash");
         }
 
         if (!GrantItem(player, item))

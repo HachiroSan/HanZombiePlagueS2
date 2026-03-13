@@ -1,7 +1,7 @@
 {
   "HZPEconomyCFG": {
     "Enable": true,
-    "CreditsCommand": "sw_credits",
+    "CashCommand": "sw_cash",
     "DisableNativeBuy": true,
     "NativeStartMoney": 0,
     "NativeMaxMoney": 0,

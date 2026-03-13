@@ -32,7 +32,7 @@ public sealed class HZPBroadcastCFG
     public List<HZPBroadcastMessage> Ads { get; set; } =
     [
         new() { Type = HZPBroadcastMessageType.Chat, Message = "Use !loadout before the round starts." },
-        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use !store to buy extra items with credits." },
+        new() { Type = HZPBroadcastMessageType.Chat, Message = "Use !store to spend your cash on extra gear." },
         new() { Type = HZPBroadcastMessageType.Chat, Message = "Use !nextmap, !rtv and !nominate to help pick the next map." }
     ];
 }

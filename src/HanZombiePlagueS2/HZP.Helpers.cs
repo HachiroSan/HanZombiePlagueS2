@@ -1,5 +1,6 @@
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Security.AccessControl;
 using System.Timers;
 using Microsoft.Extensions.Logging;
@@ -1121,6 +1122,11 @@ public partial class HZPHelpers
             return fallback;
 
         return token.Trim().Trim('[', ']').ToLowerInvariant();
+    }
+
+    public string FormatCurrency(int amount)
+    {
+        return $"{amount.ToString("N0", CultureInfo.InvariantCulture)}$";
     }
 
     public void SendCenterToAllT(string key, params object[] args)
