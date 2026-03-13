@@ -143,6 +143,7 @@ public class HZPGameMode
         return mode switch
         {
             GameModeType.Normal => config.NormalInfection.EnableInfiniteClipMode,
+            GameModeType.NormalInfection => config.NormalInfection.EnableInfiniteClipMode,
             GameModeType.MultiInfection => config.MultiInfection.EnableInfiniteClipMode,
             GameModeType.Nemesis => config.Nemesis.EnableInfiniteClipMode,
             GameModeType.Survivor => config.Survivor.EnableInfiniteClipMode,

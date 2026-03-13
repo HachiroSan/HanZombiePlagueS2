@@ -9,11 +9,11 @@
 			"AbilitySummary": "loc:ZombieAbilityStalker",
 			"Stats": 
 			{
-			  "Health": 8000,
-			  "MotherZombieHealth": 18000,
-			  "Speed": 1.0,
+			  "Health": 5200,
+			  "MotherZombieHealth": 11000,
+			  "Speed": 0.96,
 			  "Damage": 50.0,
-			  "Gravity": 0.78,
+			  "Gravity": 0.84,
 			  "Fov": 110,
 			  "EnableRegen": true,
 			  "HpRegenSec": 5.0,
@@ -48,11 +48,11 @@
 			"AbilitySummary": "loc:ZombieAbilityRunner",
 			"Stats": 
 			{
-			  "Health": 3000,
-			  "MotherZombieHealth": 13000,
-			  "Speed": 1.05,
+			  "Health": 2400,
+			  "MotherZombieHealth": 9000,
+			  "Speed": 1.0,
 			  "Damage": 50.0,
-			  "Gravity": 0.82,
+			  "Gravity": 0.86,
 			  "Fov": 110,
 			  "EnableRegen": true,
 			  "HpRegenSec": 5.0,
@@ -165,11 +165,11 @@
 			"AbilitySummary": "loc:ZombieAbilityLeaper",
 			"Stats": 
 			{
-			  "Health": 2500,
-			  "MotherZombieHealth": 12500,
-			  "Speed": 1.5,
+			  "Health": 2000,
+			  "MotherZombieHealth": 8500,
+			  "Speed": 1.28,
 			  "Damage": 50.0,
-			  "Gravity": 0.45,
+			  "Gravity": 0.6,
 			  "Fov": 110,
 			  "EnableRegen": true,
 			  "HpRegenSec": 10.0,
@@ -204,11 +204,11 @@
 			"AbilitySummary": "loc:ZombieAbilitySkirmisher",
 			"Stats": 
 			{
-			  "Health": 1800,
-			  "MotherZombieHealth": 12000,
-			  "Speed": 1.4,
+			  "Health": 1500,
+			  "MotherZombieHealth": 8000,
+			  "Speed": 1.2,
 			  "Damage": 50.0,
-			  "Gravity": 0.65,
+			  "Gravity": 0.74,
 			  "Fov": 110,
 			  "EnableRegen": true,
 			  "HpRegenSec": 10.0,

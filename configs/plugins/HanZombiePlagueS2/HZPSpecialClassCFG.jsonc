@@ -8,11 +8,11 @@
 			"AbilitySummary": "loc:ZombieAbilityPrimordial",
 			"Stats": 
 			{
-			  "Health": 15000,
-			  "MotherZombieHealth": 20000,
-			  "Speed": 1.25,
+			  "Health": 9000,
+			  "MotherZombieHealth": 12000,
+			  "Speed": 1.08,
 			  "Damage": 150.0,
-			  "Gravity": 0.65,
+			  "Gravity": 0.78,
 			  "Fov": 110,
 			  "EnableRegen": true,
 			  "HpRegenSec": 1.0,
@@ -47,11 +47,11 @@
 			"AbilitySummary": "loc:ZombieAbilityNemesis",
 			"Stats": 
 			{
-			  "Health": 30000,
-			  "MotherZombieHealth": 50000,
-			  "Speed": 1.6,
+			  "Health": 18000,
+			  "MotherZombieHealth": 26000,
+			  "Speed": 1.3,
 			  "Damage": 150.0,
-			  "Gravity": 0.5,
+			  "Gravity": 0.68,
 			  "Fov": 120,
 			  "EnableRegen": true,
 			  "HpRegenSec": 1.0,
@@ -86,11 +86,11 @@
 			"AbilitySummary": "loc:ZombieAbilityShadowReaper",
 			"Stats": 
 			{
-			  "Health": 15000,
-			  "MotherZombieHealth": 35000,
-			  "Speed": 1.85,
+			  "Health": 9000,
+			  "MotherZombieHealth": 18000,
+			  "Speed": 1.45,
 			  "Damage": 50.0,
-			  "Gravity": 0.55,
+			  "Gravity": 0.7,
 			  "Fov": 120,
 			  "EnableRegen": true,
 			  "HpRegenSec": 2.0,
