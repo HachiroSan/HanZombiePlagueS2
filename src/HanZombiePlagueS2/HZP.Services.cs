@@ -28,6 +28,7 @@ public partial class HZPServices
     private readonly IOptionsMonitor<HZPSpecialClassCFG> _specialClassCFG;
     private readonly PlayerZombieState _zombieState;
     private readonly HZPGameMode _gameMode;
+    private readonly HZPLoadoutMenu _loadoutMenu;
     private readonly HZPLoadoutState _loadoutState;
     private readonly HZPStoreState _storeState;
 
@@ -37,6 +38,7 @@ public partial class HZPServices
         IOptionsMonitor<HZPMainCFG> mainCFG,
         IOptionsMonitor<HZPZombieClassCFG> zombieClassCFG,
         PlayerZombieState zombieState, HZPGameMode gameMode,
+        HZPLoadoutMenu loadoutMenu,
         HZPLoadoutState loadoutState,
         HZPStoreState storeState,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
@@ -50,6 +52,7 @@ public partial class HZPServices
         _zombieClassCFG = zombieClassCFG;
         _zombieState = zombieState;
         _gameMode = gameMode;
+        _loadoutMenu = loadoutMenu;
         _loadoutState = loadoutState;
         _storeState = storeState;
         _specialClassCFG = specialClassCFG;
@@ -527,6 +530,7 @@ public partial class HZPServices
             _globals.g_hCountdown?.Cancel();
             _globals.g_hCountdown = null;
             _globals.GameStart = true;
+            _loadoutMenu.EnsureValidLoadoutToAll();
 
             if (_api != null)
                 _api.NotifyGameStart(_globals.GameStart);

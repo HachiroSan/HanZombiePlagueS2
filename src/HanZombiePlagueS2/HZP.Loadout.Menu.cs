@@ -129,6 +129,107 @@ public class HZPLoadoutMenu
         return OpenStageMenu(player, LoadoutStage.Primary) != null;
     }
 
+    public void EnsureValidLoadoutToAll()
+    {
+        var allPlayers = _core.PlayerManager.GetAllPlayers();
+        foreach (var player in allPlayers)
+        {
+            EnsureValidLoadout(player);
+        }
+    }
+
+    public void EnsureValidLoadout(IPlayer player)
+    {
+        var cfg = _loadoutCFG.CurrentValue;
+        if (!cfg.Enable || player == null || !player.IsValid)
+        {
+            return;
+        }
+
+        var controller = player.Controller;
+        if (controller == null || !controller.IsValid || !controller.PawnIsAlive)
+        {
+            return;
+        }
+
+        _globals.IsZombie.TryGetValue(player.PlayerID, out bool isZombie);
+        if (isZombie)
+        {
+            return;
+        }
+
+        _globals.IsSurvivor.TryGetValue(player.PlayerID, out bool isSurvivor);
+        _globals.IsSniper.TryGetValue(player.PlayerID, out bool isSniper);
+        _globals.IsHero.TryGetValue(player.PlayerID, out bool isHero);
+        if (isSurvivor || isSniper || isHero)
+        {
+            return;
+        }
+
+        var lifeState = _state.GetLifeState(player.PlayerID);
+        bool needsPrimary = !lifeState.PrimarySelected;
+        bool needsSecondary = !lifeState.SecondarySelected;
+        if (!needsPrimary && !needsSecondary)
+        {
+            return;
+        }
+
+        var saved = _state.GetSavedPreference(player.SteamID);
+        string primaryName = string.Empty;
+        string secondaryName = string.Empty;
+        bool assignedPrimary = false;
+        bool assignedSecondary = false;
+
+        if (needsPrimary)
+        {
+            var primaryEntry = saved.RememberLoadout
+                ? FindEntryById(cfg.PrimaryWeapons, saved.PrimaryLoadoutId)
+                : null;
+
+            primaryEntry ??= PickRandomEntry(LoadoutStage.Primary);
+            if (primaryEntry != null && TryGrantWeapon(player, primaryEntry))
+            {
+                lifeState.PrimarySelected = true;
+                lifeState.PrimaryLoadoutId = ResolveEntryId(primaryEntry);
+                primaryName = primaryEntry.DisplayName;
+                assignedPrimary = true;
+            }
+        }
+
+        if (needsSecondary)
+        {
+            var secondaryEntry = saved.RememberLoadout
+                ? FindEntryById(cfg.SecondaryWeapons, saved.SecondaryLoadoutId)
+                : null;
+
+            secondaryEntry ??= PickRandomEntry(LoadoutStage.Secondary);
+            if (secondaryEntry != null && TryGrantWeapon(player, secondaryEntry))
+            {
+                lifeState.SecondarySelected = true;
+                lifeState.SecondaryLoadoutId = ResolveEntryId(secondaryEntry);
+                secondaryName = secondaryEntry.DisplayName;
+                assignedSecondary = true;
+            }
+        }
+
+        if (assignedPrimary && assignedSecondary)
+        {
+            _helpers.SendChatT(player, "LoadoutAutoAssignedBoth", primaryName, secondaryName);
+            return;
+        }
+
+        if (assignedPrimary)
+        {
+            _helpers.SendChatT(player, "LoadoutAutoAssignedPrimary", primaryName);
+            return;
+        }
+
+        if (assignedSecondary)
+        {
+            _helpers.SendChatT(player, "LoadoutAutoAssignedSecondary", secondaryName);
+        }
+    }
+
     private bool TryApplyRememberedLoadout(IPlayer player)
     {
         if (player == null || !player.IsValid || player.SteamID == 0)
@@ -298,6 +399,17 @@ public class HZPLoadoutMenu
             .Where(entry => IsModeAllowed(entry.AllowedModes))
             .OrderBy(entry => entry.SortOrder)
             .ThenBy(entry => entry.DisplayName, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private HZPLoadoutEntry? PickRandomEntry(LoadoutStage stage)
+    {
+        var entries = GetEntries(stage).ToList();
+        if (entries.Count == 0)
+        {
+            return null;
+        }
+
+        return entries[Random.Shared.Next(entries.Count)];
     }
 
     private static bool HasGrantSource(HZPLoadoutEntry entry)

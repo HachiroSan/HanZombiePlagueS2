@@ -70,6 +70,9 @@
     "LoadoutRememberEnabled": "[gold]Remember Loadout[olive] enabled. Your saved kit will auto-equip next spawn.",
     "LoadoutRememberDisabled": "[gold]Remember Loadout[olive] disabled. The menu will appear again on spawn.",
     "LoadoutRememberApplied": "Your saved [gold]loadout[olive] has been equipped.",
+    "LoadoutAutoAssignedPrimary": "Primary auto-assigned: [gold]{0}[olive]",
+    "LoadoutAutoAssignedSecondary": "Secondary auto-assigned: [gold]{0}[olive]",
+    "LoadoutAutoAssignedBoth": "Loadout auto-assigned: [gold]{0}[olive] + [gold]{1}[olive]",
     "LoadoutSelectedMarker": "[Selected]",
     "LoadoutRememberMarker": "[Saved]",
 
