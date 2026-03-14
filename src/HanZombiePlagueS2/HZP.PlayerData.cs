@@ -101,6 +101,9 @@ public sealed class HZPPlayerDataService(
             return;
         }
 
+        bool victimIsBot = victim != null && victim.IsValid && victim.SteamID == 0;
+        bool shouldRewardInfection = !victimIsBot || economyCFG.CurrentValue.RewardBotVictimInfections;
+
         if (victim != null && victim.IsValid && victim.SteamID != 0 && _roundActive)
         {
             _roundParticipants.Add(victim.SteamID);
@@ -116,7 +119,10 @@ public sealed class HZPPlayerDataService(
             Infections = 1
         });
 
-        _ = GrantInfectionRewardAsync(attacker.SteamID);
+        if (shouldRewardInfection)
+        {
+            _ = GrantInfectionRewardAsync(attacker.SteamID);
+        }
     }
 
     public void RecordDeath(IPlayer? player)
@@ -144,13 +150,19 @@ public sealed class HZPPlayerDataService(
             return;
         }
 
-        if (victim == null || !victim.IsValid || victim.SteamID == 0 || victim.SteamID == attacker.SteamID)
+        if (victim == null || !victim.IsValid || victim.PlayerID == attacker.PlayerID)
         {
             return;
         }
 
+        bool victimIsBot = victim.SteamID == 0;
+        bool shouldRewardKill = !victimIsBot || economyCFG.CurrentValue.RewardBotVictimKills;
+
         _roundParticipants.Add(attacker.SteamID);
-        _roundParticipants.Add(victim.SteamID);
+        if (victim.SteamID != 0)
+        {
+            _roundParticipants.Add(victim.SteamID);
+        }
 
         globals.IsZombie.TryGetValue(attacker.PlayerID, out bool attackerIsZombie);
         globals.IsZombie.TryGetValue(victim.PlayerID, out bool victimIsZombie);
@@ -161,18 +173,23 @@ public sealed class HZPPlayerDataService(
 
         if (!attackerIsZombie && victimIsZombie)
         {
-            reward = ResolveReward(GetCurrentModeRewards().HumanKillZombieReward, 0);
+            reward = ResolveReward(GetCurrentModeRewards().HumanKillZombieReward, economyCFG.CurrentValue.HumanKillZombieReward);
             reason = "reward_human_kill_zombie";
             messageKey = "CashRewardHumanKillZombie";
         }
         else if (attackerIsZombie && !victimIsZombie)
         {
-            reward = ResolveReward(GetCurrentModeRewards().ZombieKillHumanReward, 0);
+            reward = ResolveReward(GetCurrentModeRewards().ZombieKillHumanReward, economyCFG.CurrentValue.ZombieKillHumanReward);
             reason = "reward_zombie_kill_human";
             messageKey = "CashRewardZombieKillHuman";
         }
 
         if (reward <= 0 || string.IsNullOrWhiteSpace(messageKey))
+        {
+            return;
+        }
+
+        if (!shouldRewardKill)
         {
             return;
         }

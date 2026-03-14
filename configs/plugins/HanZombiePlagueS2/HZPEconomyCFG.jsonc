@@ -6,6 +6,12 @@
     "NativeStartMoney": 0,
     "NativeMaxMoney": 0,
     "InfectionReward": 2,
+    // These rewards are overridden by mode-specific settings in HZPMainCFG.
+    // if they are set higher than these values.
+    "HumanKillZombieReward": -1,
+    "ZombieKillHumanReward": -1,
+    "RewardBotVictimInfections": true,
+    "RewardBotVictimKills": true,
     "HumanWinReward": 3,
     "ZombieWinReward": 2,
     "ParticipationReward": 1

@@ -19,6 +19,10 @@ public class HZPEconomyCFG
     public int NativeStartMoney { get; set; } = 0;
     public int NativeMaxMoney { get; set; } = 0;
     public int InfectionReward { get; set; } = 2;
+    public int HumanKillZombieReward { get; set; } = 1;
+    public int ZombieKillHumanReward { get; set; } = 1;
+    public bool RewardBotVictimInfections { get; set; } = true;
+    public bool RewardBotVictimKills { get; set; } = true;
     public int HumanWinReward { get; set; } = 3;
     public int ZombieWinReward { get; set; } = 2;
     public int ParticipationReward { get; set; } = 1;
