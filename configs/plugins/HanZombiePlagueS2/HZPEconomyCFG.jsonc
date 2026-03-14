@@ -10,8 +10,6 @@
     // if they are set higher than these values.
     "HumanKillZombieReward": -1,
     "ZombieKillHumanReward": -1,
-    "RewardBotVictimInfections": true,
-    "RewardBotVictimKills": true,
     "HumanWinReward": 3,
     "ZombieWinReward": 2,
     "ParticipationReward": 1
