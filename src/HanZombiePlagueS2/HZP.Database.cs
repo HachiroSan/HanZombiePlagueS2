@@ -46,4 +46,24 @@ public sealed class HZPDatabaseService(HZPDatabaseRepository repository)
     {
         return repository.TrySpendCurrencyAsync(steamId, amount, reason, cancellationToken);
     }
+
+    public Task AddBanAsync(HZPBanCreateRequest request, CancellationToken cancellationToken = default)
+    {
+        return repository.AddBanAsync(request, cancellationToken);
+    }
+
+    public Task<HZPBanRecord?> FindActiveBanAsync(ulong steamId, string? playerIp, string scopeKey, CancellationToken cancellationToken = default)
+    {
+        return repository.FindActiveBanAsync(steamId, playerIp, scopeKey, cancellationToken);
+    }
+
+    public Task<int> ExpireBansBySteamIdAsync(ulong steamId, string scopeKey, bool globalOnly, CancellationToken cancellationToken = default)
+    {
+        return repository.ExpireBansBySteamIdAsync(steamId, scopeKey, globalOnly, cancellationToken);
+    }
+
+    public Task<int> ExpireBansByIpAsync(string playerIp, string scopeKey, bool globalOnly, CancellationToken cancellationToken = default)
+    {
+        return repository.ExpireBansByIpAsync(playerIp, scopeKey, globalOnly, cancellationToken);
+    }
 }

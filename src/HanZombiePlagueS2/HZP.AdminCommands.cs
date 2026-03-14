@@ -8,6 +8,7 @@ public sealed partial class HZPAdminCommands(
     HZPHelpers helpers,
     HZPPermissionService permissionService,
     IHanZombiePlagueAPI api,
+    HZPBanService banService,
     HZPEconomyService economyService,
     IOptionsMonitor<HZPMainCFG> mainCFG,
     IOptionsMonitor<HZPStoreCFG> storeCFG)
@@ -38,6 +39,14 @@ public sealed partial class HZPAdminCommands(
     private const string ZombieWinCommandName = "hzp_zombiewin";
     private const string CheckRoundCommandName = "hzp_checkround";
     private const string RestartRoundCommandName = "hzp_restartround";
+    private const string BanCommandName = "hzp_ban";
+    private const string GlobalBanCommandName = "hzp_globalban";
+    private const string BanIpCommandName = "hzp_banip";
+    private const string GlobalBanIpCommandName = "hzp_globalbanip";
+    private const string UnbanCommandName = "hzp_unban";
+    private const string GlobalUnbanCommandName = "hzp_globalunban";
+    private const string UnbanIpCommandName = "hzp_unbanip";
+    private const string GlobalUnbanIpCommandName = "hzp_globalunbanip";
 
     public void RegisterCommands()
     {
@@ -67,5 +76,13 @@ public sealed partial class HZPAdminCommands(
         core.Command.RegisterCommand(ZombieWinCommandName, ZombieWinCommand);
         core.Command.RegisterCommand(CheckRoundCommandName, CheckRoundCommand);
         core.Command.RegisterCommand(RestartRoundCommandName, RestartRoundCommand);
+        core.Command.RegisterCommand(BanCommandName, BanCommand);
+        core.Command.RegisterCommand(GlobalBanCommandName, GlobalBanCommand);
+        core.Command.RegisterCommand(BanIpCommandName, BanIpCommand);
+        core.Command.RegisterCommand(GlobalBanIpCommandName, GlobalBanIpCommand);
+        core.Command.RegisterCommand(UnbanCommandName, UnbanCommand);
+        core.Command.RegisterCommand(GlobalUnbanCommandName, GlobalUnbanCommand);
+        core.Command.RegisterCommand(UnbanIpCommandName, UnbanIpCommand);
+        core.Command.RegisterCommand(GlobalUnbanIpCommandName, GlobalUnbanIpCommand);
     }
 }

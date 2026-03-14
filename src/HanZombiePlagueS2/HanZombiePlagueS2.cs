@@ -128,9 +128,14 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
             .AddOptionsWithValidateOnStart<HZPDatabaseConfig>()
             .BindConfiguration("HZPDatabaseCFG");
 
+        collection
+            .AddOptionsWithValidateOnStart<HZPBanCFG>()
+            .BindConfiguration("HZPBanCFG");
+
         collection.AddSingleton<HZPGlobals>();
         collection.AddSingleton<HZPDatabaseRepository>();
         collection.AddSingleton<HZPDatabaseService>();
+        collection.AddSingleton<HZPBanService>();
         collection.AddSingleton<HZPEconomyState>();
         collection.AddSingleton<HZPEconomyService>();
         collection.AddSingleton<HZPEvents>();

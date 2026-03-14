@@ -20,6 +20,22 @@ public sealed partial class HZPAdminCommands
         return false;
     }
 
+    private bool HasRestrictedAdminAccess(ICommandContext context, params string[] permissions)
+    {
+        if (!context.IsSentByPlayer)
+            return true;
+
+        if (permissions.Any(permission => permissionService.HasPermission(context.Sender!, permission)))
+            return true;
+
+        string adminMenuPermissions = mainCFG.CurrentValue.AdminMenuPermission;
+        if (!string.IsNullOrWhiteSpace(adminMenuPermissions) && permissionService.HasAnyPermission(context.Sender!, adminMenuPermissions))
+            return true;
+
+        helpers.SendChatT(context.Sender, "NoPermission");
+        return false;
+    }
+
     private bool RequirePlayerSender(ICommandContext context)
     {
         if (context.IsSentByPlayer)
@@ -53,6 +69,37 @@ public sealed partial class HZPAdminCommands
             return true;
 
         ReplySyntax(context, commandName, syntax);
+        return false;
+    }
+
+    private bool TryParseSteamId(ICommandContext context, string value, string commandName, string syntax, out ulong steamId)
+    {
+        if (ulong.TryParse(value, out steamId) && steamId != 0)
+            return true;
+
+        ReplySyntax(context, commandName, syntax);
+        return false;
+    }
+
+    private bool TryParseDuration(ICommandContext context, string value, string commandName, string syntax, out TimeSpan duration)
+    {
+        if (HZPBanDurationParser.TryParse(value, out duration))
+            return true;
+
+        Reply(context, "AdminBanInvalidDuration", value, commandName, syntax);
+        return false;
+    }
+
+    private bool TryParseIpAddress(ICommandContext context, string value, string commandName, string syntax, out string ipAddress)
+    {
+        if (System.Net.IPAddress.TryParse(value, out var address))
+        {
+            ipAddress = address.ToString();
+            return true;
+        }
+
+        ipAddress = string.Empty;
+        Reply(context, "AdminBanInvalidIp", value, commandName, syntax);
         return false;
     }
 

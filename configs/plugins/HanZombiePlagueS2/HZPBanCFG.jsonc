@@ -1,0 +1,7 @@
+{
+  "HZPBanCFG": {
+    "Enable": true,
+    "ServerScope": "default",
+    "ConnectCheckDelaySeconds": 0.25
+  }
+}

@@ -182,12 +182,21 @@ https://www.bilibili.com/video/BV1c3cJzrEWn
 - `!hzp_zombiewin` / `sw_hzp_zombiewin`：在有效回合内强制判定丧尸胜利。
 - `!hzp_checkround` / `sw_hzp_checkround`：在有效回合内重新检查 HZP 胜利条件。
 - `!hzp_restartround` / `sw_hzp_restartround`：触发 HZP 自身的回合重开流程。
+- `!hzp_ban` / `sw_hzp_ban`：在 HZP 封禁系统中封禁在线玩家或离线 SteamID。
+- `!hzp_globalban` / `sw_hzp_globalban`：对在线玩家或离线 SteamID 执行全局封禁。
+- `!hzp_banip` / `sw_hzp_banip`：封禁在线玩家 IP 或直接封禁指定 IP。
+- `!hzp_globalbanip` / `sw_hzp_globalbanip`：执行全局 IP 封禁。
+- `!hzp_unban` / `sw_hzp_unban`：移除本服有效 SteamID 封禁。
+- `!hzp_globalunban` / `sw_hzp_globalunban`：移除全局有效 SteamID 封禁。
+- `!hzp_unbanip` / `sw_hzp_unbanip`：移除本服有效 IP 封禁。
+- `!hzp_globalunbanip` / `sw_hzp_globalunbanip`：移除全局有效 IP 封禁。
 
 ## 权限说明
 
 - HanZombiePlagueS2 只检查 Swiftly 权限，本体不依赖外部 `Admins` 插件源码或运行时接口。
 - 默认管理员菜单权限：`configs/plugins/HanZombiePlagueS2/HZPMainCFG.jsonc` 中的 `hzp.adminmenu`。
 - 内置的 `hzp_*` 管理员工具指令与管理员道具菜单共用同一个 `AdminMenuPermission` 权限门槛。
+- 封禁管理可单独授予权限：`hzp.admin.ban`、`hzp.admin.ban.global`、`hzp.admin.unban`、`hzp.admin.unban.global`。
 - 预留给未来 VIP 功能的宽权限：`hzp.vip`。
 - 这些权限既可以在 `addons/swiftlys2/configs/permissions.jsonc` 中直接分配，也可以由外部管理员/分组插件来授予，只要最终写入 Swiftly 权限系统即可。
 
@@ -203,7 +212,14 @@ https://www.bilibili.com/video/BV1c3cJzrEWn
     },
     "PermissionGroups": {
       "hzp_admin": [
-        "hzp.adminmenu"
+        "hzp.adminmenu",
+        "hzp.admin.ban",
+        "hzp.admin.unban"
+      ],
+      "hzp_owner": [
+        "hzp_admin",
+        "hzp.admin.ban.global",
+        "hzp.admin.unban.global"
       ],
       "hzp_vip": [
         "hzp.vip"

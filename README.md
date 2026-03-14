@@ -193,12 +193,21 @@ After installation, load the map or reload the plugin if necessary. Check server
 - `!hzp_zombiewin` / `sw_hzp_zombiewin`: Force an immediate zombie victory during an active round.
 - `!hzp_checkround` / `sw_hzp_checkround`: Re-check HZP round win conditions during an active round.
 - `!hzp_restartround` / `sw_hzp_restartround`: Trigger the HZP round restart flow.
+- `!hzp_ban` / `sw_hzp_ban`: Ban an online player or offline SteamID in the HZP ban system.
+- `!hzp_globalban` / `sw_hzp_globalban`: Apply a global HZP ban to an online player or offline SteamID.
+- `!hzp_banip` / `sw_hzp_banip`: Ban an online player IP or a raw IP address.
+- `!hzp_globalbanip` / `sw_hzp_globalbanip`: Apply a global IP ban.
+- `!hzp_unban` / `sw_hzp_unban`: Remove active local SteamID bans.
+- `!hzp_globalunban` / `sw_hzp_globalunban`: Remove active global SteamID bans.
+- `!hzp_unbanip` / `sw_hzp_unbanip`: Remove active local IP bans.
+- `!hzp_globalunbanip` / `sw_hzp_globalunbanip`: Remove active global IP bans.
 
 ## Permissions
 
 - HanZombiePlagueS2 only checks Swiftly permissions and does not require the external `Admins` plugin as a source or runtime dependency.
 - Default admin-menu permission: `hzp.adminmenu` from `configs/plugins/HanZombiePlagueS2/HZPMainCFG.jsonc`.
 - The built-in `hzp_*` admin utility commands reuse the same `AdminMenuPermission` gate as the admin item menu.
+- Ban management can use dedicated permissions: `hzp.admin.ban`, `hzp.admin.ban.global`, `hzp.admin.unban`, `hzp.admin.unban.global`.
 - Reserved broad VIP permission for future use: `hzp.vip`.
 - You can grant these permissions from either `addons/swiftlys2/configs/permissions.jsonc` or any external admin/group plugin that writes Swiftly permissions.
 
@@ -214,7 +223,14 @@ Example `permissions.jsonc` setup:
     },
     "PermissionGroups": {
       "hzp_admin": [
-        "hzp.adminmenu"
+        "hzp.adminmenu",
+        "hzp.admin.ban",
+        "hzp.admin.unban"
+      ],
+      "hzp_owner": [
+        "hzp_admin",
+        "hzp.admin.ban.global",
+        "hzp.admin.unban.global"
       ],
       "hzp_vip": [
         "hzp.vip"

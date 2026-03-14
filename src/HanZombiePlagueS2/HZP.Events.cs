@@ -41,6 +41,7 @@ public partial class HZPEvents
     private readonly HZPLoadoutMenu _loadoutMenu;
     private readonly HZPStoreState _storeState;
     private readonly HZPEconomyService _economyService;
+    private readonly HZPBanService _banService;
     private readonly HZPBroadcastService _broadcastService;
     private readonly HZPMapVoteService _mapVoteService;
 
@@ -56,6 +57,7 @@ public partial class HZPEvents
         HZPLoadoutMenu loadoutMenu,
         HZPStoreState storeState,
         HZPEconomyService economyService,
+        HZPBanService banService,
         HZPBroadcastService broadcastService,
         HZPMapVoteService mapVoteService,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
@@ -77,6 +79,7 @@ public partial class HZPEvents
         _loadoutMenu = loadoutMenu;
         _storeState = storeState;
         _economyService = economyService;
+        _banService = banService;
         _broadcastService = broadcastService;
         _mapVoteService = mapVoteService;
         _SpecialClassCFG = specialClassCFG;
@@ -936,10 +939,15 @@ public partial class HZPEvents
 
         _globals.IsZombie[id] = _globals.GameStart;
 
-        _core.Scheduler.DelayBySeconds(1.0f, () =>
+        _core.Scheduler.DelayBySeconds(_banService.ConnectCheckDelaySeconds, async () =>
         {
             var player = _core.PlayerManager.GetPlayer(id);
             if (player == null || !player.IsValid || player.SteamID == 0)
+            {
+                return;
+            }
+
+            if (await _banService.EnforceBanAsync(player))
             {
                 return;
             }

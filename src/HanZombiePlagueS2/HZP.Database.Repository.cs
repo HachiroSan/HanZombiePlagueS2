@@ -23,6 +23,7 @@ public sealed class HZPDatabaseRepository(
     private const string PlayerStatsTable = "player_stats";
     private const string PlayerCurrencyTable = "player_currency";
     private const string PlayerCurrencyLedgerTable = "player_currency_ledger";
+    private const string PlayerBansTable = "hzp_bans";
 
     public async Task EnsureSchemaAsync(CancellationToken cancellationToken = default)
     {
@@ -261,6 +262,102 @@ public sealed class HZPDatabaseRepository(
         }
     }
 
+    public async Task AddBanAsync(HZPBanCreateRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        using var connection = CreateConnection();
+        var dialect = GetDialect(connection);
+        var sql = GetInsertBanSql(dialect);
+
+        await OpenAsync(connection, cancellationToken);
+        await connection.ExecuteAsync(new CommandDefinition(
+            sql,
+            new
+            {
+                request.SteamId64,
+                PlayerName = TrimOrNull(request.PlayerName, 128) ?? "Unknown",
+                PlayerIp = TrimOrNull(request.PlayerIp, 64) ?? string.Empty,
+                BanType = (int)request.BanType,
+                request.ExpiresAt,
+                request.Length,
+                Reason = TrimOrNull(request.Reason, 255) ?? "Unspecified",
+                request.AdminSteamId64,
+                AdminName = TrimOrNull(request.AdminName, 128) ?? "Console",
+                ScopeKey = TrimOrNull(request.ScopeKey, 64) ?? "default",
+                request.GlobalBan
+            },
+            cancellationToken: cancellationToken));
+    }
+
+    public async Task<HZPBanRecord?> FindActiveBanAsync(ulong steamId, string? playerIp, string scopeKey, CancellationToken cancellationToken = default)
+    {
+        if (steamId == 0 && string.IsNullOrWhiteSpace(playerIp))
+        {
+            return null;
+        }
+
+        using var connection = CreateConnection();
+        var sql = GetFindActiveBanSql(GetDialect(connection));
+
+        await OpenAsync(connection, cancellationToken);
+        return await connection.QuerySingleOrDefaultAsync<HZPBanRecord>(new CommandDefinition(
+            sql,
+            new
+            {
+                SteamId64 = (long)steamId,
+                PlayerIp = TrimOrNull(playerIp, 64) ?? string.Empty,
+                ScopeKey = TrimOrNull(scopeKey, 64) ?? "default",
+                NowUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                BanTypeSteamId = (int)HZPBanType.SteamId,
+                BanTypeIp = (int)HZPBanType.IP
+            },
+            cancellationToken: cancellationToken));
+    }
+
+    public async Task<int> ExpireBansBySteamIdAsync(ulong steamId, string scopeKey, bool globalOnly, CancellationToken cancellationToken = default)
+    {
+        if (steamId == 0)
+        {
+            return 0;
+        }
+
+        using var connection = CreateConnection();
+        return await ExpireBansAsync(
+            connection,
+            GetExpireBansBySteamIdSql(GetDialect(connection), globalOnly),
+            new
+            {
+                SteamId64 = (long)steamId,
+                ScopeKey = TrimOrNull(scopeKey, 64) ?? "default",
+                NowUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                BanType = (int)HZPBanType.SteamId
+            },
+            cancellationToken);
+    }
+
+    public async Task<int> ExpireBansByIpAsync(string playerIp, string scopeKey, bool globalOnly, CancellationToken cancellationToken = default)
+    {
+        string ip = TrimOrNull(playerIp, 64) ?? string.Empty;
+        if (ip.Length == 0)
+        {
+            return 0;
+        }
+
+        using var connection = CreateConnection();
+        return await ExpireBansAsync(
+            connection,
+            GetExpireBansByIpSql(GetDialect(connection), globalOnly),
+            new
+            {
+                PlayerIp = ip,
+                ScopeKey = TrimOrNull(scopeKey, 64) ?? "default",
+                NowUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                BanType = (int)HZPBanType.IP
+            },
+            cancellationToken);
+    }
+
     private HZPDatabaseConfig CurrentConfig => configMonitor.CurrentValue;
 
     private IDbConnection CreateConnection()
@@ -334,6 +431,36 @@ public sealed class HZPDatabaseRepository(
                 $"""
                 CREATE INDEX IF NOT EXISTS idx_player_currency_ledger_steam_id
                     ON {PlayerCurrencyLedgerTable} (steam_id)
+                """,
+                $"""
+                CREATE TABLE IF NOT EXISTS {PlayerBansTable} (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    steam_id INTEGER NOT NULL DEFAULT 0,
+                    player_name TEXT NOT NULL,
+                    player_ip TEXT NOT NULL,
+                    ban_type INTEGER NOT NULL,
+                    expires_at INTEGER NOT NULL,
+                    length_ms INTEGER NOT NULL,
+                    reason TEXT NOT NULL,
+                    admin_steam_id INTEGER NOT NULL DEFAULT 0,
+                    admin_name TEXT NOT NULL,
+                    scope_key TEXT NOT NULL,
+                    global_ban INTEGER NOT NULL DEFAULT 0,
+                    created_utc TEXT NOT NULL,
+                    updated_utc TEXT NOT NULL
+                )
+                """,
+                $"""
+                CREATE INDEX IF NOT EXISTS idx_hzp_bans_steam_id
+                    ON {PlayerBansTable} (steam_id)
+                """,
+                $"""
+                CREATE INDEX IF NOT EXISTS idx_hzp_bans_player_ip
+                    ON {PlayerBansTable} (player_ip)
+                """,
+                $"""
+                CREATE INDEX IF NOT EXISTS idx_hzp_bans_scope_expiry
+                    ON {PlayerBansTable} (scope_key, global_ban, expires_at)
                 """
             ],
             _ =>
@@ -383,6 +510,27 @@ public sealed class HZPDatabaseRepository(
                     amount INT NOT NULL,
                     created_utc DATETIME(6) NOT NULL,
                     KEY idx_player_currency_ledger_steam_id (steam_id)
+                )
+                """,
+                $"""
+                CREATE TABLE IF NOT EXISTS {PlayerBansTable} (
+                    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    steam_id BIGINT NOT NULL DEFAULT 0,
+                    player_name VARCHAR(128) NOT NULL,
+                    player_ip VARCHAR(64) NOT NULL,
+                    ban_type INT NOT NULL,
+                    expires_at BIGINT NOT NULL,
+                    length_ms BIGINT NOT NULL,
+                    reason VARCHAR(255) NOT NULL,
+                    admin_steam_id BIGINT NOT NULL DEFAULT 0,
+                    admin_name VARCHAR(128) NOT NULL,
+                    scope_key VARCHAR(64) NOT NULL,
+                    global_ban TINYINT(1) NOT NULL DEFAULT 0,
+                    created_utc DATETIME(6) NOT NULL,
+                    updated_utc DATETIME(6) NOT NULL,
+                    KEY idx_hzp_bans_steam_id (steam_id),
+                    KEY idx_hzp_bans_player_ip (player_ip),
+                    KEY idx_hzp_bans_scope_expiry (scope_key, global_ban, expires_at)
                 )
                 """
             ]
@@ -558,6 +706,132 @@ public sealed class HZPDatabaseRepository(
         };
     }
 
+    private static string GetInsertBanSql(SqlDialect dialect)
+    {
+        return dialect switch
+        {
+            SqlDialect.Sqlite => $"""
+                INSERT INTO {PlayerBansTable} (
+                    steam_id,
+                    player_name,
+                    player_ip,
+                    ban_type,
+                    expires_at,
+                    length_ms,
+                    reason,
+                    admin_steam_id,
+                    admin_name,
+                    scope_key,
+                    global_ban,
+                    created_utc,
+                    updated_utc)
+                VALUES (
+                    @SteamId64,
+                    @PlayerName,
+                    @PlayerIp,
+                    @BanType,
+                    @ExpiresAt,
+                    @Length,
+                    @Reason,
+                    @AdminSteamId64,
+                    @AdminName,
+                    @ScopeKey,
+                    @GlobalBan,
+                    CURRENT_TIMESTAMP,
+                    CURRENT_TIMESTAMP)
+                """,
+            _ => $"""
+                INSERT INTO {PlayerBansTable} (
+                    steam_id,
+                    player_name,
+                    player_ip,
+                    ban_type,
+                    expires_at,
+                    length_ms,
+                    reason,
+                    admin_steam_id,
+                    admin_name,
+                    scope_key,
+                    global_ban,
+                    created_utc,
+                    updated_utc)
+                VALUES (
+                    @SteamId64,
+                    @PlayerName,
+                    @PlayerIp,
+                    @BanType,
+                    @ExpiresAt,
+                    @Length,
+                    @Reason,
+                    @AdminSteamId64,
+                    @AdminName,
+                    @ScopeKey,
+                    @GlobalBan,
+                    UTC_TIMESTAMP(6),
+                    UTC_TIMESTAMP(6))
+                """
+        };
+    }
+
+    private static string GetFindActiveBanSql(SqlDialect dialect)
+    {
+        string limit = dialect == SqlDialect.Sqlite ? "LIMIT 1" : "LIMIT 1";
+        return $"""
+            SELECT
+                id AS Id,
+                steam_id AS SteamId64,
+                player_name AS PlayerName,
+                player_ip AS PlayerIp,
+                ban_type AS BanType,
+                expires_at AS ExpiresAt,
+                length_ms AS Length,
+                reason AS Reason,
+                admin_steam_id AS AdminSteamId64,
+                admin_name AS AdminName,
+                scope_key AS ScopeKey,
+                global_ban AS GlobalBan,
+                created_utc AS CreatedUtc,
+                updated_utc AS UpdatedUtc
+            FROM {PlayerBansTable}
+            WHERE (
+                    (ban_type = @BanTypeSteamId AND steam_id = @SteamId64)
+                 OR (@PlayerIp <> '' AND ban_type = @BanTypeIp AND player_ip = @PlayerIp)
+                )
+              AND (expires_at = 0 OR expires_at > @NowUnixMs)
+              AND (global_ban = 1 OR scope_key = @ScopeKey)
+            ORDER BY global_ban DESC, created_utc DESC
+            {limit};
+            """;
+    }
+
+    private static string GetExpireBansBySteamIdSql(SqlDialect dialect, bool globalOnly)
+    {
+        return GetExpireBanSql(dialect, globalOnly, "steam_id = @SteamId64");
+    }
+
+    private static string GetExpireBansByIpSql(SqlDialect dialect, bool globalOnly)
+    {
+        return GetExpireBanSql(dialect, globalOnly, "player_ip = @PlayerIp");
+    }
+
+    private static string GetExpireBanSql(SqlDialect dialect, bool globalOnly, string targetClause)
+    {
+        string timeExpression = dialect == SqlDialect.Sqlite ? "CURRENT_TIMESTAMP" : "UTC_TIMESTAMP(6)";
+        string scopeClause = globalOnly
+            ? "global_ban = 1"
+            : "global_ban = 0 AND scope_key = @ScopeKey";
+
+        return $"""
+            UPDATE {PlayerBansTable}
+            SET expires_at = @NowUnixMs,
+                updated_utc = {timeExpression}
+            WHERE {targetClause}
+              AND ban_type = @BanType
+              AND (expires_at = 0 OR expires_at > @NowUnixMs)
+              AND {scopeClause}
+            """;
+    }
+
     private static string? TrimOrNull(string? value, int maxLength)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -604,6 +878,12 @@ public sealed class HZPDatabaseRepository(
     private DbConnection CreateDbConnection()
     {
         return (DbConnection)CreateConnection();
+    }
+
+    private static async Task<int> ExpireBansAsync(IDbConnection connection, string sql, object parameters, CancellationToken cancellationToken)
+    {
+        await OpenAsync(connection, cancellationToken);
+        return await connection.ExecuteAsync(new CommandDefinition(sql, parameters, cancellationToken: cancellationToken));
     }
 
     private static async Task EnsureCurrencyRowAsync(DbConnection connection, DbTransaction transaction, SqlDialect dialect, ulong steamId, CancellationToken cancellationToken)
