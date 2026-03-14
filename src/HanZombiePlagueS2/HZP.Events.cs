@@ -1248,9 +1248,12 @@ public partial class HZPEvents
         if(_helpers.CheckIsGrenade(activeWeapon))
             return HookResult.Continue;
 
-        if (CFG.EnableInfiniteReserveAmmo && activeWeapon.ReserveAmmo[0] < 1000)
+        if (CFG.EnableInfiniteReserveAmmo)
         {
-            activeWeapon.ReserveAmmo[0] = 1000;
+            if (activeWeapon.ReserveAmmo[0] < 100)
+            {
+                activeWeapon.ReserveAmmo[0] = 1000;
+            }
         }
 
         if (_globals.GameInfiniteClipMode)
