@@ -599,6 +599,22 @@ public partial class HZPEvents
         if (attacker != null && attacker.IsValid)
         {
             _playerDataService.RecordKill(attacker, player);
+
+            if (_globals.GameStart)
+            {
+                _globals.IsZombie.TryGetValue(Id, out bool isVictimZombie_KillNotify);
+                _globals.IsZombie.TryGetValue(attacker.PlayerID, out bool attackerIsZombie);
+
+                if (isVictimZombie_KillNotify && !attackerIsZombie)
+                {
+                    var zombieConfig = _zombieClassCFG.CurrentValue;
+                    var specialConfig = _SpecialClassCFG.CurrentValue;
+                    var zombieClass = _zombieState.GetZombieClass(Id, zombieConfig.ZombieClassList, specialConfig.SpecialClassList);
+                    var className = zombieClass?.Name ?? _zombieState.GetPlayerZombieClass(Id) ?? "Unknown";
+
+                    _helpers.SendChatT(attacker, "KillNotifyZombieClass", className);
+                }
+            }
         }
 
         _helpers.ClearPlayerBurn(Id);
@@ -610,14 +626,11 @@ public partial class HZPEvents
         _globals.GodState.Remove(Id);
         _globals.InfiniteAmmoState.Remove(Id);
 
-
-
-
         if (!_globals.GameStart)
             return HookResult.Continue;
 
-        _globals.IsZombie.TryGetValue(Id, out bool IsZombie);
-        if (IsZombie && _gameMode.CanZombieReborn())
+        _globals.IsZombie.TryGetValue(Id, out bool isVictimZombie_Spawn);
+        if (isVictimZombie_Spawn && _gameMode.CanZombieReborn())
         {
 
             var zombieClasses = _zombieClassCFG.CurrentValue.ZombieClassList;
@@ -628,7 +641,7 @@ public partial class HZPEvents
                 player.Respawn();
             });
         }
-        if (!IsZombie && _gameMode.CanZombieReborn())
+        if (!isVictimZombie_Spawn && _gameMode.CanZombieReborn())
         {
             _core.Scheduler.DelayBySeconds(1.0f, () =>
             {
