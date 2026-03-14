@@ -186,6 +186,18 @@ After installation, load the map or use the command to reload the plugin if nece
 - `!hzp_hero` / `sw_hzp_hero`: Turn living humans into Hero.
 - `!hzp_survivor` / `sw_hzp_survivor`: Turn living humans into Survivor.
 - `!hzp_sniper` / `sw_hzp_sniper`: Turn living humans into Sniper.
+- `!hzp_cash_add` / `sw_hzp_cash_add`: Add HZP cash to target players.
+- `!hzp_cash_set` / `sw_hzp_cash_set`: Set HZP cash balance for target players.
+- `!hzp_tvaccine` / `sw_hzp_tvaccine`: Give a T-Virus Antidote to eligible zombies.
+- `!hzp_scba` / `sw_hzp_scba`: Equip an eligible human with a Hazmat Suit.
+- `!hzp_god` / `sw_hzp_god`: Grant God Mode to a living player, optionally with custom seconds.
+- `!hzp_infiniteammo` / `sw_hzp_infiniteammo`: Grant Infinite Ammo to an eligible human, optionally with custom seconds.
+- `!hzp_tvirusgrenade` / `sw_hzp_tvirusgrenade`: Give a Virus Grenade to an eligible zombie.
+- `!hzp_addhealth` / `sw_hzp_addhealth`: Give bonus HP to an eligible human, optionally with a custom amount.
+- `!hzp_humanwin` / `sw_hzp_humanwin`: Force an immediate human victory during an active round.
+- `!hzp_zombiewin` / `sw_hzp_zombiewin`: Force an immediate zombie victory during an active round.
+- `!hzp_checkround` / `sw_hzp_checkround`: Re-check HZP round win conditions during an active round.
+- `!hzp_restartround` / `sw_hzp_restartround`: Trigger the HZP round restart flow.
 
 ## Permissions
 

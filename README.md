@@ -170,6 +170,18 @@ https://www.bilibili.com/video/BV1c3cJzrEWn
 - `!hzp_hero` / `sw_hzp_hero`：将存活的人类变成英雄。
 - `!hzp_survivor` / `sw_hzp_survivor`：将存活的人类变成幸存者。
 - `!hzp_sniper` / `sw_hzp_sniper`：将存活的人类变成狙击手。
+- `!hzp_cash_add` / `sw_hzp_cash_add`：为目标玩家增加 HZP 现金。
+- `!hzp_cash_set` / `sw_hzp_cash_set`：将目标玩家的 HZP 现金设置为指定数值。
+- `!hzp_tvaccine` / `sw_hzp_tvaccine`：向符合条件的丧尸发放 T 病毒解药。
+- `!hzp_scba` / `sw_hzp_scba`：为符合条件的人类装备防化服。
+- `!hzp_god` / `sw_hzp_god`：给予存活玩家无敌效果，可选自定义持续秒数。
+- `!hzp_infiniteammo` / `sw_hzp_infiniteammo`：给予符合条件的人类无限子弹，可选自定义持续秒数。
+- `!hzp_tvirusgrenade` / `sw_hzp_tvirusgrenade`：向符合条件的丧尸发放病毒手雷。
+- `!hzp_addhealth` / `sw_hzp_addhealth`：为符合条件的人类增加血量，可选自定义数值。
+- `!hzp_humanwin` / `sw_hzp_humanwin`：在有效回合内强制判定人类胜利。
+- `!hzp_zombiewin` / `sw_hzp_zombiewin`：在有效回合内强制判定丧尸胜利。
+- `!hzp_checkround` / `sw_hzp_checkround`：在有效回合内重新检查 HZP 胜利条件。
+- `!hzp_restartround` / `sw_hzp_restartround`：触发 HZP 自身的回合重开流程。
 
 ## 权限说明
 
