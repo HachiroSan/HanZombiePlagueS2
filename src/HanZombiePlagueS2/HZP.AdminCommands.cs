@@ -47,6 +47,8 @@ public sealed partial class HZPAdminCommands(
     private const string GlobalUnbanCommandName = "hzp_globalunban";
     private const string UnbanIpCommandName = "hzp_unbanip";
     private const string GlobalUnbanIpCommandName = "hzp_globalunbanip";
+    private const string SlayCommandName = "hzp_slay";
+    private const string SlapCommandName = "hzp_slap";
 
     public void RegisterCommands()
     {
@@ -84,5 +86,7 @@ public sealed partial class HZPAdminCommands(
         core.Command.RegisterCommand(GlobalUnbanCommandName, GlobalUnbanCommand);
         core.Command.RegisterCommand(UnbanIpCommandName, UnbanIpCommand);
         core.Command.RegisterCommand(GlobalUnbanIpCommandName, GlobalUnbanIpCommand);
+        core.Command.RegisterCommand(SlayCommandName, SlayCommand);
+        core.Command.RegisterCommand(SlapCommandName, SlapCommand);
     }
 }
