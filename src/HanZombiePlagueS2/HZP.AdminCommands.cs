@@ -6,6 +6,7 @@ namespace HanZombiePlagueS2;
 public sealed partial class HZPAdminCommands(
     ISwiftlyCore core,
     HZPHelpers helpers,
+    HZPGlobals globals,
     HZPPermissionService permissionService,
     IHanZombiePlagueAPI api,
     HZPBanService banService,
@@ -39,6 +40,8 @@ public sealed partial class HZPAdminCommands(
     private const string ZombieWinCommandName = "hzp_zombiewin";
     private const string CheckRoundCommandName = "hzp_checkround";
     private const string RestartRoundCommandName = "hzp_restartround";
+    private const string MinPlayersCommandName = "hzp_minplayers";
+    private const string BotQuotaCommandName = "hzp_botquota";
     private const string BanCommandName = "hzp_ban";
     private const string GlobalBanCommandName = "hzp_globalban";
     private const string BanIpCommandName = "hzp_banip";
@@ -78,6 +81,8 @@ public sealed partial class HZPAdminCommands(
         core.Command.RegisterCommand(ZombieWinCommandName, ZombieWinCommand);
         core.Command.RegisterCommand(CheckRoundCommandName, CheckRoundCommand);
         core.Command.RegisterCommand(RestartRoundCommandName, RestartRoundCommand);
+        core.Command.RegisterCommand(MinPlayersCommandName, MinPlayersCommand);
+        core.Command.RegisterCommand(BotQuotaCommandName, BotQuotaCommand);
         core.Command.RegisterCommand(BanCommandName, BanCommand);
         core.Command.RegisterCommand(GlobalBanCommandName, GlobalBanCommand);
         core.Command.RegisterCommand(BanIpCommandName, BanIpCommand);

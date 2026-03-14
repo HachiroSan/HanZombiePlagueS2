@@ -43,16 +43,25 @@ public partial class HZPHelpers
 
     public int? ServerPlayerCount()
     {
+        return GetEligibleParticipantCount(includeBots: true);
+    }
+
+    public int GetEligibleParticipantCount(bool includeBots)
+    {
         var allplayer = _core.PlayerManager.GetAllPlayers();
-        var list = new List<IPlayer>();
+        int count = 0;
         foreach (var player in allplayer)
         {
             if (player == null || !player.IsValid)
                 continue;
 
-            list.Add(player);
+            if (!includeBots && player.IsFakeClient)
+                continue;
+
+            count++;
         }
-        return list.Count;
+
+        return count;
     }
 
     public void DropAllWeapon(IPlayer p)

@@ -1,252 +1,244 @@
 {
-  "HZPMainCFG": {
-	"RoundReadyTime": "22.0",
-	"RoundTime": "4.0",
-	"NormalInfection": 
-	{
-		"Enable": true,
-		"Name": "Infection Mode",
-		"MotherZombieNames": "Primordial",
-		"MotherZombieCount": 1,
-		"Weight": 1800,
-		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": false,
-		"Rewards": {
-			"InfectionReward": 2,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 0,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"MultiInfection": 
-	{
-		"Enable": true,
-		"Name": "Multi Infection Mode",
-		"MotherZombieNames": "Primordial",
-		"MotherZombieCount": 5,
-		"Weight": 50,
-		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true,
-		"Rewards": {
-			"InfectionReward": 2,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 0,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"Nemesis": 
-	{
-		"Enable": true,
-		"Name": "Nemesis Mode",
-		"NemesisNames": "Nemesis",
-		"Weight": 50,
-		"EnableInfiniteClipMode": true,
-		"ZombieCanReborn": true,
-		"Rewards": {
-			"InfectionReward": 0,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 2,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"Survivor": 
-	{
-		"Enable": true,
-		"Name": "Survivor Mode",
-		"Weight": 50,
-		"SurvivorNames": "Survivor",
-		"SurvivorHealth": 1000,
-		"SurvivorSpeed": 3.0,
-		"SurvivorGravity": 0.5,
-		"SurvivorDamage": 5.0,
-		"SurvivorWeapon": "weapon_m249",
-		"CustomWeaponName": "Survivor M249",
-		"ModelsPath": "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl",
-		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": false,
-		"Rewards": {
-			"InfectionReward": 0,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 2,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"Swarm": 
-	{
-		"Enable": true,
-		"Name": "Swarm Mode",
-		"Weight": 50,
-		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": false,
-		"Rewards": {
-			"InfectionReward": 0,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 2,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"Plague": 
-	{
-		"Enable": true,
-		"Name": "Plague Mode",
-		"Weight": 50,
-		"NemesisNames": "Nemesis",
-		"SurvivorNames": "Survivor",
-		"EnableInfiniteClipMode": true,
-		"ZombieCanReborn": true,
-		"Rewards": {
-			"InfectionReward": 0,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 2,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"Assassin": 
-	{
-		"Enable": true,
-		"Name": "Assassin Mode",
-		"Weight": 50,
-		"AssassinNames": "Shadow Reaper",
-		"InvisibilityDist": 200.0,
-		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true,
-		"Rewards": {
-			"InfectionReward": 0,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 2,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"Sniper": 
-	{
-		"Enable": true,
-		"Name": "Sniper Mode",
-		"Weight": 50,
-		"SniperNames": "Sniper",
-		"SniperHealth": 500,
-		"SniperSpeed": 3.0,
-		"SniperGravity": 0.6,
-		"SniperDamage": 10.0,
-		"SniperWeapon": "weapon_awp",
-		"CustomWeaponName": "Sniper Hero AWP",
-		"ModelsPath": "characters/models/tm_professional/tm_professional_varf4.vmdl",
-		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true,
-		"Rewards": {
-			"InfectionReward": 0,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 2,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"AVS": 
-	{
-		"Enable": true,
-		"Name": "Sniper vs Assassin",
-		"Weight": 50,
-		"AssassinNames": "Shadow Reaper",
-		"SniperNames": "Sniper",
-		"EnableInfiniteClipMode": true,
-		"ZombieCanReborn": true,
-		"Rewards": {
-			"InfectionReward": 0,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 2,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"Hero": 
-	{
-		"Enable": true,
-		"Name": "Hero Mode",
-		"Weight": 50,
-		"HeroCount": 3,
-		"HeroNames": "Hero",
-		"HeroHealth": 1500,
-		"HeroSpeed": 3.0,
-		"HeroGravity": 0.4,
-		"HeroDamage": 50.0,
-		"ModelsPath": "characters/models/ctm_heavy/ctm_heavy.vmdl",
-		"EnableInfiniteClipMode": false,
-		"ZombieCanReborn": true,
-		"Rewards": {
-			"InfectionReward": 2,
-			"HumanKillZombieReward": 5,
-			"ZombieKillHumanReward": 0,
-			"ParticipationReward": 1,
-			"HumanWinReward": 3,
-			"ZombieWinReward": 2
-		}
-	},
-	"HumandefaultModel": "characters/models/ctm_st6/ctm_st6_variante.vmdl",
-	"HumanMaxHealth": 225,
-	"HumanInitialSpeed": 1.0,
-	"HumanInitialGravity": 0.8,
-	"HumanKnockBackHeadMultiply": 2.0,
-	"HumanKnockBackBodyMultiply": 1.0,
-	"HumanKnockBackGroundMultiply": 1.0,
-	"HumanKnockBackAirMultiply": 0.5,
-	"HumanHeroKnockBackMultiply": 1.0,
-	"EnableDamageHud": false,
-	"EnableInfiniteReserveAmmo": false,
-	"EnableWeaponNoRecoil": false,
-	"HumanSpawnPoints": "CT,T,DM",
-	"ZombieSpawnPoints": "CT,T,DM",
-	"KnockZombieForce": 250.0,
-	"StunZombieTime": 0.1,
-	"TVaccineSound": "HealthShot.Pickup",
-	"TVirusGrenadeRange": 300.0,
-	"TVirusCanInfectHero": true,
-	"TVirusGrenadeSound": "han.zombieplague.grenadedote",
-	"AddHealthSound": "HealthShot.Pickup",
-	"FireGrenade": true,
-	"SpawnGiveFireGrenade": true,
-	"FireGrenadeRange": 300.0,
-	"FireGrenadeDmg": 500.0,
-	"FireDmg": 10.0,
-	"FireGrenadeDuration": 5.0,
-	"FireGrenadeSound": "han.zombieplague.grenadedote",
-	"SpawnGiveIncGrenade": false,
-	"LightGrenade": true,
-	"SpawnGiveLightGrenade": true,
-	"LightGrenadeRange": 1000.0,
-	"LightGrenadeDuration": 30.0,
-	"LightGrenadeSound": "C4.ExplodeTriggerTrip",
-	"FreezeGrenade": true,
-	"SpawnGiveFreezeGrenade": true,
-	"FreezeGrenadeRange": 300.0,
-	"FreezeGrenadeDuration": 10.0,
-	"FreezeGrenadeSound": "han.zombieplague.grenadedote",
-	"TelportGrenade": true,
-	"SpawnGiveTelportGrenade": false,
-	"CanUseScbaSuit": true,
-	"ScbaSuitGetSound": "Player.PickupPistol",
-	"ScbaSuitBrokenSound": "Breakable.Flesh",
-	"ZombieClassCommand": "sw_zclass",
-	"ZombieInfoCommand": "sw_zinfo",
-	"AdminMenuItemCommand": "sw_admin",
-	"AdminMenuPermission": "hzp.adminmenu",
-	"AmbSound": "han.zombie.amb.zriot,han.zombie.amb.classicA,han.zombie.amb.classicB,han.zombie.amb.classicC,han.zombie.amb.classicD",
-	"AmbSoundLoopTime": "60.0",
-	"AmbSoundVolume": "0.8",
-	"PrecacheAmbSound": "soundevents/hanzbambience.vsndevts,soundevents/hanzombiepanicplayer.vsndevts"
-  }
+	"HZPMainCFG": {
+		"RoundReadyTime": "22.0",
+		"RoundTime": "4.0",
+		"MinPlayersToStart": 2,
+		"BotQuota": 0,
+		"NormalInfection": {
+			"Enable": true,
+			"Name": "Infection Mode",
+			"MotherZombieNames": "Primordial",
+			"MotherZombieCount": 1,
+			"Weight": 1800,
+			"EnableInfiniteClipMode": false,
+			"ZombieCanReborn": false,
+			"Rewards": {
+				"InfectionReward": 2,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 0,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"MultiInfection": {
+			"Enable": true,
+			"Name": "Multi Infection Mode",
+			"MotherZombieNames": "Primordial",
+			"MotherZombieCount": 5,
+			"Weight": 50,
+			"EnableInfiniteClipMode": false,
+			"ZombieCanReborn": true,
+			"Rewards": {
+				"InfectionReward": 2,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 0,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"Nemesis": {
+			"Enable": true,
+			"Name": "Nemesis Mode",
+			"NemesisNames": "Nemesis",
+			"Weight": 50,
+			"EnableInfiniteClipMode": true,
+			"ZombieCanReborn": true,
+			"Rewards": {
+				"InfectionReward": 0,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 2,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"Survivor": {
+			"Enable": true,
+			"Name": "Survivor Mode",
+			"Weight": 50,
+			"SurvivorNames": "Survivor",
+			"SurvivorHealth": 1000,
+			"SurvivorSpeed": 1.15,
+			"SurvivorGravity": 0.5,
+			"SurvivorDamage": 5.0,
+			"SurvivorWeapon": "weapon_m249",
+			"CustomWeaponName": "Survivor M249",
+			"ModelsPath": "characters/models/tm_phoenix_heavy/tm_phoenix_heavy.vmdl",
+			"EnableInfiniteClipMode": false,
+			"ZombieCanReborn": false,
+			"Rewards": {
+				"InfectionReward": 0,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 2,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"Swarm": {
+			"Enable": true,
+			"Name": "Swarm Mode",
+			"Weight": 50,
+			"EnableInfiniteClipMode": false,
+			"ZombieCanReborn": false,
+			"Rewards": {
+				"InfectionReward": 0,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 2,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"Plague": {
+			"Enable": true,
+			"Name": "Plague Mode",
+			"Weight": 50,
+			"NemesisNames": "Nemesis",
+			"SurvivorNames": "Survivor",
+			"EnableInfiniteClipMode": true,
+			"ZombieCanReborn": true,
+			"Rewards": {
+				"InfectionReward": 0,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 2,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"Assassin": {
+			"Enable": true,
+			"Name": "Assassin Mode",
+			"Weight": 50,
+			"AssassinNames": "Shadow Reaper",
+			"InvisibilityDist": 200.0,
+			"EnableInfiniteClipMode": false,
+			"ZombieCanReborn": true,
+			"Rewards": {
+				"InfectionReward": 0,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 2,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"Sniper": {
+			"Enable": true,
+			"Name": "Sniper Mode",
+			"Weight": 50,
+			"SniperNames": "Sniper",
+			"SniperHealth": 500,
+			"SniperSpeed": 1.1,
+			"SniperGravity": 0.6,
+			"SniperDamage": 10.0,
+			"SniperWeapon": "weapon_awp",
+			"CustomWeaponName": "Sniper Hero AWP",
+			"ModelsPath": "characters/models/tm_professional/tm_professional_varf4.vmdl",
+			"EnableInfiniteClipMode": false,
+			"ZombieCanReborn": true,
+			"Rewards": {
+				"InfectionReward": 0,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 2,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"AVS": {
+			"Enable": true,
+			"Name": "Sniper vs Assassin",
+			"Weight": 50,
+			"AssassinNames": "Shadow Reaper",
+			"SniperNames": "Sniper",
+			"EnableInfiniteClipMode": true,
+			"ZombieCanReborn": true,
+			"Rewards": {
+				"InfectionReward": 0,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 2,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"Hero": {
+			"Enable": true,
+			"Name": "Hero Mode",
+			"Weight": 50,
+			"HeroCount": 3,
+			"HeroNames": "Hero",
+			"HeroHealth": 1500,
+			"HeroSpeed": 1.2,
+			"HeroGravity": 0.4,
+			"HeroDamage": 50.0,
+			"ModelsPath": "characters/models/ctm_heavy/ctm_heavy.vmdl",
+			"EnableInfiniteClipMode": false,
+			"ZombieCanReborn": true,
+			"Rewards": {
+				"InfectionReward": 2,
+				"HumanKillZombieReward": 5,
+				"ZombieKillHumanReward": 0,
+				"ParticipationReward": 1,
+				"HumanWinReward": 3,
+				"ZombieWinReward": 2
+			}
+		},
+		"HumandefaultModel": "characters/models/ctm_st6/ctm_st6_variante.vmdl",
+		"HumanMaxHealth": 225,
+		"HumanInitialSpeed": 1.0,
+		"HumanInitialGravity": 0.8,
+		"HumanKnockBackHeadMultiply": 2.0,
+		"HumanKnockBackBodyMultiply": 1.0,
+		"HumanKnockBackGroundMultiply": 1.0,
+		"HumanKnockBackAirMultiply": 0.5,
+		"HumanHeroKnockBackMultiply": 1.0,
+		"EnableDamageHud": false,
+		"EnableInfiniteReserveAmmo": true,
+		"EnableWeaponNoRecoil": false,
+		"HumanSpawnPoints": "CT,T,DM",
+		"ZombieSpawnPoints": "CT,T,DM",
+		"KnockZombieForce": 250.0,
+		"StunZombieTime": 0.1,
+		"TVaccineSound": "HealthShot.Pickup",
+		"TVirusGrenadeRange": 300.0,
+		"TVirusCanInfectHero": true,
+		"TVirusGrenadeSound": "han.zombieplague.grenadedote",
+		"AddHealthSound": "HealthShot.Pickup",
+		"FireGrenade": true,
+		"SpawnGiveFireGrenade": true,
+		"FireGrenadeRange": 300.0,
+		"FireGrenadeDmg": 500.0,
+		"FireDmg": 10.0,
+		"FireGrenadeDuration": 5.0,
+		"FireGrenadeSound": "han.zombieplague.grenadedote",
+		"SpawnGiveIncGrenade": false,
+		"LightGrenade": true,
+		"SpawnGiveLightGrenade": true,
+		"LightGrenadeRange": 1000.0,
+		"LightGrenadeDuration": 30.0,
+		"LightGrenadeSound": "C4.ExplodeTriggerTrip",
+		"FreezeGrenade": true,
+		"SpawnGiveFreezeGrenade": true,
+		"FreezeGrenadeRange": 300.0,
+		"FreezeGrenadeDuration": 10.0,
+		"FreezeGrenadeSound": "han.zombieplague.grenadedote",
+		"TelportGrenade": true,
+		"SpawnGiveTelportGrenade": false,
+		"CanUseScbaSuit": true,
+		"ScbaSuitGetSound": "Player.PickupPistol",
+		"ScbaSuitBrokenSound": "Breakable.Flesh",
+		"ZombieClassCommand": "sw_zclass",
+		"ZombieInfoCommand": "sw_zinfo",
+		"AdminMenuItemCommand": "sw_admin",
+		"AdminMenuPermission": "hzp.adminmenu",
+		"AmbSound": "han.zombie.amb.zriot,han.zombie.amb.classicA,han.zombie.amb.classicB,han.zombie.amb.classicC,han.zombie.amb.classicD",
+		"AmbSoundLoopTime": "60.0",
+		"AmbSoundVolume": "0.8",
+		"PrecacheAmbSound": "soundevents/hanzbambience.vsndevts,soundevents/hanzombiepanicplayer.vsndevts"
+	}
 }

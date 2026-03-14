@@ -158,19 +158,21 @@ public partial class HZPEvents
                 return HookResult.Continue;
 
             _globals.SafeRoundStart = false;
+            _globals.RestartRoundPendingForMinPlayers = false;
 
             _helpers.SwitchAllPlayerTeam();
             _commands.RoundCvar();
             _helpers.BuildSpawnCache();
             _helpers.RemoveHostage();
 
-            var playerCount = _helpers.ServerPlayerCount();
+            var playerCount = _helpers.GetEligibleParticipantCount(includeBots: true);
             if (playerCount <= 0)
             {
                 _globals.ServerIsEmpty = true;
                 return HookResult.Continue;
             }
             _globals.ServerIsEmpty = false;
+            _globals.WaitingForPlayers = false;
 
             var CFG = _mainCFG.CurrentValue;
             var VoxCFG = _voxCFG.CurrentValue;
@@ -254,6 +256,8 @@ public partial class HZPEvents
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
         _mapVoteService.OnRoundStart();
+        _globals.RestartRoundPendingForMinPlayers = false;
+        _globals.WaitingForPlayers = false;
         _service.SetRoundEndTime();
         _globals.SafeRoundStart = true;
         var CFG = _mainCFG.CurrentValue;
@@ -280,8 +284,12 @@ public partial class HZPEvents
         {
             _globals.RoundVoxGroup = null;
             _globals.GameStart = false;
+            _globals.WaitingForPlayers = false;
+            _globals.RestartRoundPendingForMinPlayers = false;
             _globals.g_hRoundEndTimer?.Cancel();
             _globals.g_hRoundEndTimer = null;
+            _globals.g_hCountdown?.Cancel();
+            _globals.g_hCountdown = null;
             var allplayer = _core.PlayerManager.GetAllPlayers();
             foreach (var player in allplayer)
             {
@@ -1011,7 +1019,7 @@ public partial class HZPEvents
 
         _core.Scheduler.DelayBySeconds(1.0f, () =>
         {
-            var playerCount = _helpers.ServerPlayerCount();
+            var playerCount = _helpers.GetEligibleParticipantCount(includeBots: true);
             if (playerCount <= 0 && !_globals.ServerIsEmpty)
             {
                 _globals.ServerIsEmpty = true;

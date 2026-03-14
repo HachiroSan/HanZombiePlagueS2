@@ -462,6 +462,17 @@ public partial class HZPServices
 
         _globals.g_hRoundEndTimer = _core.Scheduler.DelayBySeconds(roundSeconds, () =>
         {
+            if (!_globals.GameStart || _globals.RestartRoundPendingForMinPlayers)
+                return;
+
+            int requiredPlayers = GetEffectiveMinPlayersToStart();
+            int currentParticipants = _helpers.GetEligibleParticipantCount(includeBots: true);
+            if (currentParticipants < requiredPlayers)
+            {
+                _globals.WaitingForPlayers = true;
+                return;
+            }
+
             FakeHumanWins();
         });
     }
@@ -502,6 +513,24 @@ public partial class HZPServices
     public void Round_Countdown()
     {
         var CFG = _mainCFG.CurrentValue;
+        int requiredPlayers = GetEffectiveMinPlayersToStart();
+        int currentParticipants = _helpers.GetEligibleParticipantCount(includeBots: true);
+        bool wasWaitingForPlayers = _globals.WaitingForPlayers;
+
+        if (currentParticipants < requiredPlayers)
+        {
+            _globals.WaitingForPlayers = true;
+            _helpers.SendCenterToAllT("ServerWaitForPlayers", currentParticipants, requiredPlayers);
+            return;
+        }
+
+        if (wasWaitingForPlayers)
+        {
+            TriggerMinPlayersRecoveryRestart();
+            return;
+        }
+
+        _globals.WaitingForPlayers = false;
         int currentDisplay = _globals.Countdown;
 
         if (_globals.Countdown > 0)
@@ -592,6 +621,25 @@ public partial class HZPServices
 
     public void CheckRoundWinConditions()
     {
+        if (_globals.RestartRoundPendingForMinPlayers)
+            return;
+
+        int requiredPlayers = GetEffectiveMinPlayersToStart();
+        int currentParticipants = _helpers.GetEligibleParticipantCount(includeBots: true);
+        if (currentParticipants < requiredPlayers)
+        {
+            _globals.WaitingForPlayers = true;
+            return;
+        }
+
+        if (_globals.WaitingForPlayers)
+        {
+            TriggerMinPlayersRecoveryRestart();
+            return;
+        }
+
+        _globals.WaitingForPlayers = false;
+
         var allPlayers = _core.PlayerManager.GetAlive();
         int zombieCount = 0;
         int humanCount = 0;
@@ -620,6 +668,25 @@ public partial class HZPServices
             FakeHumanWins();
         else if (humanCount == 0)
             FakeZombieWins();
+    }
+
+    private int GetEffectiveMinPlayersToStart()
+    {
+        int configured = _mainCFG.CurrentValue.MinPlayersToStart;
+        return Math.Max(1, _globals.RuntimeMinPlayersToStart ?? configured);
+    }
+
+    private void TriggerMinPlayersRecoveryRestart()
+    {
+        if (_globals.RestartRoundPendingForMinPlayers)
+            return;
+
+        _globals.RestartRoundPendingForMinPlayers = true;
+        _globals.WaitingForPlayers = false;
+        _globals.GameStart = false;
+        _globals.g_hCountdown?.Cancel();
+        _globals.g_hCountdown = null;
+        _helpers.restartgame();
     }
 
     public void ZombieRegenTimer()

@@ -41,6 +41,7 @@
     "ZombieAbilityShadowReaper": "Stealth assassin that fades from sight at range, stalks the backline with quick movement, and regenerates while hunting.",
 
     "ServerGameCountDown": "Outbreak in {0}s",
+    "ServerWaitForPlayers": "Waiting for players: {0}/{1}",
 
     "ZClassMenu": "Zombie Mutation",
     "ZClassMenuSelect": "Class will apply on next respawn",
@@ -188,6 +189,9 @@
     "AdminCommandZombieWinSender": "Forced a zombie victory.",
     "AdminCommandCheckRoundSender": "Checked round win conditions.",
     "AdminCommandRestartRoundSender": "Round restart initiated.",
+    "AdminCommandMinPlayersSet": "Runtime min players to start set to [gold]{0}[olive].",
+    "AdminCommandBotQuotaStatus": "Bot quota: current [gold]{0}[olive] (config [gold]{1}[olive]). Usage: [gold]!hzp_botquota <0-64>[olive]",
+    "AdminCommandBotQuotaSet": "Runtime bot quota set to [gold]{0}[olive].",
     "AdminCommandSlaySender": "Slain [lightblue]{0}[olive].",
     "AdminCommandSlayTarget": "[lightblue]{0}[olive] has slain you.",
     "AdminCommandSlapSender": "Slapped [lightblue]{0}[olive].",
