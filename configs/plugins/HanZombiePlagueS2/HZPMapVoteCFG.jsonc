@@ -41,6 +41,34 @@
         "Id": "zm_silent_village",
         "MinPlayers": 0,
         "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_ice_attack",
+        "Id": "zm_ice_attack",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_lila_hacker_meow",
+        "Id": "zm_lila_hacker_meow",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_minecraft_village",
+        "Id": "zm_minecraft_village",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_dark_dust",
+        "Id": "zm_dark_dust",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
       }
     ]
   }

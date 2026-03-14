@@ -181,6 +181,8 @@
     "AdminCommandZombieWinSender": "已强制判定丧尸胜利。",
     "AdminCommandCheckRoundSender": "已检查当前回合胜利条件。",
     "AdminCommandRestartRoundSender": "已发起回合重开。",
+    "AdminCommandChangeMapSender": "已发起立即切换地图到 [gold]{0}[olive]。",
+    "AdminCommandChangeMapInProgress": "地图切换已在进行中。",
     "AdminCommandMinPlayersSet": "已将运行时开局最少人数设置为 [gold]{0}[olive]。",
     "AdminCommandBotQuotaStatus": "Bot 数量: 当前 [gold]{0}[olive] (配置 [gold]{1}[olive])。用法: [gold]!hzp_botquota <0-64>[olive]",
     "AdminCommandBotQuotaSet": "已将运行时 Bot 数量设置为 [gold]{0}[olive]。",
