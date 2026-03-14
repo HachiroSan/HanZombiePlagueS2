@@ -14,7 +14,6 @@ public class HZPGlobals
     public bool WaitingForPlayers { get; set; }
     public bool RestartRoundPendingForMinPlayers { get; set; }
     public int? RuntimeMinPlayersToStart { get; set; }
-    public int? RuntimeBotQuota { get; set; }
     public bool GameInfiniteClipMode { get; set; }
     public bool IsheroSetup { get; set; }
     public int Countdown { get; set; }

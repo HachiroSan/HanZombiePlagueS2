@@ -43,7 +43,6 @@ public sealed partial class HZPAdminCommands(
     private const string RestartRoundCommandName = "hzp_restartround";
     private const string ChangeMapCommandName = "hzp_changemap";
     private const string MinPlayersCommandName = "hzp_minplayers";
-    private const string BotQuotaCommandName = "hzp_botquota";
     private const string BanCommandName = "hzp_ban";
     private const string GlobalBanCommandName = "hzp_globalban";
     private const string BanIpCommandName = "hzp_banip";
@@ -85,7 +84,6 @@ public sealed partial class HZPAdminCommands(
         core.Command.RegisterCommand(RestartRoundCommandName, RestartRoundCommand);
         core.Command.RegisterCommand(ChangeMapCommandName, ChangeMapCommand);
         core.Command.RegisterCommand(MinPlayersCommandName, MinPlayersCommand);
-        core.Command.RegisterCommand(BotQuotaCommandName, BotQuotaCommand);
         core.Command.RegisterCommand(BanCommandName, BanCommand);
         core.Command.RegisterCommand(GlobalBanCommandName, GlobalBanCommand);
         core.Command.RegisterCommand(BanIpCommandName, BanIpCommand);

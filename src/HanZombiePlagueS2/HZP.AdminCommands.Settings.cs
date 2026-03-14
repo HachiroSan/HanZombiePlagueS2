@@ -55,31 +55,4 @@ public sealed partial class HZPAdminCommands
         globals.RuntimeMinPlayersToStart = minPlayers;
         Reply(context, "AdminCommandMinPlayersSet", minPlayers);
     }
-
-    private void BotQuotaCommand(ICommandContext context)
-    {
-        if (!HasAdminAccess(context))
-            return;
-
-        if (context.Args.Length == 0)
-        {
-            if (globals.RuntimeBotQuota is int runtimeBotQuota)
-            {
-                Reply(context, "AdminCommandBotQuotaStatusRuntime", Math.Max(0, runtimeBotQuota));
-            }
-            else
-            {
-                Reply(context, "AdminCommandBotQuotaStatusServerManaged");
-            }
-            return;
-        }
-
-        if (!TryParseInt(context, context.Args[0], BotQuotaCommandName, "[count]", 0, 64, out int quota))
-            return;
-
-        globals.RuntimeBotQuota = quota;
-        core.Engine.ExecuteCommand("bot_quota_mode fill");
-        core.Engine.ExecuteCommand($"bot_quota {quota}");
-        Reply(context, "AdminCommandBotQuotaSet", quota);
-    }
 }
