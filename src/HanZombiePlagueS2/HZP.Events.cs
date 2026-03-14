@@ -165,7 +165,7 @@ public partial class HZPEvents
             _helpers.BuildSpawnCache();
             _helpers.RemoveHostage();
 
-            var playerCount = _helpers.GetEligibleParticipantCount(includeBots: true);
+            var playerCount = _helpers.GetEligibleParticipantCount();
             if (playerCount <= 0)
             {
                 _globals.ServerIsEmpty = true;
@@ -1030,7 +1030,7 @@ public partial class HZPEvents
 
         _core.Scheduler.DelayBySeconds(1.0f, () =>
         {
-            var playerCount = _helpers.GetEligibleParticipantCount(includeBots: true);
+            var playerCount = _helpers.GetEligibleParticipantCount();
             if (playerCount <= 0 && !_globals.ServerIsEmpty)
             {
                 _globals.ServerIsEmpty = true;

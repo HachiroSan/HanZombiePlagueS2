@@ -43,10 +43,10 @@ public partial class HZPHelpers
 
     public int? ServerPlayerCount()
     {
-        return GetEligibleParticipantCount(includeBots: true);
+        return GetEligibleParticipantCount();
     }
 
-    public int GetEligibleParticipantCount(bool includeBots)
+    public int GetEligibleParticipantCount()
     {
         var allplayer = _core.PlayerManager.GetAllPlayers();
         int count = 0;
@@ -55,7 +55,7 @@ public partial class HZPHelpers
             if (player == null || !player.IsValid)
                 continue;
 
-            if (!includeBots && player.IsFakeClient)
+            if (player.IsFakeClient)
                 continue;
 
             count++;

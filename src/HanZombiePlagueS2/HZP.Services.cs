@@ -466,7 +466,7 @@ public partial class HZPServices
                 return;
 
             int requiredPlayers = GetEffectiveMinPlayersToStart();
-            int currentParticipants = _helpers.GetEligibleParticipantCount(includeBots: true);
+            int currentParticipants = _helpers.GetEligibleParticipantCount();
             if (currentParticipants < requiredPlayers)
             {
                 _globals.WaitingForPlayers = true;
@@ -514,7 +514,7 @@ public partial class HZPServices
     {
         var CFG = _mainCFG.CurrentValue;
         int requiredPlayers = GetEffectiveMinPlayersToStart();
-        int currentParticipants = _helpers.GetEligibleParticipantCount(includeBots: true);
+        int currentParticipants = _helpers.GetEligibleParticipantCount();
         bool wasWaitingForPlayers = _globals.WaitingForPlayers;
 
         if (currentParticipants < requiredPlayers)
@@ -625,7 +625,7 @@ public partial class HZPServices
             return;
 
         int requiredPlayers = GetEffectiveMinPlayersToStart();
-        int currentParticipants = _helpers.GetEligibleParticipantCount(includeBots: true);
+        int currentParticipants = _helpers.GetEligibleParticipantCount();
         if (currentParticipants < requiredPlayers)
         {
             _globals.WaitingForPlayers = true;
@@ -686,7 +686,7 @@ public partial class HZPServices
         _globals.GameStart = false;
         _globals.g_hCountdown?.Cancel();
         _globals.g_hCountdown = null;
-        _helpers.restartgame();
+        _core.Engine.ExecuteCommand("mp_restartgame 1");
     }
 
     public void ZombieRegenTimer()
