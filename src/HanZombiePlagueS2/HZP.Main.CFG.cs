@@ -110,7 +110,6 @@ public class HZPMainCFG
     public float RoundReadyTime { get; set; } = 25f;
     public float RoundTime { get; set; } = 3;
     public int MinPlayersToStart { get; set; } = 2;
-    public int BotQuota { get; set; } = 20;
 
     public NormalInfectionModeConfig NormalInfection { get; set; } = new();
     public MultiInfectionModeConfig MultiInfection { get; set; } = new();

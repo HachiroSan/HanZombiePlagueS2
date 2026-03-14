@@ -61,12 +61,16 @@ public sealed partial class HZPAdminCommands
         if (!HasAdminAccess(context))
             return;
 
-        int configured = Math.Max(0, mainCFG.CurrentValue.BotQuota);
-        int effective = Math.Max(0, globals.RuntimeBotQuota ?? configured);
-
         if (context.Args.Length == 0)
         {
-            Reply(context, "AdminCommandBotQuotaStatus", effective, configured);
+            if (globals.RuntimeBotQuota is int runtimeBotQuota)
+            {
+                Reply(context, "AdminCommandBotQuotaStatusRuntime", Math.Max(0, runtimeBotQuota));
+            }
+            else
+            {
+                Reply(context, "AdminCommandBotQuotaStatusServerManaged");
+            }
             return;
         }
 
