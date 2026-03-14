@@ -167,6 +167,38 @@
         "NativeWeaponClassName": "weapon_xm1014",
         "NativeWeaponSlot": 0,
         "SortOrder": 220
+      },
+      {
+        "Id": "m249",
+        "Enable": true,
+        "DisplayName": "M249",
+        "NativeWeaponClassName": "weapon_m249",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 230
+      },
+      {
+        "Id": "negev",
+        "Enable": true,
+        "DisplayName": "Negev",
+        "NativeWeaponClassName": "weapon_negev",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 240
+      },
+      {
+        "Id": "g3sg1",
+        "Enable": true,
+        "DisplayName": "G3SG1",
+        "NativeWeaponClassName": "weapon_g3sg1",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 250
+      },
+      {
+        "Id": "scar20",
+        "Enable": true,
+        "DisplayName": "SCAR-20",
+        "NativeWeaponClassName": "weapon_scar20",
+        "NativeWeaponSlot": 0,
+        "SortOrder": 260
       }
     ],
     "SecondaryWeapons": [
@@ -217,6 +249,38 @@
         "NativeWeaponClassName": "weapon_cz75a",
         "NativeWeaponSlot": 1,
         "SortOrder": 70
+      },
+      {
+        "Id": "fiveseven",
+        "Enable": true,
+        "DisplayName": "Five-SeveN",
+        "NativeWeaponClassName": "weapon_fiveseven",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 80
+      },
+      {
+        "Id": "deagle",
+        "Enable": true,
+        "DisplayName": "Desert Eagle",
+        "NativeWeaponClassName": "weapon_deagle",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 90
+      },
+      {
+        "Id": "revolver",
+        "Enable": true,
+        "DisplayName": "R8 Revolver",
+        "NativeWeaponClassName": "weapon_revolver",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 110
+      },
+      {
+        "Id": "dualies",
+        "Enable": true,
+        "DisplayName": "Dual Berettas",
+        "NativeWeaponClassName": "weapon_elite",
+        "NativeWeaponSlot": 1,
+        "SortOrder": 120
       }
     ]
   }

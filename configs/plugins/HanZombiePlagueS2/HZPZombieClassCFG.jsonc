@@ -9,8 +9,8 @@
 			"AbilitySummary": "loc:ZombieAbilityStalker",
 			"Stats": 
 			{
-			  "Health": 5200,
-			  "MotherZombieHealth": 11000,
+			  "Health": 7800,
+			  "MotherZombieHealth": 16500,
 			  "Speed": 0.96,
 			  "Damage": 50.0,
 			  "Gravity": 0.84,
@@ -48,8 +48,8 @@
 			"AbilitySummary": "loc:ZombieAbilityRunner",
 			"Stats": 
 			{
-			  "Health": 2400,
-			  "MotherZombieHealth": 9000,
+			  "Health": 3600,
+			  "MotherZombieHealth": 13500,
 			  "Speed": 1.0,
 			  "Damage": 50.0,
 			  "Gravity": 0.86,
@@ -165,9 +165,9 @@
 			"AbilitySummary": "loc:ZombieAbilityLeaper",
 			"Stats": 
 			{
-			  "Health": 2000,
-			  "MotherZombieHealth": 8500,
-			  "Speed": 1.28,
+			  "Health": 3000,
+			  "MotherZombieHealth": 12750,
+			  "Speed": 1.15,
 			  "Damage": 50.0,
 			  "Gravity": 0.6,
 			  "Fov": 110,
@@ -204,9 +204,9 @@
 			"AbilitySummary": "loc:ZombieAbilitySkirmisher",
 			"Stats": 
 			{
-			  "Health": 1500,
-			  "MotherZombieHealth": 8000,
-			  "Speed": 1.2,
+			  "Health": 2250,
+			  "MotherZombieHealth": 12000,
+			  "Speed": 1.1,
 			  "Damage": 50.0,
 			  "Gravity": 0.74,
 			  "Fov": 110,
