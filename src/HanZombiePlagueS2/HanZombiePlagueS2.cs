@@ -135,6 +135,8 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         collection.AddSingleton<HZPEconomyService>();
         collection.AddSingleton<HZPEvents>();
         collection.AddSingleton<HZPHelpers>();
+        collection.AddSingleton<HZPAdminCommands>();
+        collection.AddSingleton<HZPPermissionService>();
         collection.AddSingleton<HZPServices>();
         collection.AddSingleton<HZPCommands>();
         collection.AddSingleton<PlayerZombieState>();
@@ -196,6 +198,7 @@ public partial class HanZombiePlagueS2(ISwiftlyCore core) : BasePlugin(core)
         _Events.HookZombieSoundEvents();
         _Commands.Command();
         _Commands.MenuCommands();
+        ServiceProvider.GetRequiredService<HZPAdminCommands>().RegisterCommands();
 
         _apiInstance.HZP_OnPreferenceChanged += HandlePreferenceChanged;
         _apiInstance.HZP_OnGameStart += HandleGameStartChanged;

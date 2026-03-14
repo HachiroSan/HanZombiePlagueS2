@@ -171,7 +171,51 @@ After installation, load the map or use the command to reload the plugin if nece
 ## Commands List
 
 - `!zclass` or `sw_zclass`: Opens the zombie class selection menu (player preference, command can be freely customized in config).
-- `!zmenu` or `sw_zmenu`: Opens the admin menu (requires permission `AdminMenuPermission`; if left empty, accessible to everyone).
+- `!admin` or `sw_admin` by default: Opens the admin item menu (command comes from `AdminMenuItemCommand`, permission comes from `AdminMenuPermission`; if the permission is left empty, accessible to everyone).
+- `!hzp_respawn` / `sw_hzp_respawn`: Respawn target players.
+- `!hzp_bring` / `sw_hzp_bring`: Teleport target players in front of you.
+- `!hzp_goto` / `sw_hzp_goto`: Teleport to another player.
+- `!hzp_clean` / `sw_hzp_clean`: Remove dropped world weapons.
+- `!hzp_csay` / `sw_hzp_csay`: Send a center-screen admin message.
+- `!hzp_human` / `sw_hzp_human`: Force living zombies back to human form.
+- `!hzp_zombie` / `sw_hzp_zombie`: Force living humans into direct zombie form.
+- `!hzp_infect` / `sw_hzp_infect`: Infect living humans using HZP infection flow.
+- `!hzp_mother` / `sw_hzp_mother`: Turn living humans into Mother Zombies.
+- `!hzp_nemesis` / `sw_hzp_nemesis`: Turn living humans into Nemesis.
+- `!hzp_assassin` / `sw_hzp_assassin`: Turn living humans into Assassin.
+- `!hzp_hero` / `sw_hzp_hero`: Turn living humans into Hero.
+- `!hzp_survivor` / `sw_hzp_survivor`: Turn living humans into Survivor.
+- `!hzp_sniper` / `sw_hzp_sniper`: Turn living humans into Sniper.
+
+## Permissions
+
+- HanZombiePlagueS2 only checks Swiftly permissions and does not require the external `Admins` plugin as a source or runtime dependency.
+- Default admin-menu permission: `hzp.adminmenu` from `configs/plugins/HanZombiePlagueS2/HZPMainCFG.jsonc`.
+- The built-in `hzp_*` admin utility commands reuse the same `AdminMenuPermission` gate as the admin item menu.
+- Reserved broad VIP permission for future use: `hzp.vip`.
+- You can grant these permissions from either `addons/swiftlys2/configs/permissions.jsonc` or any external admin/group plugin that writes Swiftly permissions.
+
+Example `permissions.jsonc` setup:
+
+```json
+{
+  "Permissions": {
+    "Players": {
+      "76561198111700953": [
+        "hzp_admin"
+      ]
+    },
+    "PermissionGroups": {
+      "hzp_admin": [
+        "hzp.adminmenu"
+      ],
+      "hzp_vip": [
+        "hzp.vip"
+      ]
+    }
+  }
+}
+```
 
 ---
 

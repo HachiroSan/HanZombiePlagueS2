@@ -155,7 +155,51 @@ https://www.bilibili.com/video/BV1c3cJzrEWn
 ## 命令列表
 
 - `!zclass` 或 `sw_zclass`：打开丧尸职业选择菜单（玩家偏好,可自由定义指令）
-- `!zmenu` 或 `sw_zmenu`：管理员菜单（需权限 `AdminMenuPermission`,不填写为所有人可以使用）
+- 默认 `!admin` 或 `sw_admin`：打开管理员道具菜单（指令来自 `AdminMenuItemCommand`，权限来自 `AdminMenuPermission`；如果权限留空则所有人都可使用）
+- `!hzp_respawn` / `sw_hzp_respawn`：复活目标玩家。
+- `!hzp_bring` / `sw_hzp_bring`：将目标玩家拉到自己面前。
+- `!hzp_goto` / `sw_hzp_goto`：传送到另一名玩家身边。
+- `!hzp_clean` / `sw_hzp_clean`：清理地图上掉落的武器。
+- `!hzp_csay` / `sw_hzp_csay`：向全服发送中央提示消息。
+- `!hzp_human` / `sw_hzp_human`：将存活的丧尸强制变回人类。
+- `!hzp_zombie` / `sw_hzp_zombie`：将存活的人类直接变成丧尸。
+- `!hzp_infect` / `sw_hzp_infect`：按 HZP 感染流程感染存活的人类。
+- `!hzp_mother` / `sw_hzp_mother`：将存活的人类变成母体丧尸。
+- `!hzp_nemesis` / `sw_hzp_nemesis`：将存活的人类变成复仇之神。
+- `!hzp_assassin` / `sw_hzp_assassin`：将存活的人类变成暗杀者。
+- `!hzp_hero` / `sw_hzp_hero`：将存活的人类变成英雄。
+- `!hzp_survivor` / `sw_hzp_survivor`：将存活的人类变成幸存者。
+- `!hzp_sniper` / `sw_hzp_sniper`：将存活的人类变成狙击手。
+
+## 权限说明
+
+- HanZombiePlagueS2 只检查 Swiftly 权限，本体不依赖外部 `Admins` 插件源码或运行时接口。
+- 默认管理员菜单权限：`configs/plugins/HanZombiePlagueS2/HZPMainCFG.jsonc` 中的 `hzp.adminmenu`。
+- 内置的 `hzp_*` 管理员工具指令与管理员道具菜单共用同一个 `AdminMenuPermission` 权限门槛。
+- 预留给未来 VIP 功能的宽权限：`hzp.vip`。
+- 这些权限既可以在 `addons/swiftlys2/configs/permissions.jsonc` 中直接分配，也可以由外部管理员/分组插件来授予，只要最终写入 Swiftly 权限系统即可。
+
+`permissions.jsonc` 示例：
+
+```json
+{
+  "Permissions": {
+    "Players": {
+      "76561198111700953": [
+        "hzp_admin"
+      ]
+    },
+    "PermissionGroups": {
+      "hzp_admin": [
+        "hzp.adminmenu"
+      ],
+      "hzp_vip": [
+        "hzp.vip"
+      ]
+    }
+  }
+}
+```
 
 ---
 

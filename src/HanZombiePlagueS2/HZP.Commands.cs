@@ -32,12 +32,14 @@ public class HZPCommands
     private readonly IOptionsMonitor<HZPMapVoteCFG> _mapVoteCFG;
     private readonly HZPEconomyService _economyService;
     private readonly HZPMapVoteService _mapVoteService;
+    private readonly HZPPermissionService _permissionService;
 
     public HZPCommands(ISwiftlyCore core, ILogger<HZPCommands> logger,
         HZPServices services, IOptionsMonitor<HZPMainCFG> mainCFG,
         HZPGlobals globals, HZPAdminItemMenu hZPAdminItemMenu,
         HZPZombieClassMenu hZPZombieClassMenu, HZPLoadoutMenu hZPLoadoutMenu,
         HZPStoreMenu storeMenu, HZPMapVoteMenu mapVoteMenu, HZPEconomyService economyService, HZPMapVoteService mapVoteService, HZPHelpers helpers,
+        HZPPermissionService permissionService,
         IOptionsMonitor<HZPLoadoutCFG> loadoutCFG,
         IOptionsMonitor<HZPStoreCFG> storeCFG,
         IOptionsMonitor<HZPEconomyCFG> economyCFG,
@@ -56,6 +58,7 @@ public class HZPCommands
         _economyService = economyService;
         _mapVoteService = mapVoteService;
         _helpers = helpers;
+        _permissionService = permissionService;
         _loadoutCFG = loadoutCFG;
         _storeCFG = storeCFG;
         _economyCFG = economyCFG;
@@ -294,29 +297,8 @@ public class HZPCommands
 
     private bool HasAdminMenuPermission(IPlayer player)
     {
-        if (player == null || !player.IsValid)
-            return false;
-
-        ulong steamId = player.SteamID;
-        if (steamId == 0)
-            return false;
-
-        var permString = _mainCFG.CurrentValue.AdminMenuPermission;
-
-        if (string.IsNullOrWhiteSpace(permString))
-            return true;
-
-        foreach (var perm in permString.Split(','))
-        {
-            var p = perm.Trim();
-            if (p.Length == 0)
-                continue;
-
-            if (_core.Permission.PlayerHasPermission(steamId, p))
-                return true;
-        }
-
-        return false;
+        string permissions = _mainCFG.CurrentValue.AdminMenuPermission;
+        return string.IsNullOrWhiteSpace(permissions) || _permissionService.HasAnyPermission(player, permissions);
     }
 
     public void RoundCvar()
