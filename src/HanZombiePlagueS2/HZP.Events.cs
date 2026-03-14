@@ -952,10 +952,21 @@ public partial class HZPEvents
         if (_globals.ServerIsEmpty)
         {
             _globals.ServerIsEmpty = false;
-            _core.Scheduler.DelayBySeconds(1.0f, () =>
+            // Restart the game after a short delay to allow the player to fully connect and initialize.
+            // _core.Scheduler.DelayBySeconds(1.0f, () =>
+            // {
+            //     _helpers.restartgame();
+            // });
+
+            // If freeze-end happened while empty, start a countdown loop so min-player recovery can proceed.
+            if (!_globals.GameStart && _globals.g_hCountdown == null)
             {
-                _helpers.restartgame();
-            });
+                var cfg = _mainCFG.CurrentValue;
+                _globals.Countdown = (int)Math.Ceiling(cfg.RoundReadyTime > 0 ? cfg.RoundReadyTime : 3.0f);
+                _globals.WaitingForPlayers = true;
+                _globals.g_hCountdown = _core.Scheduler.DelayAndRepeatBySeconds(0.1f, 1.0f, () => _service.Round_Countdown());
+                _core.Scheduler.StopOnMapChange(_globals.g_hCountdown);
+            }
         }
 
         _globals.IsZombie[id] = _globals.GameStart;
