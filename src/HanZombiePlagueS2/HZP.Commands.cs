@@ -315,16 +315,15 @@ public class HZPCommands
 
     public void ServerCvar()
     {
+        var cfg = _mainCFG.CurrentValue;
+        int effectiveBotQuota = Math.Max(0, _globals.RuntimeBotQuota ?? cfg.BotQuota);
+
         _core.Engine.ExecuteCommand("mp_randomspawn 1");
         _core.Engine.ExecuteCommand("mp_roundtime_hostage 3");
         _core.Engine.ExecuteCommand("mp_roundtime_defuse 3");
         _core.Engine.ExecuteCommand("mp_roundtime 3");
-        if (_globals.RuntimeBotQuota is int runtimeBotQuota)
-        {
-            int effectiveBotQuota = Math.Max(0, runtimeBotQuota);
-            _core.Engine.ExecuteCommand("bot_quota_mode fill");
-            _core.Engine.ExecuteCommand($"bot_quota {effectiveBotQuota}");
-        }
+        _core.Engine.ExecuteCommand("bot_quota_mode fill");
+        _core.Engine.ExecuteCommand($"bot_quota {effectiveBotQuota}");
         _core.Engine.ExecuteCommand("mp_ignore_round_win_conditions 1");
         _core.Engine.ExecuteCommand("bot_join_after_player 1");
         _core.Engine.ExecuteCommand("bot_chatter off");
