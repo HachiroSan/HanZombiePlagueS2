@@ -23,8 +23,43 @@
     "MapList": [
       {
         "Enable": true,
-        "Name": "zm_lila_epic_d",
-        "Id": "zm_lila_epic_d",
+        "Name": "zm_turkish_streets_exo_v1",
+        "Id": "zm_turkish_streets_exo_v1",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_ice_attack3",
+        "Id": "zm_ice_attack3",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_festival_v01",
+        "Id": "zm_festival_v01",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_defense_box",
+        "Id": "zm_defense_box",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_prison_break",
+        "Id": "zm_prison_break",
+        "MinPlayers": 0,
+        "MaxPlayers": 0
+      },
+      {
+        "Enable": true,
+        "Name": "zm_my_games_moment_house_world",
+        "Id": "zm_my_games_moment_house_world",
         "MinPlayers": 0,
         "MaxPlayers": 0
       },
@@ -32,41 +67,6 @@
         "Enable": true,
         "Name": "de_dust2_night",
         "Id": "de_dust2_night",
-        "MinPlayers": 0,
-        "MaxPlayers": 0
-      },
-      {
-        "Enable": true,
-        "Name": "zm_silent_village",
-        "Id": "zm_silent_village",
-        "MinPlayers": 0,
-        "MaxPlayers": 0
-      },
-      {
-        "Enable": true,
-        "Name": "zm_ice_attack",
-        "Id": "zm_ice_attack",
-        "MinPlayers": 0,
-        "MaxPlayers": 0
-      },
-      {
-        "Enable": true,
-        "Name": "zm_lila_hacker_meow",
-        "Id": "zm_lila_hacker_meow",
-        "MinPlayers": 0,
-        "MaxPlayers": 0
-      },
-      {
-        "Enable": true,
-        "Name": "zm_minecraft_village",
-        "Id": "zm_minecraft_village",
-        "MinPlayers": 0,
-        "MaxPlayers": 0
-      },
-      {
-        "Enable": true,
-        "Name": "zm_dark_dust",
-        "Id": "zm_dark_dust",
         "MinPlayers": 0,
         "MaxPlayers": 0
       }

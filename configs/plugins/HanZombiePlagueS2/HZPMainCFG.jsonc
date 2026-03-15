@@ -1,6 +1,8 @@
 {
 	"HZPMainCFG": {
 		"RoundReadyTime": "22.0",
+		"OutbreakStartDelayAfterFreezeEnd": "1.25",
+		"CountdownTickInterval": "1.0",
 		"RoundTime": "3.0",
 		"MinPlayersToStart": 2,
 		"EmptyServerPolicy": "wait_only",

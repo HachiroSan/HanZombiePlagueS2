@@ -108,6 +108,8 @@ public class HeroConfig : GameModeConfig
 public class HZPMainCFG
 {
     public float RoundReadyTime { get; set; } = 25f;
+    public float OutbreakStartDelayAfterFreezeEnd { get; set; } = 1.25f;
+    public float CountdownTickInterval { get; set; } = 1.0f;
     public float RoundTime { get; set; } = 3;
     public int MinPlayersToStart { get; set; } = 2;
     public string EmptyServerPolicy { get; set; } = "wait_only";

@@ -15,6 +15,9 @@ public class HZPGlobals
     public bool RestartRoundPendingForMinPlayers { get; set; }
     public bool BootstrapRecoveryDrawPending { get; set; }
     public bool BootstrapRecoveryDrawConsumed { get; set; }
+    public bool RoundPrepActive { get; set; }
+    public long OutbreakAtUnixMs { get; set; }
+    public int LastAnnouncedCountdown { get; set; } = int.MinValue;
     public int? RuntimeMinPlayersToStart { get; set; }
     public bool GameInfiniteClipMode { get; set; }
     public bool IsheroSetup { get; set; }

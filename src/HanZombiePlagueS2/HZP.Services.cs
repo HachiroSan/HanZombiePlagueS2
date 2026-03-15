@@ -516,11 +516,18 @@ public partial class HZPServices
         int requiredPlayers = GetEffectiveMinPlayersToStart();
         int currentParticipants = _helpers.GetEligibleParticipantCount();
         bool wasWaitingForPlayers = _globals.WaitingForPlayers;
+        float tickInterval = CFG.CountdownTickInterval > 0 ? CFG.CountdownTickInterval : 1.0f;
 
         if (currentParticipants < requiredPlayers)
         {
             _globals.WaitingForPlayers = true;
             _globals.BootstrapRecoveryDrawPending = false;
+
+            if (_globals.RoundPrepActive && _globals.OutbreakAtUnixMs > 0)
+            {
+                _globals.OutbreakAtUnixMs += (long)Math.Round(tickInterval * 1000f);
+            }
+
             _helpers.SendCenterToAllT("ServerWaitForPlayers", currentParticipants, requiredPlayers);
             return;
         }
@@ -532,10 +539,27 @@ public partial class HZPServices
         }
 
         _globals.WaitingForPlayers = false;
-        int currentDisplay = _globals.Countdown;
+        if (!_globals.RoundPrepActive)
+        {
+            float prepSeconds = CFG.RoundReadyTime > 0 ? CFG.RoundReadyTime : 3.0f;
+            _globals.RoundPrepActive = true;
+            _globals.OutbreakAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)Math.Round(prepSeconds * 1000f);
+            _globals.LastAnnouncedCountdown = int.MinValue;
+        }
 
-        if (_globals.Countdown > 0)
-            _globals.Countdown--;
+        long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        double remainingSecondsRaw = (_globals.OutbreakAtUnixMs - nowMs) / 1000.0;
+        int currentDisplay = (int)Math.Ceiling(remainingSecondsRaw);
+        if (currentDisplay < 0)
+            currentDisplay = 0;
+
+        _globals.Countdown = currentDisplay;
+
+        bool displayChanged = currentDisplay != _globals.LastAnnouncedCountdown;
+        _globals.LastAnnouncedCountdown = currentDisplay;
+
+        if (!displayChanged)
+            return;
 
         if (currentDisplay <= 10 && currentDisplay >= 1 && _globals.RoundVoxGroup != null)
         {
@@ -559,6 +583,9 @@ public partial class HZPServices
         {
             _globals.g_hCountdown?.Cancel();
             _globals.g_hCountdown = null;
+            _globals.RoundPrepActive = false;
+            _globals.OutbreakAtUnixMs = 0;
+            _globals.LastAnnouncedCountdown = int.MinValue;
             _globals.GameStart = true;
             _loadoutMenu.EnsureValidLoadoutToAll();
 
@@ -587,6 +614,34 @@ public partial class HZPServices
         _helpers.SendCenterToAllT("ServerGameCountDown", currentDisplay);
     }
 
+    public void ScheduleRoundPreparationStart(float roundReadySeconds, float delayAfterFreezeEndSeconds)
+    {
+        _globals.g_hCountdown?.Cancel();
+        _globals.g_hCountdown = null;
+        _globals.RoundPrepActive = false;
+        _globals.OutbreakAtUnixMs = 0;
+        _globals.LastAnnouncedCountdown = int.MinValue;
+
+        float safeDelay = Math.Max(0f, delayAfterFreezeEndSeconds);
+        _core.Scheduler.DelayBySeconds(safeDelay, () =>
+        {
+            if (_globals.GameStart || _globals.RestartRoundPendingForMinPlayers || _globals.g_hCountdown != null)
+                return;
+
+            float prepSeconds = roundReadySeconds > 0 ? roundReadySeconds : 3.0f;
+            float tickInterval = _mainCFG.CurrentValue.CountdownTickInterval > 0
+                ? _mainCFG.CurrentValue.CountdownTickInterval
+                : 1.0f;
+
+            _globals.RoundPrepActive = true;
+            _globals.OutbreakAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)Math.Round(prepSeconds * 1000f);
+            _globals.LastAnnouncedCountdown = int.MinValue;
+
+            _globals.g_hCountdown = _core.Scheduler.DelayAndRepeatBySeconds(0.1f, tickInterval, () => Round_Countdown());
+            _core.Scheduler.StopOnMapChange(_globals.g_hCountdown);
+        });
+    }
+
     public void CheckEndTimer()
     {
         if (_globals.g_hRoundEndTimer != null)
@@ -604,6 +659,9 @@ public partial class HZPServices
         _globals.GameStart = false;
         _globals.RestartRoundPendingForMinPlayers = false;
         _globals.BootstrapRecoveryDrawPending = false;
+        _globals.RoundPrepActive = false;
+        _globals.OutbreakAtUnixMs = 0;
+        _globals.LastAnnouncedCountdown = int.MinValue;
 
         if (serverEmpty)
             _globals.ServerIsEmpty = true;
@@ -719,6 +777,9 @@ public partial class HZPServices
         _globals.WaitingForPlayers = false;
         _globals.GameStart = false;
         _globals.BootstrapRecoveryDrawPending = false;
+        _globals.RoundPrepActive = false;
+        _globals.OutbreakAtUnixMs = 0;
+        _globals.LastAnnouncedCountdown = int.MinValue;
         _globals.g_hCountdown?.Cancel();
         _globals.g_hCountdown = null;
 
@@ -731,7 +792,7 @@ public partial class HZPServices
         }
 
         _logger.LogInformation("Using standard recovery restart on waiting->min transition");
-        _core.Engine.ExecuteCommand("mp_restartgame 1");
+        _core.Engine.ExecuteCommand("mp_restartgame 5");
     }
 
     public void ZombieRegenTimer()

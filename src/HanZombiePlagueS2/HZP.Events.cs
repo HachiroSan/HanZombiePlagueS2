@@ -195,10 +195,13 @@ public partial class HZPEvents
                 _globals.RoundVoxGroup = _helpers.PickRandomActiveGroup(VoxList);
             }
 
+            float prepSeconds = CFG.RoundReadyTime > 0 ? CFG.RoundReadyTime : 3.0f;
+            float prepDelay = CFG.OutbreakStartDelayAfterFreezeEnd;
+
             if (CFG.RoundReadyTime > 0)
             {
                 //_logger.LogInformation($"开始倒计时: {CFG.RoundReadyTime}秒");
-                _globals.Countdown = (int)Math.Ceiling(CFG.RoundReadyTime);
+                _globals.Countdown = (int)Math.Ceiling(prepSeconds);
 
                 if (_globals.GameStart)
                     return HookResult.Continue;
@@ -209,15 +212,12 @@ public partial class HZPEvents
                     _service.PlayerSelectSoundtoAll(_globals.RoundVoxGroup.RoundMusicVox, _globals.RoundVoxGroup.Volume);
                 }
 
-                _globals.g_hCountdown?.Cancel();
-                _globals.g_hCountdown = null;
-                _globals.g_hCountdown = _core.Scheduler.DelayAndRepeatBySeconds(0.1f, 1.0f, () => _service.Round_Countdown());
-                _core.Scheduler.StopOnMapChange(_globals.g_hCountdown);
+                _service.ScheduleRoundPreparationStart(prepSeconds, prepDelay);
 
             }
             else
             {
-                _globals.Countdown = 3;
+                _globals.Countdown = (int)Math.Ceiling(prepSeconds);
 
                 if (_globals.GameStart)
                     return HookResult.Continue;
@@ -228,10 +228,7 @@ public partial class HZPEvents
                     _service.PlayerSelectSoundtoAll(_globals.RoundVoxGroup.RoundMusicVox, _globals.RoundVoxGroup.Volume);
                 }
 
-                _globals.g_hCountdown?.Cancel();
-                _globals.g_hCountdown = null;
-                _globals.g_hCountdown = _core.Scheduler.DelayAndRepeatBySeconds(0.1f, 1.0f, () => _service.Round_Countdown());
-                _core.Scheduler.StopOnMapChange(_globals.g_hCountdown);
+                _service.ScheduleRoundPreparationStart(prepSeconds, prepDelay);
             }
         }
         catch (Exception ex)
@@ -286,6 +283,9 @@ public partial class HZPEvents
             _globals.GameStart = false;
             _globals.WaitingForPlayers = false;
             _globals.RestartRoundPendingForMinPlayers = false;
+            _globals.RoundPrepActive = false;
+            _globals.OutbreakAtUnixMs = 0;
+            _globals.LastAnnouncedCountdown = int.MinValue;
             _globals.g_hRoundEndTimer?.Cancel();
             _globals.g_hRoundEndTimer = null;
             _globals.g_hCountdown?.Cancel();
