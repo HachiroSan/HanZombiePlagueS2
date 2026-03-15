@@ -13,6 +13,8 @@ public class HZPGlobals
     public bool SafeRoundStart { get; set; }
     public bool WaitingForPlayers { get; set; }
     public bool RestartRoundPendingForMinPlayers { get; set; }
+    public bool BootstrapRecoveryDrawPending { get; set; }
+    public bool BootstrapRecoveryDrawConsumed { get; set; }
     public int? RuntimeMinPlayersToStart { get; set; }
     public bool GameInfiniteClipMode { get; set; }
     public bool IsheroSetup { get; set; }

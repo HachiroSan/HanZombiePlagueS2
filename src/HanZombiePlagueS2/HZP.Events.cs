@@ -168,7 +168,7 @@ public partial class HZPEvents
             var playerCount = _helpers.GetEligibleParticipantCount();
             if (playerCount <= 0)
             {
-                _globals.ServerIsEmpty = true;
+                _service.EnterWaitingForPlayersState(true);
                 return HookResult.Continue;
             }
             _globals.ServerIsEmpty = false;
@@ -971,6 +971,22 @@ public partial class HZPEvents
 
         _globals.IsZombie[id] = _globals.GameStart;
 
+        _core.Scheduler.DelayBySeconds(0.25f, () =>
+        {
+            if (_globals.BootstrapRecoveryDrawConsumed)
+                return;
+
+            if (_globals.GameStart || !_globals.WaitingForPlayers)
+                return;
+
+            int requiredPlayers = Math.Max(1, _globals.RuntimeMinPlayersToStart ?? _mainCFG.CurrentValue.MinPlayersToStart);
+            int currentParticipants = _helpers.GetEligibleParticipantCount();
+            if (currentParticipants >= requiredPlayers)
+            {
+                _globals.BootstrapRecoveryDrawPending = true;
+            }
+        });
+
         _core.Scheduler.DelayBySeconds(_banService.ConnectCheckDelaySeconds, async () =>
         {
             var player = _core.PlayerManager.GetPlayer(id);
@@ -1033,8 +1049,7 @@ public partial class HZPEvents
             var playerCount = _helpers.GetEligibleParticipantCount();
             if (playerCount <= 0 && !_globals.ServerIsEmpty)
             {
-                _globals.ServerIsEmpty = true;
-                _helpers.restartgame();
+                _service.HandleServerEmptyTransition();
             }
         });
 

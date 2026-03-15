@@ -3,6 +3,7 @@
 		"RoundReadyTime": "22.0",
 		"RoundTime": "3.0",
 		"MinPlayersToStart": 2,
+		"EmptyServerPolicy": "wait_only",
 		"NormalInfection": {
 			"Enable": true,
 			"Name": "Infection Mode",

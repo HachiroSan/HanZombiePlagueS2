@@ -520,6 +520,7 @@ public partial class HZPServices
         if (currentParticipants < requiredPlayers)
         {
             _globals.WaitingForPlayers = true;
+            _globals.BootstrapRecoveryDrawPending = false;
             _helpers.SendCenterToAllT("ServerWaitForPlayers", currentParticipants, requiredPlayers);
             return;
         }
@@ -588,7 +589,37 @@ public partial class HZPServices
 
     public void CheckEndTimer()
     {
-        if (_globals.g_hRoundEndTimer == null)
+        if (_globals.g_hRoundEndTimer != null)
+            return;
+
+        if (!_globals.GameStart || _globals.RestartRoundPendingForMinPlayers)
+            return;
+
+        SetRoundEndTime();
+    }
+
+    public void EnterWaitingForPlayersState(bool serverEmpty)
+    {
+        _globals.WaitingForPlayers = true;
+        _globals.GameStart = false;
+        _globals.RestartRoundPendingForMinPlayers = false;
+        _globals.BootstrapRecoveryDrawPending = false;
+
+        if (serverEmpty)
+            _globals.ServerIsEmpty = true;
+
+        _globals.g_hCountdown?.Cancel();
+        _globals.g_hCountdown = null;
+        _globals.g_hRoundEndTimer?.Cancel();
+        _globals.g_hRoundEndTimer = null;
+    }
+
+    public void HandleServerEmptyTransition()
+    {
+        EnterWaitingForPlayersState(true);
+
+        string policy = (_mainCFG.CurrentValue.EmptyServerPolicy ?? "wait_only").Trim().ToLowerInvariant();
+        if (policy == "draw_restart" || policy == "draw")
         {
             _helpers.restartgame();
         }
@@ -629,6 +660,7 @@ public partial class HZPServices
         if (currentParticipants < requiredPlayers)
         {
             _globals.WaitingForPlayers = true;
+            _globals.BootstrapRecoveryDrawPending = false;
             return;
         }
 
@@ -681,11 +713,24 @@ public partial class HZPServices
         if (_globals.RestartRoundPendingForMinPlayers)
             return;
 
+        bool useBootstrapDrawRecovery = _globals.BootstrapRecoveryDrawPending && !_globals.BootstrapRecoveryDrawConsumed;
+
         _globals.RestartRoundPendingForMinPlayers = true;
         _globals.WaitingForPlayers = false;
         _globals.GameStart = false;
+        _globals.BootstrapRecoveryDrawPending = false;
         _globals.g_hCountdown?.Cancel();
         _globals.g_hCountdown = null;
+
+        if (useBootstrapDrawRecovery)
+        {
+            _globals.BootstrapRecoveryDrawConsumed = true;
+            _logger.LogInformation("Using one-time bootstrap draw recovery on waiting->min transition");
+            _helpers.restartgame();
+            return;
+        }
+
+        _logger.LogInformation("Using standard recovery restart on waiting->min transition");
         _core.Engine.ExecuteCommand("mp_restartgame 1");
     }
 
