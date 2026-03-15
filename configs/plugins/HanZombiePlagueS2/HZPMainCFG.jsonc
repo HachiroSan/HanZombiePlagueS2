@@ -4,7 +4,7 @@
 		"OutbreakStartDelayAfterFreezeEnd": "1.25",
 		"CountdownTickInterval": "1.0",
 		"RoundTime": "3.0",
-		"MinPlayersToStart": 2,
+		"MinPlayersToStart": 1,
 		"EmptyServerPolicy": "wait_only",
 		"NormalInfection": {
 			"Enable": true,

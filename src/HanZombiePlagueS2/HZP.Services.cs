@@ -510,7 +510,7 @@ public partial class HZPServices
         }
     }
 
-    public void Round_Countdown()
+   public void Round_Countdown()
     {
         var CFG = _mainCFG.CurrentValue;
         int requiredPlayers = GetEffectiveMinPlayersToStart();
@@ -524,9 +524,7 @@ public partial class HZPServices
             _globals.BootstrapRecoveryDrawPending = false;
 
             if (_globals.RoundPrepActive && _globals.OutbreakAtUnixMs > 0)
-            {
                 _globals.OutbreakAtUnixMs += (long)Math.Round(tickInterval * 1000f);
-            }
 
             _helpers.SendCenterToAllT("ServerWaitForPlayers", currentParticipants, requiredPlayers);
             return;
@@ -539,44 +537,63 @@ public partial class HZPServices
         }
 
         _globals.WaitingForPlayers = false;
+
         if (!_globals.RoundPrepActive)
         {
             float prepSeconds = CFG.RoundReadyTime > 0 ? CFG.RoundReadyTime : 3.0f;
+
             _globals.RoundPrepActive = true;
-            _globals.OutbreakAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() + (long)Math.Round(prepSeconds * 1000f);
+            _globals.OutbreakAtUnixMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() +
+                                        (long)Math.Round(prepSeconds * 1000f);
             _globals.LastAnnouncedCountdown = int.MinValue;
         }
 
         long nowMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        double remainingSecondsRaw = (_globals.OutbreakAtUnixMs - nowMs) / 1000.0;
-        int currentDisplay = (int)Math.Ceiling(remainingSecondsRaw);
-        if (currentDisplay < 0)
-            currentDisplay = 0;
-
+        int currentDisplay = Math.Max(0, (int)Math.Ceiling((_globals.OutbreakAtUnixMs - nowMs) / 1000.0));
         _globals.Countdown = currentDisplay;
 
-        bool displayChanged = currentDisplay != _globals.LastAnnouncedCountdown;
+        int previousDisplay = _globals.LastAnnouncedCountdown;
+        if (previousDisplay == int.MinValue)
+            previousDisplay = currentDisplay + 1;
+
+        if (currentDisplay == previousDisplay)
+        {
+            _helpers.SendCenterToAllT("ServerGameCountDown", currentDisplay);
+            return;
+        }
+
         _globals.LastAnnouncedCountdown = currentDisplay;
 
-        if (!displayChanged)
-            return;
-
-        if (currentDisplay <= 10 && currentDisplay >= 1 && _globals.RoundVoxGroup != null)
+        if (_globals.RoundVoxGroup != null)
         {
-            var soundList = _globals.RoundVoxGroup.CoundDownVox.Split(',');
+            var vox = _globals.RoundVoxGroup;
 
-            int soundIndex = currentDisplay - 1;
-
-            if (soundIndex >= 0 && soundIndex < soundList.Length)
+            if (previousDisplay > 20 && currentDisplay <= 20 && currentDisplay > 0)
             {
-                CheckEndTimer();
-                _helpers.EmitSoundToAll(soundList[soundIndex].Trim(), _globals.RoundVoxGroup.Volume);
+                if (!string.IsNullOrWhiteSpace(vox.SecRemainVox))
+                    PlayerSelectSoundtoAll(vox.SecRemainVox.Trim(), vox.Volume);
             }
-        }
-        else if (currentDisplay == 20 && _globals.RoundVoxGroup != null)
-        {
 
-            PlayerSelectSoundtoAll(_globals.RoundVoxGroup.SecRemainVox, _globals.RoundVoxGroup.Volume);
+            string[] soundList = string.IsNullOrWhiteSpace(vox.CoundDownVox)
+                ? Array.Empty<string>()
+                : vox.CoundDownVox.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            int upper = Math.Min(10, previousDisplay - 1);
+            int lower = Math.Max(1, currentDisplay);
+
+            for (int sec = upper; sec >= lower; sec--)
+            {
+                int soundIndex = sec - 1;
+                if (soundIndex < 0 || soundIndex >= soundList.Length)
+                    continue;
+
+                string soundPath = soundList[soundIndex];
+                if (string.IsNullOrWhiteSpace(soundPath))
+                    continue;
+
+                _helpers.EmitSoundToAll(soundPath, vox.Volume);
+                break;
+            }
         }
 
         if (currentDisplay <= 0)
@@ -587,32 +604,34 @@ public partial class HZPServices
             _globals.OutbreakAtUnixMs = 0;
             _globals.LastAnnouncedCountdown = int.MinValue;
             _globals.GameStart = true;
+
             _loadoutMenu.EnsureValidLoadoutToAll();
 
             if (_api != null)
                 _api.NotifyGameStart(_globals.GameStart);
 
             _globals.GameInfiniteClipMode = _gameMode.InfiniteClipMode();
+
             CheckEndTimer();
             SwitchMode();
             _helpers.SetAmbSounds(CFG, _globals);
 
             var modeVox = _gameMode.SelectModeVox();
-            if (_globals.RoundVoxGroup != null && !string.IsNullOrEmpty(modeVox))
-            {
+            if (_globals.RoundVoxGroup != null && !string.IsNullOrWhiteSpace(modeVox))
                 PlayerSelectSoundtoAll(modeVox, _globals.RoundVoxGroup.Volume);
-            }
-            _core.Scheduler.DelayBySeconds(1.0f, () => 
+
+            _core.Scheduler.DelayBySeconds(1.0f, () =>
             {
                 if (_globals.GameStart)
-                {
                     CheckRoundWinConditions();
-                }
             });
+
             return;
         }
+
         _helpers.SendCenterToAllT("ServerGameCountDown", currentDisplay);
     }
+
 
     public void ScheduleRoundPreparationStart(float roundReadySeconds, float delayAfterFreezeEndSeconds)
     {
