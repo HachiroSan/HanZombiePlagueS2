@@ -9,10 +9,10 @@
     "RevoteCommand": "sw_revote",
     "EnableRtv": true,
     "EnableNomination": true,
-    "RtvMinPlayers": 2,
+    "RtvMinPlayers": 1,
     "RtvMinRounds": 1,
     "RtvVotePercentage": 60,
-    "RtvChangeMapImmediately": false,
+    "RtvChangeMapImmediately": true,
     "MapsToShow": 5,
     "VoteDuration": 20,
     "ChangeMapDelay": 6,
@@ -25,6 +25,7 @@
         "Enable": true,
         "Name": "zm_turkish_streets_exo_v1",
         "Id": "zm_turkish_streets_exo_v1",
+        "WorkshopMapId": "3623687101",
         "MinPlayers": 0,
         "MaxPlayers": 0
       },
@@ -32,6 +33,7 @@
         "Enable": true,
         "Name": "zm_ice_attack3",
         "Id": "zm_ice_attack3",
+        "WorkshopMapId": "3617865709",
         "MinPlayers": 0,
         "MaxPlayers": 0
       },
@@ -39,6 +41,7 @@
         "Enable": true,
         "Name": "zm_festival_v01",
         "Id": "zm_festival_v01",
+        "WorkshopMapId": "3633167182",
         "MinPlayers": 0,
         "MaxPlayers": 0
       },
@@ -46,6 +49,7 @@
         "Enable": true,
         "Name": "zm_defense_box",
         "Id": "zm_defense_box",
+        "WorkshopMapId": "3637145381",
         "MinPlayers": 0,
         "MaxPlayers": 0
       },
@@ -53,6 +57,7 @@
         "Enable": true,
         "Name": "zm_prison_break",
         "Id": "zm_prison_break",
+        "WorkshopMapId": "3648327879",
         "MinPlayers": 0,
         "MaxPlayers": 0
       },
@@ -60,6 +65,7 @@
         "Enable": true,
         "Name": "zm_my_games_moment_house_world",
         "Id": "zm_my_games_moment_house_world",
+        "WorkshopMapId": "3623737360",
         "MinPlayers": 0,
         "MaxPlayers": 0
       },
@@ -67,9 +73,19 @@
         "Enable": true,
         "Name": "de_dust2_night",
         "Id": "de_dust2_night",
+        "WorkshopMapId": "3296013569",
         "MinPlayers": 0,
         "MaxPlayers": 0
       }
+      // Workshop map entry format (recommended):
+      // {
+      //   "Enable": true,
+      //   "Name": "zm_my_workshop_map",
+      //   "Id": "",
+      //   "WorkshopMapId": "3465840918",
+      //   "MinPlayers": 0,
+      //   "MaxPlayers": 0
+      // }
     ]
   }
 }

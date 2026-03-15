@@ -28,6 +28,11 @@ public sealed class HZPMapVoteService(
             EnqueueRecentMap(currentMapId);
         }
 
+        if (!string.IsNullOrWhiteSpace(currentWorkshopId))
+        {
+            EnqueueRecentMap(currentWorkshopId);
+        }
+
         float currentTime = 0;
         try
         {
@@ -216,8 +221,9 @@ public sealed class HZPMapVoteService(
             return "MapVoteNominateCooldown";
         }
 
-        state.Nominations[player.PlayerID] = map.Name;
-        helpers.SendChatToAllT("MapVoteNominateSuccess", player.Name, map.Name);
+        var resolvedMapName = map.ResolveMapName();
+        state.Nominations[player.PlayerID] = resolvedMapName;
+        helpers.SendChatToAllT("MapVoteNominateSuccess", player.Name, resolvedMapName);
         return "MapVoteNominateStored";
     }
 
@@ -228,10 +234,14 @@ public sealed class HZPMapVoteService(
             return null;
         }
 
+        string normalizedQuery = query.Trim();
+
         return mapVoteCFG.CurrentValue.MapList.FirstOrDefault(map =>
             map.Enable &&
-            (map.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
-            || map.Id.Equals(query, StringComparison.OrdinalIgnoreCase)));
+            (map.ResolveMapName().Contains(normalizedQuery, StringComparison.OrdinalIgnoreCase)
+            || (!map.IsWorkshopMap && map.Id.Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))
+            || (map.TryGetWorkshopMapId(out var workshopMapId)
+                && workshopMapId.Equals(normalizedQuery, StringComparison.OrdinalIgnoreCase))));
     }
 
     public void CheckAutomatedVote(bool force = false)
@@ -270,7 +280,7 @@ public sealed class HZPMapVoteService(
         state.MapsInVote.AddRange(maps);
         foreach (var map in maps)
         {
-            state.Votes[map.Name] = 0;
+            state.Votes[map.ResolveMapName()] = 0;
         }
 
         helpers.SendChatToAllT(isRtv ? "MapVoteRtvStarted" : "MapVoteStarted", cfg.VoteDuration);
@@ -295,7 +305,7 @@ public sealed class HZPMapVoteService(
 
         var nominations = state.Nominations.Values
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Select(name => cfg.MapList.FirstOrDefault(m => string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase)))
+            .Select(name => cfg.MapList.FirstOrDefault(m => string.Equals(m.ResolveMapName(), name, StringComparison.OrdinalIgnoreCase)))
             .Where(m => m != null)
             .Cast<HZPMapVoteMapEntry>()
             .Where(map => map.IsValidForPlayerCount(playerCount))
@@ -307,7 +317,7 @@ public sealed class HZPMapVoteService(
         var selected = new List<HZPMapVoteMapEntry>();
         foreach (var nomination in nominations.OrderBy(_ => random.Next()))
         {
-            if (selected.Any(x => string.Equals(x.Name, nomination.Name, StringComparison.OrdinalIgnoreCase)))
+            if (selected.Any(x => string.Equals(x.ResolveMapName(), nomination.ResolveMapName(), StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
@@ -321,7 +331,7 @@ public sealed class HZPMapVoteService(
 
         foreach (var map in eligible.OrderBy(_ => random.Next()))
         {
-            if (selected.Any(x => string.Equals(x.Name, map.Name, StringComparison.OrdinalIgnoreCase)))
+            if (selected.Any(x => string.Equals(x.ResolveMapName(), map.ResolveMapName(), StringComparison.OrdinalIgnoreCase)))
             {
                 continue;
             }
@@ -348,8 +358,8 @@ public sealed class HZPMapVoteService(
         _menu?.CloseAllVoteMenus();
 
         var winner = state.MapsInVote
-            .OrderByDescending(map => GetVotes(map.Name))
-            .ThenBy(map => map.Name, StringComparer.OrdinalIgnoreCase)
+            .OrderByDescending(map => GetVotes(map.ResolveMapName()))
+            .ThenBy(map => map.ResolveMapName(), StringComparer.OrdinalIgnoreCase)
             .FirstOrDefault();
 
         if (winner == null)
@@ -358,10 +368,10 @@ public sealed class HZPMapVoteService(
             return;
         }
 
-        state.NextMapName = winner.Name;
-        state.NextMapId = winner.Id;
+        state.NextMapName = winner.ResolveMapName();
+        state.NextMapId = winner.ResolveTargetId();
         state.MapChangeScheduled = true;
-        helpers.SendChatRawToAll($"[default]Next map selected: [gold]{winner.Name}[olive]");
+        helpers.SendChatRawToAll($"[default]Next map selected: [gold]{state.NextMapName}[olive]");
         if (state.ChangeMapImmediately)
         {
             ChangeMap();
@@ -380,17 +390,53 @@ public sealed class HZPMapVoteService(
         helpers.SendChatRawToAll($"[default]Changing map to [gold]{state.NextMapName}[olive] in [red]{cfg.ChangeMapDelay}[olive] seconds.");
         core.Scheduler.DelayBySeconds(cfg.ChangeMapDelay, () =>
         {
-            string targetId = string.IsNullOrWhiteSpace(state.NextMapId) ? state.NextMapName : state.NextMapId;
-            if (targetId.StartsWith("ws:", StringComparison.OrdinalIgnoreCase) || long.TryParse(targetId, out _))
+            string nextMapName = state.NextMapName.Trim();
+            string targetId = string.IsNullOrWhiteSpace(state.NextMapId) ? nextMapName : state.NextMapId.Trim();
+            if (targetId.StartsWith("ws:", StringComparison.OrdinalIgnoreCase))
             {
-                string workshopId = targetId.StartsWith("ws:", StringComparison.OrdinalIgnoreCase) ? targetId[3..] : targetId;
-                core.Engine.ExecuteCommandWithBuffer($"nextlevel {state.NextMapName}", _ => { });
-                core.Engine.ExecuteCommandWithBuffer($"host_workshop_map {workshopId}", _ => { });
+                logger.LogWarning("Legacy workshop id format ws: is not supported for map changes. Target: {TargetId}", targetId);
+                state.MapChangeInProgress = false;
+                return;
+            }
+
+            var matchedMap = mapVoteCFG.CurrentValue.MapList.FirstOrDefault(map =>
+                string.Equals(map.ResolveMapName(), nextMapName, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(map.Name, state.NextMapName, StringComparison.OrdinalIgnoreCase));
+
+            if (matchedMap != null)
+            {
+                nextMapName = matchedMap.ResolveMapName();
+            }
+
+            string workshopMapId = string.Empty;
+            if (matchedMap?.TryGetWorkshopMapId(out var entryWorkshopId) == true)
+            {
+                workshopMapId = entryWorkshopId;
+            }
+            else if (long.TryParse(targetId, out _))
+            {
+                workshopMapId = targetId;
+            }
+            else if (HZPMapVoteMapEntry.TryParseNameWorkshopMapId(state.NextMapName, out var parsedMapName, out var parsedWorkshopId))
+            {
+                nextMapName = parsedMapName;
+                workshopMapId = parsedWorkshopId;
+            }
+
+            if (IsMapValidOnServer(nextMapName))
+            {
+                core.Engine.ExecuteCommandWithBuffer($"nextlevel {nextMapName}", _ => { });
+                core.Engine.ExecuteCommandWithBuffer($"changelevel {nextMapName}", _ => { });
+            }
+            else if (!string.IsNullOrWhiteSpace(workshopMapId))
+            {
+                core.Engine.ExecuteCommandWithBuffer($"nextlevel {nextMapName}", _ => { });
+                core.Engine.ExecuteCommandWithBuffer($"host_workshop_map {workshopMapId}", _ => { });
             }
             else
             {
-                core.Engine.ExecuteCommandWithBuffer($"nextlevel {state.NextMapName}", _ => { });
-                core.Engine.ExecuteCommandWithBuffer($"changelevel {targetId}", _ => { });
+                core.Engine.ExecuteCommandWithBuffer($"nextlevel {nextMapName}", _ => { });
+                core.Engine.ExecuteCommandWithBuffer($"ds_workshop_changelevel {nextMapName}", _ => { });
             }
         });
     }
@@ -434,14 +480,31 @@ public sealed class HZPMapVoteService(
 
     private bool IsCurrentMap(HZPMapVoteMapEntry map, string currentMapId, string workshopId)
     {
+        var resolvedMapName = map.ResolveMapName();
+        if (map.IsWorkshopMap && map.TryGetWorkshopMapId(out var mapWorkshopId))
+        {
+            return (!string.IsNullOrWhiteSpace(workshopId)
+                    && string.Equals(mapWorkshopId, workshopId, StringComparison.OrdinalIgnoreCase))
+            || string.Equals(resolvedMapName, currentMapId, StringComparison.OrdinalIgnoreCase);
+        }
+
         return string.Equals(map.Id, currentMapId, StringComparison.OrdinalIgnoreCase)
-            || (!string.IsNullOrWhiteSpace(workshopId) && string.Equals(map.Id, workshopId, StringComparison.OrdinalIgnoreCase))
-            || string.Equals(map.Name, currentMapId, StringComparison.OrdinalIgnoreCase);
+            || string.Equals(resolvedMapName, currentMapId, StringComparison.OrdinalIgnoreCase);
     }
 
     private bool IsMapInCooldown(HZPMapVoteMapEntry map)
     {
-        return ContainsRecentMap(map.Id) || ContainsRecentMap(map.Name);
+        if (ContainsRecentMap(map.ResolveMapName()))
+        {
+            return true;
+        }
+
+        if (map.IsWorkshopMap)
+        {
+            return map.TryGetWorkshopMapId(out var mapWorkshopId) && ContainsRecentMap(mapWorkshopId);
+        }
+
+        return ContainsRecentMap(map.Id);
     }
 
     private void EnqueueRecentMap(string mapId)
@@ -473,6 +536,66 @@ public sealed class HZPMapVoteService(
     private bool ContainsRecentMap(string mapId)
     {
         return state.RecentMaps.Any(x => string.Equals(x, mapId, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private bool IsMapValidOnServer(string mapName)
+    {
+        if (string.IsNullOrWhiteSpace(mapName))
+        {
+            return false;
+        }
+
+        return TryInvokeMapValidMethod(core, mapName, out var isValid)
+            || TryInvokeMapValidMethod(core.Engine, mapName, out isValid)
+            || TryInvokeMapValidOnCoreServer(mapName, out isValid)
+            ? isValid
+            : false;
+    }
+
+    private bool TryInvokeMapValidOnCoreServer(string mapName, out bool isValid)
+    {
+        isValid = false;
+        try
+        {
+            var serverProperty = core.GetType().GetProperty("Server");
+            var serverInstance = serverProperty?.GetValue(core);
+            if (serverInstance == null)
+            {
+                return false;
+            }
+
+            return TryInvokeMapValidMethod(serverInstance, mapName, out isValid);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryInvokeMapValidMethod(object target, string mapName, out bool isValid)
+    {
+        isValid = false;
+        try
+        {
+            var method = target.GetType().GetMethod("IsMapValid", [typeof(string)]);
+            if (method == null || method.ReturnType != typeof(bool))
+            {
+                return false;
+            }
+
+            var result = method.Invoke(target, [mapName]);
+            if (result is not bool boolResult)
+            {
+                return false;
+            }
+
+            isValid = boolResult;
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private int GetEligibleVoterCount()

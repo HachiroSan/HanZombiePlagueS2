@@ -19,9 +19,35 @@ public sealed partial class HZPAdminCommands
             return;
         }
 
+        if (mapQuery.StartsWith("ws:", StringComparison.OrdinalIgnoreCase))
+        {
+            ReplySyntax(context, ChangeMapCommandName, "<map_name_or_id>");
+            return;
+        }
+
         var map = mapVoteService.FindMap(mapQuery);
-        string mapName = map?.Name ?? mapQuery;
-        string mapId = string.IsNullOrWhiteSpace(map?.Id) ? mapName : map.Id;
+        string mapName;
+        string mapId;
+        if (map != null)
+        {
+            mapName = map.ResolveMapName();
+            mapId = map.ResolveTargetId();
+        }
+        else if (HZPMapVoteMapEntry.TryParseNameWorkshopMapId(mapQuery, out var parsedMapName, out var parsedWorkshopMapId))
+        {
+            mapName = parsedMapName;
+            mapId = parsedWorkshopMapId;
+        }
+        else if (long.TryParse(mapQuery, out _))
+        {
+            mapName = mapQuery;
+            mapId = mapQuery;
+        }
+        else
+        {
+            mapName = mapQuery;
+            mapId = mapQuery;
+        }
 
         var state = mapVoteService.State;
         if (state.MapChangeInProgress)

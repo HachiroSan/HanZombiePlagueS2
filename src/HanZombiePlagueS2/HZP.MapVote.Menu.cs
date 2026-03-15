@@ -65,8 +65,9 @@ public sealed class HZPMapVoteMenu(
 
         foreach (var map in mapVoteService.State.MapsInVote)
         {
-            int votes = mapVoteService.GetVotes(map.Name);
-            string label = $"{map.Name} [{votes}]";
+            string voteKey = map.ResolveMapName();
+            int votes = mapVoteService.GetVotes(voteKey);
+            string label = $"{voteKey} [{votes}]";
             var button = new ButtonMenuOption(label)
             {
                 TextStyle = MenuOptionTextStyle.ScrollLeftLoop,
@@ -84,7 +85,7 @@ public sealed class HZPMapVoteMenu(
                         return;
                     }
 
-                    var result = mapVoteService.TryVote(clicker, map.Name);
+                    var result = mapVoteService.TryVote(clicker, voteKey);
                     helpers.SendChatT(clicker, result);
                 });
             };
