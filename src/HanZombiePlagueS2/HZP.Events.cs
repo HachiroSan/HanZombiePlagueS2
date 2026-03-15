@@ -256,6 +256,7 @@ public partial class HZPEvents
         _globals.RestartRoundPendingForMinPlayers = false;
         _globals.WaitingForPlayers = false;
         _service.SetRoundEndTime();
+        _helpers.BuildSpawnCache();
         _globals.SafeRoundStart = true;
         var CFG = _mainCFG.CurrentValue;
         float configDist = CFG.Assassin.InvisibilityDist;
@@ -854,6 +855,7 @@ public partial class HZPEvents
     {
         _commands.ServerCvar();
         _mapVoteService.ResetOnMapLoad(@event.MapName, _core.Engine.WorkshopId);
+        _helpers.BuildSpawnCache();
         var VoxCFG = _voxCFG.CurrentValue;
         var VoxList = VoxCFG.VoxList;
         if (_globals.RoundVoxGroup == null && VoxList != null)
@@ -952,40 +954,10 @@ public partial class HZPEvents
         if (_globals.ServerIsEmpty)
         {
             _globals.ServerIsEmpty = false;
-            // Restart the game after a short delay to allow the player to fully connect and initialize.
-            // _core.Scheduler.DelayBySeconds(1.0f, () =>
-            // {
-            //     _helpers.restartgame();
-            // });
-
-            // If freeze-end happened while empty, start a countdown loop so min-player recovery can proceed.
-            if (!_globals.GameStart && _globals.g_hCountdown == null)
-            {
-                var cfg = _mainCFG.CurrentValue;
-                _globals.Countdown = (int)Math.Ceiling(cfg.RoundReadyTime > 0 ? cfg.RoundReadyTime : 3.0f);
-                _globals.WaitingForPlayers = true;
-                _globals.g_hCountdown = _core.Scheduler.DelayAndRepeatBySeconds(0.1f, 1.0f, () => _service.Round_Countdown());
-                _core.Scheduler.StopOnMapChange(_globals.g_hCountdown);
-            }
+            _service.RestartFreshAfterEmptyJoin();
         }
 
         _globals.IsZombie[id] = _globals.GameStart;
-
-        _core.Scheduler.DelayBySeconds(0.25f, () =>
-        {
-            if (_globals.BootstrapRecoveryDrawConsumed)
-                return;
-
-            if (_globals.GameStart || !_globals.WaitingForPlayers)
-                return;
-
-            int requiredPlayers = Math.Max(1, _globals.RuntimeMinPlayersToStart ?? _mainCFG.CurrentValue.MinPlayersToStart);
-            int currentParticipants = _helpers.GetEligibleParticipantCount();
-            if (currentParticipants >= requiredPlayers)
-            {
-                _globals.BootstrapRecoveryDrawPending = true;
-            }
-        });
 
         _core.Scheduler.DelayBySeconds(_banService.ConnectCheckDelaySeconds, async () =>
         {
@@ -1375,6 +1347,36 @@ public partial class HZPEvents
         _globals.IsZombie.TryGetValue(Id, out var isZombie);
 
         _service.RandomSpawnPoint(player, !isZombie);
+
+        _core.Scheduler.DelayBySeconds(0.15f, () =>
+        {
+            if (player == null || !player.IsValid)
+                return;
+
+            var currentPawn = player.PlayerPawn;
+            if (currentPawn == null || !currentPawn.IsValid)
+                return;
+
+            var origin = currentPawn.AbsOrigin;
+            if (origin == null)
+            {
+                _logger.LogWarning($"[Spawn] Player [{player.Name}] has null origin after spawn, retrying random spawn");
+                _service.RandomSpawnPoint(player, !isZombie);
+                return;
+            }
+
+            var pos = origin.Value;
+            bool invalidPos = float.IsNaN(pos.X) || float.IsNaN(pos.Y) || float.IsNaN(pos.Z)
+                              || Math.Abs(pos.X) > 32768f
+                              || Math.Abs(pos.Y) > 32768f
+                              || Math.Abs(pos.Z) > 32768f;
+
+            if (invalidPos)
+            {
+                _logger.LogWarning($"[Spawn] Player [{player.Name}] at invalid position ({pos.X}, {pos.Y}, {pos.Z}), retrying random spawn");
+                _service.RandomSpawnPoint(player, !isZombie);
+            }
+        });
 
         return HookResult.Continue;
     }

@@ -465,9 +465,7 @@ public partial class HZPServices
             if (!_globals.GameStart || _globals.RestartRoundPendingForMinPlayers)
                 return;
 
-            int requiredPlayers = GetEffectiveMinPlayersToStart();
-            int currentParticipants = _helpers.GetEligibleParticipantCount();
-            if (currentParticipants < requiredPlayers)
+            if (!HasValidRoundPopulation(out _, out _, out _))
             {
                 _globals.WaitingForPlayers = true;
                 return;
@@ -513,20 +511,17 @@ public partial class HZPServices
    public void Round_Countdown()
     {
         var CFG = _mainCFG.CurrentValue;
-        int requiredPlayers = GetEffectiveMinPlayersToStart();
-        int currentParticipants = _helpers.GetEligibleParticipantCount();
         bool wasWaitingForPlayers = _globals.WaitingForPlayers;
         float tickInterval = CFG.CountdownTickInterval > 0 ? CFG.CountdownTickInterval : 1.0f;
 
-        if (currentParticipants < requiredPlayers)
+        if (!HasValidRoundPopulation(out int realPlayers, out int totalEntities, out int requiredEntities))
         {
             _globals.WaitingForPlayers = true;
-            _globals.BootstrapRecoveryDrawPending = false;
 
             if (_globals.RoundPrepActive && _globals.OutbreakAtUnixMs > 0)
                 _globals.OutbreakAtUnixMs += (long)Math.Round(tickInterval * 1000f);
 
-            _helpers.SendCenterToAllT("ServerWaitForPlayers", currentParticipants, requiredPlayers);
+            _helpers.SendCenterToAllT("ServerWaitForPlayers", totalEntities, requiredEntities);
             return;
         }
 
@@ -677,7 +672,6 @@ public partial class HZPServices
         _globals.WaitingForPlayers = true;
         _globals.GameStart = false;
         _globals.RestartRoundPendingForMinPlayers = false;
-        _globals.BootstrapRecoveryDrawPending = false;
         _globals.RoundPrepActive = false;
         _globals.OutbreakAtUnixMs = 0;
         _globals.LastAnnouncedCountdown = int.MinValue;
@@ -694,12 +688,32 @@ public partial class HZPServices
     public void HandleServerEmptyTransition()
     {
         EnterWaitingForPlayersState(true);
+        _globals.FreshRestartAfterEmptyPending = false;
+    }
 
-        string policy = (_mainCFG.CurrentValue.EmptyServerPolicy ?? "wait_only").Trim().ToLowerInvariant();
-        if (policy == "draw_restart" || policy == "draw")
+    public void RestartFreshAfterEmptyJoin()
+    {
+        if (_globals.FreshRestartAfterEmptyPending)
+            return;
+
+        _globals.FreshRestartAfterEmptyPending = true;
+        EnterWaitingForPlayersState(false);
+        _globals.ServerIsEmpty = false;
+
+        _core.Scheduler.DelayBySeconds(3f, () =>
         {
-            _helpers.restartgame();
-        }
+            try
+            {
+                if (_helpers.GetEligibleParticipantCount() > 0)
+                {
+                    _core.Engine.ExecuteCommand("mp_restartgame 1");
+                }
+            }
+            finally
+            {
+                _globals.FreshRestartAfterEmptyPending = false;
+            }
+        });
     }
 
 
@@ -732,12 +746,9 @@ public partial class HZPServices
         if (_globals.RestartRoundPendingForMinPlayers)
             return;
 
-        int requiredPlayers = GetEffectiveMinPlayersToStart();
-        int currentParticipants = _helpers.GetEligibleParticipantCount();
-        if (currentParticipants < requiredPlayers)
+        if (!HasValidRoundPopulation(out _, out _, out _))
         {
             _globals.WaitingForPlayers = true;
-            _globals.BootstrapRecoveryDrawPending = false;
             return;
         }
 
@@ -785,33 +796,30 @@ public partial class HZPServices
         return Math.Max(1, _globals.RuntimeMinPlayersToStart ?? configured);
     }
 
+    private bool HasValidRoundPopulation(out int realPlayers, out int totalEntities, out int requiredEntities)
+    {
+        realPlayers = _helpers.GetEligibleParticipantCount();
+        totalEntities = _helpers.GetTotalEntityCount();
+        requiredEntities = GetEffectiveMinPlayersToStart();
+        return realPlayers >= 1 && totalEntities >= requiredEntities;
+    }
+
     private void TriggerMinPlayersRecoveryRestart()
     {
         if (_globals.RestartRoundPendingForMinPlayers)
             return;
 
-        bool useBootstrapDrawRecovery = _globals.BootstrapRecoveryDrawPending && !_globals.BootstrapRecoveryDrawConsumed;
-
         _globals.RestartRoundPendingForMinPlayers = true;
         _globals.WaitingForPlayers = false;
         _globals.GameStart = false;
-        _globals.BootstrapRecoveryDrawPending = false;
         _globals.RoundPrepActive = false;
         _globals.OutbreakAtUnixMs = 0;
         _globals.LastAnnouncedCountdown = int.MinValue;
         _globals.g_hCountdown?.Cancel();
         _globals.g_hCountdown = null;
 
-        if (useBootstrapDrawRecovery)
-        {
-            _globals.BootstrapRecoveryDrawConsumed = true;
-            _logger.LogInformation("Using one-time bootstrap draw recovery on waiting->min transition");
-            _helpers.restartgame();
-            return;
-        }
-
         _logger.LogInformation("Using standard recovery restart on waiting->min transition");
-        _core.Engine.ExecuteCommand("mp_restartgame 5");
+        _core.Engine.ExecuteCommand("mp_restartgame 1");
     }
 
     public void ZombieRegenTimer()
@@ -1107,9 +1115,25 @@ public partial class HZPServices
         var spawnConfig = isZombie ? CFG.ZombieSpawnPoints : CFG.HumanSpawnPoints;
         var pool = _helpers.GetSpawnPool(spawnConfig);
         if (pool.Count == 0)
+        {
+            _logger.LogWarning($"[Spawn] Empty pool for {(isZombie ? "zombie" : "human")} spawn (config: '{spawnConfig}')");
             return;
+        }
 
         var sp = pool[Random.Shared.Next(pool.Count)];
+
+        if (float.IsNaN(sp.Position.X) || float.IsNaN(sp.Position.Y) || float.IsNaN(sp.Position.Z))
+        {
+            _logger.LogWarning("[Spawn] Selected spawn contains NaN position values, skipping teleport");
+            return;
+        }
+
+        if (Math.Abs(sp.Position.Z) > 32768f)
+        {
+            _logger.LogWarning($"[Spawn] Selected spawn has suspicious Z value ({sp.Position.Z}), skipping teleport");
+            return;
+        }
+
         player.Teleport(sp.Position, sp.Angle);
     }
 

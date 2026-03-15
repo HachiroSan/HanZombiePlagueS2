@@ -64,6 +64,21 @@ public partial class HZPHelpers
         return count;
     }
 
+    public int GetTotalEntityCount()
+    {
+        var allplayer = _core.PlayerManager.GetAllPlayers();
+        int count = 0;
+        foreach (var player in allplayer)
+        {
+            if (player == null || !player.IsValid)
+                continue;
+
+            count++;
+        }
+
+        return count;
+    }
+
     public void DropAllWeapon(IPlayer p)
     {
         var pawn = p.PlayerPawn;

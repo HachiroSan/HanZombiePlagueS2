@@ -13,8 +13,7 @@ public class HZPGlobals
     public bool SafeRoundStart { get; set; }
     public bool WaitingForPlayers { get; set; }
     public bool RestartRoundPendingForMinPlayers { get; set; }
-    public bool BootstrapRecoveryDrawPending { get; set; }
-    public bool BootstrapRecoveryDrawConsumed { get; set; }
+    public bool FreshRestartAfterEmptyPending { get; set; }
     public bool RoundPrepActive { get; set; }
     public long OutbreakAtUnixMs { get; set; }
     public int LastAnnouncedCountdown { get; set; } = int.MinValue;

@@ -4,8 +4,8 @@
 		"OutbreakStartDelayAfterFreezeEnd": "1.25",
 		"CountdownTickInterval": "1.0",
 		"RoundTime": "3.0",
-		"MinPlayersToStart": 1,
-		"EmptyServerPolicy": "wait_only",
+		// Minimum total participants required to start, including bots.
+		"MinPlayersToStart": 2,
 		"NormalInfection": {
 			"Enable": true,
 			"Name": "Infection Mode",

@@ -193,6 +193,12 @@ public sealed class HZPPlayerDataService(
         _roundOutcomeRecorded = true;
         _roundActive = false;
 
+        if (!HasValidRewardPopulation())
+        {
+            logger.LogInformation("Skipping round rewards because start population was invalid for reward eligibility");
+            return;
+        }
+
         var playerSnapshots = core.PlayerManager
             .GetAllPlayers()
             .Where(player => player != null && player.IsValid && player.SteamID != 0)
@@ -316,6 +322,12 @@ public sealed class HZPPlayerDataService(
 
             helpers.SendChatT(target, "CashRewardParticipationOnly", helpers.FormatCurrency(grantedParticipation), balance);
         });
+    }
+
+    private bool HasValidRewardPopulation()
+    {
+        int requiredEntities = Math.Max(1, globals.RuntimeMinPlayersToStart ?? mainCFG.CurrentValue.MinPlayersToStart);
+        return helpers.GetEligibleParticipantCount() >= 1 && helpers.GetTotalEntityCount() >= requiredEntities;
     }
 
     private void NotifyOnlinePlayer(ulong steamId, Action<IPlayer> notify)
