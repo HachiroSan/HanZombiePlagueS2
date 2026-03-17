@@ -921,6 +921,15 @@ public partial class HZPEvents
         }
         else if (attackerIsZombie && !victimIsZombie)
         {
+            var activeWeapon = AttackerPawn.WeaponServices?.ActiveWeapon.Value;
+            bool isKnifeAttack = activeWeapon != null
+                && activeWeapon.IsValid
+                && activeWeapon.DesignerName == "weapon_knife";
+            bool isInfectionMode = _gameMode.CurrentMode == GameModeType.Normal
+                || _gameMode.CurrentMode == GameModeType.NormalInfection
+                || _gameMode.CurrentMode == GameModeType.MultiInfection
+                || _gameMode.CurrentMode == GameModeType.Hero;
+
             var zombieConfig = _zombieClassCFG.CurrentValue;
             var specialConfig = _SpecialClassCFG.CurrentValue;
             var zombie = _zombieState.GetZombieClass(attackerId, zombieConfig.ZombieClassList, specialConfig.SpecialClassList);
@@ -939,6 +948,20 @@ public partial class HZPEvents
             else
             {
                 @event.Info.Damage += zombie.Stats.Damage;
+
+                if (isKnifeAttack && isInfectionMode)
+                {
+                    int victimHealth = VictimPawn.Health;
+                    if (victimHealth <= 1)
+                    {
+                        @event.Info.Damage = 0;
+                        _service.Infect(AttackerPlayer, VictimPlayer, false);
+                    }
+                    else if (@event.Info.Damage >= victimHealth)
+                    {
+                        @event.Info.Damage = victimHealth - 1;
+                    }
+                }
             }
         }
         else if (!attackerIsZombie && victimIsZombie)
