@@ -70,6 +70,7 @@ public class HZPGlobals
     public readonly Dictionary<SpawnType, List<SpawnPointData>> spawnCache= new();
 
     public Dictionary<int, float> StopZombieTimers = new();
+    public Dictionary<int, FrozenEffectState> ActiveFrozenEffects = new();
 
     public Dictionary<int, bool> ScbaSuit = new Dictionary<int, bool>();
     public Dictionary<int, bool> GodState = new Dictionary<int, bool>();
@@ -121,6 +122,16 @@ public class GlowEntity
     public CBaseModelEntity? Relay { get; set; } = null;
     public CBaseModelEntity? Glow { get; set; } = null;
 
+}
+
+public class FrozenEffectState
+{
+    public CParticleSystem? Particle { get; set; } = null;
+    public CParticleSystem? AccentParticle { get; set; } = null;
+    public CancellationTokenSource? AudioTimer { get; set; } = null;
+    public byte OriginalRenderR { get; set; } = 255;
+    public byte OriginalRenderG { get; set; } = 255;
+    public byte OriginalRenderB { get; set; } = 255;
 }
 
 public readonly record struct PopulationSnapshot(bool IsAlive, bool IsZombie);

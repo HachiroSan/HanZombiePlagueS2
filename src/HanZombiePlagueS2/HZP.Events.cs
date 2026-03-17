@@ -106,6 +106,7 @@ public partial class HZPEvents
         _core.Event.OnMapLoad += Event_OnMapLoad;
         _core.Event.OnWeaponServicesCanUseHook += Event_OnWeaponServicesCanUseHook;
         _core.Event.OnPrecacheResource += Event_OnPrecacheResource;
+        _core.Event.OnTick += Event_OnTickFrozenMovement;
         _core.Event.OnTick += Event_OnTickSpeed;
         _core.Event.OnTick += Event_OnTickNoRecoil;
         _core.Event.OnTick += Event_OnTickBroadcast;
@@ -1018,6 +1019,44 @@ public partial class HZPEvents
         }
     }
 
+    private void Event_OnTickFrozenMovement()
+    {
+        float now = _core.Engine.GlobalVars.CurrentTime;
+
+        foreach (var player in _core.PlayerManager.GetAlive())
+        {
+            if (player == null || !player.IsValid)
+                continue;
+
+            int playerId = player.PlayerID;
+            if (!_globals.StopZombieTimers.TryGetValue(playerId, out float freezeUntil) || freezeUntil <= now)
+                continue;
+
+            var pawn = player.PlayerPawn;
+            if (pawn == null || !pawn.IsValid)
+                continue;
+
+            if (pawn.MoveType != MoveType_t.MOVETYPE_WALK || pawn.ActualMoveType != MoveType_t.MOVETYPE_WALK)
+            {
+                pawn.MoveType = MoveType_t.MOVETYPE_WALK;
+                pawn.ActualMoveType = MoveType_t.MOVETYPE_WALK;
+                pawn.MoveTypeUpdated();
+            }
+
+            if (Math.Abs(pawn.VelocityModifier) > 0.001f)
+            {
+                pawn.VelocityModifier = 0f;
+                pawn.VelocityModifierUpdated();
+            }
+
+            var velocity = pawn.AbsVelocity;
+            if (Math.Abs(velocity.X) > 0.01f || Math.Abs(velocity.Y) > 0.01f)
+            {
+                pawn.Teleport(null, null, new SwiftlyS2.Shared.Natives.Vector(0f, 0f, velocity.Z));
+            }
+        }
+    }
+
     private void Event_OnTickSpeed()
     {
         float now = _core.Engine.GlobalVars.CurrentTime;
@@ -1044,6 +1083,7 @@ public partial class HZPEvents
             _globals.IsSurvivor.TryGetValue(Id, out bool IsSurvivor);
             _globals.IsSniper.TryGetValue(Id, out bool IsSniper);
             _globals.IsHero.TryGetValue(Id, out bool IsHero);
+            bool isMovementLocked = _globals.StopZombieTimers.TryGetValue(Id, out float freezeUntil) && freezeUntil > now;
             float speed;
             float gravity;
 
@@ -1075,6 +1115,11 @@ public partial class HZPEvents
             {
                 speed = mainCfg.HumanInitialSpeed > 0 ? mainCfg.HumanInitialSpeed : 1.0f;
                 gravity = mainCfg.HumanInitialGravity;
+            }
+
+            if (isMovementLocked)
+            {
+                speed = 0f;
             }
 
             if (_globals.MovementSnapshots.TryGetValue(Id, out var snapshot)
@@ -1597,7 +1642,7 @@ public partial class HZPEvents
 
 
         SwiftlyS2.Shared.Natives.Vector position = new SwiftlyS2.Shared.Natives.Vector(@event.X, @event.Y, @event.Z);
-        float radius = 500f;
+        float radius = CFG.FreezeGrenadeRange;
         _helpers.DrawExpandingRing(position, radius, 0, 0, 255, 125);
         var sound = new SwiftlyS2.Shared.Sounds.SoundEvent(CFG.FreezeGrenadeSound, 1.0f, 1.0f);
         sound.SourceEntityIndex = (int)entity.Index;
@@ -1634,7 +1679,7 @@ public partial class HZPEvents
 
             if (distance <= radius)
             {
-                _helpers.SetZombieFreezeOrStun(zombie, CFG.FreezeGrenadeDuration, "Glass.BulletImpact");
+                _helpers.SetZombieFreezeOrStun(zombie, CFG.FreezeGrenadeDuration, "Glass.BulletImpact", true);
             }
         }
 
