@@ -25,6 +25,28 @@ namespace HanZombiePlagueS2;
 
 public partial class HZPHelpers
 {
+    private const int ExtraSpawnsPerTeamTarget = 32;
+    private static readonly BBox_t PlayerSpawnBounds = new()
+    {
+        Mins = new Vector(-16f, -16f, 0f),
+        Maxs = new Vector(16f, 16f, 72f)
+    };
+    private static readonly Vector[] ExtraSpawnOffsets =
+    {
+        new(32f, 0f, 0f),
+        new(-32f, 0f, 0f),
+        new(0f, 32f, 0f),
+        new(0f, -32f, 0f),
+        new(24f, 24f, 0f),
+        new(24f, -24f, 0f),
+        new(-24f, 24f, 0f),
+        new(-24f, -24f, 0f),
+        new(48f, 0f, 0f),
+        new(-48f, 0f, 0f),
+        new(0f, 48f, 0f),
+        new(0f, -48f, 0f),
+    };
+
     private readonly ILogger<HZPHelpers> _logger;
     private readonly ISwiftlyCore _core;
     private readonly HanZombiePlagueAPI _api;
@@ -472,6 +494,54 @@ public partial class HZPHelpers
 
         pawn.Collision.CollisionGroup = (byte)CollisionGroup.Debris;
         pawn.CollisionRulesChanged();
+    }
+
+    public void RestorePlayerCollision(IPlayer player)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null || !pawn.IsValid)
+            return;
+
+        pawn.Collision.CollisionGroup = (byte)CollisionGroup.Player;
+        pawn.CollisionRulesChanged();
+    }
+
+    public void ApplyTemporarySpawnNoBlock(IPlayer player, float durationSeconds = 0.75f)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        int playerId = player.PlayerID;
+
+        if (_globals.SpawnNoBlockTimers.TryGetValue(playerId, out var existing))
+        {
+            existing.Cancel();
+            _globals.SpawnNoBlockTimers.Remove(playerId);
+        }
+
+        SetNoBlock(player);
+
+        var timer = new CancellationTokenSource();
+        _globals.SpawnNoBlockTimers[playerId] = timer;
+
+        _core.Scheduler.DelayBySeconds(durationSeconds, () =>
+        {
+            if (timer.IsCancellationRequested)
+                return;
+
+            if (!_globals.SpawnNoBlockTimers.TryGetValue(playerId, out var current) || current != timer)
+                return;
+
+            _globals.SpawnNoBlockTimers.Remove(playerId);
+
+            if (player == null || !player.IsValid)
+                return;
+
+            RestorePlayerCollision(player);
+        });
     }
 
     public void ChangeKnife(IPlayer player, bool isZombie, bool customKnife, string knifepath = "")
@@ -1087,6 +1157,147 @@ public partial class HZPHelpers
             burn.timer?.Cancel();
             _globals.ActiveBurns.Remove(playerId);
         }
+    }
+
+    public void EnsureExtraSpawnEntities()
+    {
+        if (_globals.ExtraSpawnsGenerated)
+            return;
+
+        bool createdCt = EnsureExtraCtSpawnEntities();
+        bool createdT = EnsureExtraTSpawnEntities();
+
+        _globals.ExtraSpawnsGenerated = true;
+
+        if (createdCt || createdT)
+        {
+            _logger.LogInformation("[SpawnExpand] Added extra spawn entities: CT={CtCreated}, T={TCreated}", createdCt, createdT);
+        }
+    }
+
+    private bool EnsureExtraCtSpawnEntities()
+    {
+        return EnsureExtraSpawnEntitiesForTeam(
+            "info_player_counterterrorist",
+            () => _core.EntitySystem.CreateEntity<CInfoPlayerCounterterrorist>());
+    }
+
+    private bool EnsureExtraTSpawnEntities()
+    {
+        return EnsureExtraSpawnEntitiesForTeam(
+            "info_player_terrorist",
+            () => _core.EntitySystem.CreateEntity<CInfoPlayerTerrorist>());
+    }
+
+    private bool EnsureExtraSpawnEntitiesForTeam(string designerName, Func<SpawnPoint?> createSpawn)
+    {
+        var existingSpawns = _core.EntitySystem.GetAllEntitiesByDesignerName<SpawnPoint>(designerName)
+            .Where(spawn => spawn != null && spawn.IsValid)
+            .ToList();
+
+        if (existingSpawns.Count == 0 || existingSpawns.Count >= ExtraSpawnsPerTeamTarget)
+            return false;
+
+        int needed = ExtraSpawnsPerTeamTarget - existingSpawns.Count;
+        int created = 0;
+
+        foreach (var spawn in existingSpawns)
+        {
+            if (created >= needed)
+                break;
+
+            var origin = spawn.AbsOrigin;
+            var angles = spawn.AbsRotation;
+            if (origin == null || angles == null)
+                continue;
+
+            foreach (var offset in ExtraSpawnOffsets)
+            {
+                if (created >= needed)
+                    break;
+
+                var newSpawn = createSpawn();
+                if (newSpawn == null || !newSpawn.IsValid)
+                    continue;
+
+                var newPosition = new Vector(origin.Value.X + offset.X, origin.Value.Y + offset.Y, origin.Value.Z + offset.Z);
+                if (!TryResolvePlayableSpawnPosition(newPosition, out var groundedPosition))
+                    continue;
+
+                newSpawn.Teleport(groundedPosition, angles, null);
+                newSpawn.DispatchSpawn();
+                created++;
+            }
+        }
+
+        return created > 0;
+    }
+
+    public bool TryResolvePlayableSpawnPosition(Vector candidatePosition, out Vector resolvedPosition)
+    {
+        var filter = new CTraceFilter();
+        var start = new Vector(candidatePosition.X, candidatePosition.Y, candidatePosition.Z + 24f);
+        var end = new Vector(candidatePosition.X, candidatePosition.Y, candidatePosition.Z - 256f);
+        CGameTrace trace = default;
+
+        _core.Trace.TracePlayerBBox(start, end, PlayerSpawnBounds, filter, ref trace);
+
+        if (!trace.DidHit)
+        {
+            resolvedPosition = default;
+            return false;
+        }
+
+        if (float.IsNaN(trace.EndPos.X) || float.IsNaN(trace.EndPos.Y) || float.IsNaN(trace.EndPos.Z))
+        {
+            resolvedPosition = default;
+            return false;
+        }
+
+        resolvedPosition = new Vector(trace.EndPos.X, trace.EndPos.Y, trace.EndPos.Z + 1.0f);
+        return true;
+    }
+
+    public bool IsPlayableSpawnPosition(Vector candidatePosition)
+    {
+        var filter = new CTraceFilter();
+        CGameTrace trace = default;
+        _core.Trace.TracePlayerBBox(candidatePosition, candidatePosition, PlayerSpawnBounds, filter, ref trace);
+
+        return !trace.DidHit || trace.Fraction >= 0.99f;
+    }
+
+    public bool TryGetSafeSpawnPosition(SpawnPointData spawnPoint, out Vector safePosition)
+    {
+        safePosition = default;
+
+        if (!TryResolvePlayableSpawnPosition(spawnPoint.Position, out var groundedPosition))
+            return false;
+
+        if (!IsPlayableSpawnPosition(groundedPosition))
+            return false;
+
+        safePosition = groundedPosition;
+        return true;
+    }
+
+    public bool IsPlayerFloating(IPlayer player, float maxGroundGap = 24f)
+    {
+        if (player == null || !player.IsValid)
+            return false;
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null || !pawn.IsValid)
+            return false;
+
+        var origin = pawn.AbsOrigin;
+        if (origin == null)
+            return true;
+
+        if (!TryResolvePlayableSpawnPosition(origin.Value, out var groundedPosition))
+            return true;
+
+        return origin.Value.Z - groundedPosition.Z > maxGroundGap;
     }
     public void ApplyDamage(IPlayer attacker, IPlayer target, float damageAmount, DamageTypes_t damageType = DamageTypes_t.DMG_BULLET)
     {

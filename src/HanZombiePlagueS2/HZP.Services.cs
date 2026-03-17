@@ -423,6 +423,7 @@ public partial class HZPServices
         _helpers.ClearFreezeStaten(player);
         _helpers.RemovePlayerFlashlight(playerId);
         _helpers.ResetPlayerFlashlightState(playerId);
+        _helpers.ApplyTemporarySpawnNoBlock(player);
 
         _core.Scheduler.NextWorldUpdate(() =>
         {
@@ -1278,10 +1279,10 @@ public partial class HZPServices
         return trimmed;
     }
 
-    public void RandomSpawnPoint(IPlayer player, bool isZombie)
+    public bool RandomSpawnPoint(IPlayer player, bool isZombie)
     {
         if (player == null || !player.IsValid)
-            return;
+            return false;
 
         var CFG = _mainCFG.CurrentValue;
 
@@ -1290,24 +1291,35 @@ public partial class HZPServices
         if (pool.Count == 0)
         {
             _logger.LogWarning($"[Spawn] Empty pool for {(isZombie ? "zombie" : "human")} spawn (config: '{spawnConfig}')");
-            return;
+            return false;
         }
 
-        var sp = pool[Random.Shared.Next(pool.Count)];
-
-        if (float.IsNaN(sp.Position.X) || float.IsNaN(sp.Position.Y) || float.IsNaN(sp.Position.Z))
+        var candidates = pool.OrderBy(_ => Random.Shared.Next()).Take(Math.Min(pool.Count, 12));
+        foreach (var sp in candidates)
         {
-            _logger.LogWarning("[Spawn] Selected spawn contains NaN position values, skipping teleport");
-            return;
+            if (float.IsNaN(sp.Position.X) || float.IsNaN(sp.Position.Y) || float.IsNaN(sp.Position.Z))
+                continue;
+
+            if (Math.Abs(sp.Position.Z) > 32768f)
+                continue;
+
+            if (!_helpers.TryGetSafeSpawnPosition(sp, out var safePosition))
+                continue;
+
+            player.Teleport(safePosition, sp.Angle, Vector.Zero);
+            return true;
         }
 
-        if (Math.Abs(sp.Position.Z) > 32768f)
+        var fallback = pool[Random.Shared.Next(pool.Count)];
+        if (float.IsNaN(fallback.Position.X) || float.IsNaN(fallback.Position.Y) || float.IsNaN(fallback.Position.Z))
         {
-            _logger.LogWarning($"[Spawn] Selected spawn has suspicious Z value ({sp.Position.Z}), skipping teleport");
-            return;
+            _logger.LogWarning("[Spawn] No valid grounded spawn candidate found and fallback spawn is NaN");
+            return false;
         }
 
-        player.Teleport(sp.Position, sp.Angle);
+        player.Teleport(fallback.Position, fallback.Angle, Vector.Zero);
+        _logger.LogWarning($"[Spawn] Fell back to unvalidated spawn for {(isZombie ? "zombie" : "human")}");
+        return true;
     }
 
     public void GiveSpawnGrenade(IPlayer player, HZPMainCFG CFG)

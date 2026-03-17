@@ -164,6 +164,7 @@ public partial class HZPEvents
             _globals.RestartRoundPendingForMinPlayers = false;
 
             _commands.RoundCvar();
+            _helpers.EnsureExtraSpawnEntities();
             _helpers.BuildSpawnCache();
             _helpers.RemoveHostage();
 
@@ -857,7 +858,9 @@ public partial class HZPEvents
     private void Event_OnMapLoad(IOnMapLoadEvent @event)
     {
         _commands.ServerCvar();
+        _globals.ExtraSpawnsGenerated = false;
         _mapVoteService.ResetOnMapLoad(@event.MapName, _core.Engine.WorkshopId);
+        _helpers.EnsureExtraSpawnEntities();
         _helpers.BuildSpawnCache();
         var VoxCFG = _voxCFG.CurrentValue;
         var VoxList = VoxCFG.VoxList;
@@ -1059,6 +1062,11 @@ public partial class HZPEvents
         _globals.StopZombieTimers.Remove(id);
         _globals.g_IsInvisible.Remove(id);
         _globals.ThrowerIsZombie.Remove(id);
+        if (_globals.SpawnNoBlockTimers.TryGetValue(id, out var spawnNoBlockTimer))
+        {
+            spawnNoBlockTimer.Cancel();
+            _globals.SpawnNoBlockTimers.Remove(id);
+        }
         _loadoutState.ResetLifeState(id);
         _storeState.ResetLifeState(id);
         _economyService.ClearPlayer(_core.PlayerManager.GetPlayer(id));
@@ -1402,6 +1410,7 @@ public partial class HZPEvents
         _globals.IsZombie.TryGetValue(Id, out var isZombie);
 
         _service.RandomSpawnPoint(player, !isZombie);
+        _helpers.ApplyTemporarySpawnNoBlock(player);
 
         _core.Scheduler.DelayBySeconds(0.15f, () =>
         {
@@ -1417,6 +1426,7 @@ public partial class HZPEvents
             {
                 _logger.LogWarning($"[Spawn] Player [{player.Name}] has null origin after spawn, retrying random spawn");
                 _service.RandomSpawnPoint(player, !isZombie);
+                _helpers.ApplyTemporarySpawnNoBlock(player);
                 return;
             }
 
@@ -1430,6 +1440,15 @@ public partial class HZPEvents
             {
                 _logger.LogWarning($"[Spawn] Player [{player.Name}] at invalid position ({pos.X}, {pos.Y}, {pos.Z}), retrying random spawn");
                 _service.RandomSpawnPoint(player, !isZombie);
+                _helpers.ApplyTemporarySpawnNoBlock(player);
+                return;
+            }
+
+            if (_helpers.IsPlayerFloating(player))
+            {
+                _logger.LogWarning($"[Spawn] Player [{player.Name}] appears to be floating after spawn, retrying grounded spawn");
+                if (_service.RandomSpawnPoint(player, !isZombie))
+                    _helpers.ApplyTemporarySpawnNoBlock(player);
             }
         });
 

@@ -74,6 +74,8 @@ public class HZPGlobals
     public Dictionary<int, bool> ScbaSuit = new Dictionary<int, bool>();
     public Dictionary<int, bool> GodState = new Dictionary<int, bool>();
     public Dictionary<int, bool> InfiniteAmmoState = new Dictionary<int, bool>();
+    public Dictionary<int, CancellationTokenSource> SpawnNoBlockTimers = new Dictionary<int, CancellationTokenSource>();
+    public bool ExtraSpawnsGenerated { get; set; }
 
 
 }
