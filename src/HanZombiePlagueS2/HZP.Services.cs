@@ -354,6 +354,104 @@ public partial class HZPServices
         _helpers.TerminateRound(reason, 5.0f);
     }
 
+    private static bool IsRoundTeam(byte teamNum)
+    {
+        return teamNum == (byte)Team.CT || teamNum == (byte)Team.T;
+    }
+
+    private void ResetPlayerToHumanRoundState(int playerId)
+    {
+        _globals.IsZombie[playerId] = false;
+        _globals.IsMother[playerId] = false;
+        _globals.IsSurvivor[playerId] = false;
+        _globals.IsSniper[playerId] = false;
+        _globals.IsNemesis[playerId] = false;
+        _globals.IsAssassin[playerId] = false;
+        _globals.IsHero[playerId] = false;
+
+        _helpers.RemoveSHumanClass(playerId);
+        _helpers.RemoveSZombieClass(playerId);
+
+        _globals.ScbaSuit[playerId] = false;
+        _globals.GodState[playerId] = false;
+        _globals.InfiniteAmmoState[playerId] = false;
+
+        _globals.g_ZombieIdleStates.Remove(playerId);
+        _globals.g_ZombieRegenStates.Remove(playerId);
+        _globals.StopZombieTimers.Remove(playerId);
+        _globals.ThrowerIsZombie.Remove(playerId);
+        _globals.InSwing[playerId] = false;
+    }
+
+    public void NormalizePlayersForRoundPrestart()
+    {
+        foreach (var player in _core.PlayerManager.GetAllPlayers())
+        {
+            if (player == null || !player.IsValid)
+                continue;
+
+            var controller = player.Controller;
+            if (controller == null || !controller.IsValid)
+                continue;
+
+            if (!IsRoundTeam(controller.TeamNum))
+                continue;
+
+            ResetPlayerToHumanRoundState(player.PlayerID);
+
+            if (controller.TeamNum == (byte)Team.T)
+                player.SwitchTeam(Team.CT);
+        }
+    }
+
+    public void FinalizeHumanSpawn(IPlayer player)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        var controller = player.Controller;
+        if (controller == null || !controller.IsValid)
+            return;
+
+        int playerId = player.PlayerID;
+        ResetPlayerToHumanRoundState(playerId);
+
+        if (controller.TeamNum == (byte)Team.T)
+            player.SwitchTeam(Team.CT);
+
+        _helpers.ClearPlayerBurn(playerId);
+        _helpers.ClearFreezeStaten(player);
+        _helpers.RemovePlayerFlashlight(playerId);
+        _helpers.ResetPlayerFlashlightState(playerId);
+
+        _core.Scheduler.NextWorldUpdate(() =>
+        {
+            if (player == null || !player.IsValid)
+                return;
+
+            var currentPawn = player.PlayerPawn;
+            if (currentPawn == null || !currentPawn.IsValid)
+                return;
+
+            var cfg = _mainCFG.CurrentValue;
+            string defaultModel = "characters/models/ctm_st6/ctm_st6_variante.vmdl";
+            string customModel = string.IsNullOrEmpty(cfg.HumandefaultModel) ? defaultModel : cfg.HumandefaultModel;
+
+            currentPawn.SetModel(customModel);
+            currentPawn.MaxHealth = cfg.HumanMaxHealth;
+            currentPawn.MaxHealthUpdated();
+            currentPawn.Health = cfg.HumanMaxHealth;
+            currentPawn.HealthUpdated();
+            currentPawn.ActualGravityScale = cfg.HumanInitialGravity;
+            currentPawn.VelocityModifier = cfg.HumanInitialSpeed;
+            currentPawn.VelocityModifierUpdated();
+
+            _helpers.ChangeKnife(player, false, false);
+            _helpers.SetFov(player, 90);
+            GiveSpawnGrenade(player, cfg);
+        });
+    }
+
     public void NormalizeAliveTPlayersForPreRestart()
     {
         var allPlayers = _core.PlayerManager.GetAllPlayers();
@@ -364,6 +462,13 @@ public partial class HZPServices
 
             var controller = player.Controller;
             if (controller == null || !controller.IsValid)
+                continue;
+
+            if (!controller.PawnIsAlive)
+                continue;
+
+            var pawn = player.PlayerPawn;
+            if (pawn == null || !pawn.IsValid)
                 continue;
 
             if (controller.TeamNum != (byte)Team.T)
@@ -416,12 +521,24 @@ public partial class HZPServices
             {
                 try
                 {
+                    if (_globals.RoundClosing || _globals.RoundResetInProgress || !_globals.GameStart)
+                    {
+                        _globals.IsZombie[Id] = false;
+                        return;
+                    }
+
                     if (zombie == null || !zombie.IsValid)
                         return;
 
                     var nextController = zombie.Controller;
                     if (nextController == null || !nextController.IsValid)
                         return;
+
+                    if (!nextController.PawnIsAlive)
+                    {
+                        _globals.IsZombie[Id] = false;
+                        return;
+                    }
 
                     zombie.SwitchTeam(Team.T);
                     _helpers.ShakeZombie(zombie);

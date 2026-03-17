@@ -88,6 +88,7 @@ public partial class HZPEvents
 
     public void HookEvents()
     {
+        _core.GameEvent.HookPre<EventRoundPrestart>(OnRoundPrestart);
         _core.GameEvent.HookPre<EventRoundStart>(OnTimerStart);
         _core.GameEvent.HookPre<EventRoundFreezeEnd>(OnRoundFreezeEnd);
         _core.GameEvent.HookPre<EventRoundEnd>(OnRoundEnd);
@@ -272,6 +273,13 @@ public partial class HZPEvents
         return HookResult.Continue;
     }
 
+    private HookResult OnRoundPrestart(EventRoundPrestart @event)
+    {
+        _globals.RoundResetInProgress = true;
+        _service.NormalizePlayersForRoundPrestart();
+        return HookResult.Continue;
+    }
+
     private HookResult OnRoundEnd(EventRoundEnd @event)
     {
         _globals.RoundResetInProgress = true;
@@ -304,22 +312,12 @@ public partial class HZPEvents
                 _helpers.RemoveGlow(player);
 
                 var id = player.PlayerID;
-                _globals.IsZombie[id] = false;
-                _globals.IsSurvivor[id] = false;
-                _globals.IsAssassin[id] = false;
-                _globals.IsSniper[id] = false;
-                _globals.IsNemesis[id] = false;
-                _globals.IsHero[id] = false;
-
                 _globals.ScbaSuit[id] = false;
                 _globals.GodState[id] = false;
                 _globals.InfiniteAmmoState[id] = false;
 
                 _service.StopAssassinTimer();
                 _helpers.SetUnInvisibility(player);
-
-                _helpers.ChangeKnife(player, false, false);
-                _helpers.SetFov(player, 90);
 
             }
 
@@ -331,10 +329,6 @@ public partial class HZPEvents
 
     private HookResult OnPreRestart(EventCsPreRestart @event)
     {
-        if (!_globals.RoundClosing && !_globals.RestartRoundPendingForMinPlayers)
-            return HookResult.Continue;
-
-        _service.NormalizeAliveTPlayersForPreRestart();
         return HookResult.Continue;
     }
     private void Event_OnPrecacheResource(IOnPrecacheResourceEvent @event)
@@ -542,18 +536,7 @@ public partial class HZPEvents
             }
             else
             {
-                var CFG = _mainCFG.CurrentValue;
-                _core.Scheduler.NextWorldUpdate(() =>
-                {
-                    pawn.MaxHealth = CFG.HumanMaxHealth;
-                    pawn.MaxHealthUpdated();
-                    pawn.Health = CFG.HumanMaxHealth;
-                    pawn.HealthUpdated();
-
-                    pawn.ActualGravityScale = CFG.HumanInitialGravity;
-
-                    _service.GiveSpawnGrenade(player, CFG);
-                });
+                _service.FinalizeHumanSpawn(player);
 
                 _core.Scheduler.DelayBySeconds(0.5f, () =>
                 {
@@ -654,6 +637,12 @@ public partial class HZPEvents
             var specialClasses = _SpecialClassCFG.CurrentValue.SpecialClassList;
             _core.Scheduler.DelayBySeconds(1.0f, () =>
             {
+                if (!_globals.GameStart || _globals.RoundClosing || _globals.RoundResetInProgress)
+                    return;
+
+                if (player == null || !player.IsValid)
+                    return;
+
                 _zombieState.ClearSpecialAndSetPlayerZombie(player, zombieClasses, specialClasses);
                 player.Respawn();
             });
@@ -662,6 +651,9 @@ public partial class HZPEvents
         {
             _core.Scheduler.DelayBySeconds(1.0f, () =>
             {
+                if (!_globals.GameStart || _globals.RoundClosing || _globals.RoundResetInProgress)
+                    return;
+
                 var player = _core.PlayerManager.GetPlayer(Id);
                 if (player == null || !player.IsValid)
                     return;
@@ -670,6 +662,9 @@ public partial class HZPEvents
 
                 _core.Scheduler.NextWorldUpdate(() =>
                 {
+                    if (!_globals.GameStart || _globals.RoundClosing || _globals.RoundResetInProgress)
+                        return;
+
                     if (player == null || !player.IsValid)
                         return;
 
