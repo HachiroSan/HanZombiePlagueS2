@@ -481,21 +481,6 @@ public partial class HZPEvents
             if (_globals.RoundClosing || _globals.RoundResetInProgress)
                 return HookResult.Continue;
 
-            _core.Scheduler.NextWorldUpdate(() =>
-            {
-                try
-                {
-                    if (player == null || !player.IsValid)
-                        return;
-
-                    _helpers.SetNoBlock(player);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"SetNoBlock Error [{controller.PlayerName}]: {ex.Message}");
-                }
-            });
-
             _globals.IsZombie.TryGetValue(Id, out bool IsZombie);
 
             if (IsZombie)
