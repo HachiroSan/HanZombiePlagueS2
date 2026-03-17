@@ -94,6 +94,33 @@ public partial class HZPHelpers
         ws.DropWeaponBySlot(gear_slot_t.GEAR_SLOT_GRENADES);
     }
 
+    public void StripArmor(IPlayer player)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null || !pawn.IsValid)
+            return;
+
+        var weaponServices = pawn.WeaponServices;
+        if (weaponServices != null && weaponServices.IsValid)
+        {
+            var weapons = weaponServices.MyValidWeapons;
+            foreach (var weapon in weapons)
+            {
+                if (weapon.AttributeManager.Item.ItemDefinitionIndex == 51)
+                {
+                    weaponServices.RemoveWeapon(weapon);
+                    break;
+                }
+            }
+        }
+
+        pawn.ArmorValue = 0;
+        pawn.ArmorValueUpdated();
+    }
+
     public void TerminateRound(RoundEndReason reason, float delay)
     {
         var gameRules = _core.EntitySystem.GetGameRules();

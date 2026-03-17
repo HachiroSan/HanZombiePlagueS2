@@ -431,6 +431,7 @@ public partial class HZPServices
                     nextPawn.SetModel(path);
 
                     _helpers.DropAllWeapon(zombie);
+                    _helpers.StripArmor(zombie);
 
                     bool CustomKinfe = !string.IsNullOrEmpty(Zclass.Models.CustomKinfeModelPath);
                     _helpers.ChangeKnife(zombie, true, CustomKinfe);
