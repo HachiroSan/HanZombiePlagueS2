@@ -91,6 +91,7 @@ public partial class HZPEvents
         _core.GameEvent.HookPre<EventRoundStart>(OnTimerStart);
         _core.GameEvent.HookPre<EventRoundFreezeEnd>(OnRoundFreezeEnd);
         _core.GameEvent.HookPre<EventRoundEnd>(OnRoundEnd);
+        _core.GameEvent.HookPre<EventCsPreRestart>(OnPreRestart);
         _core.GameEvent.HookPre<EventPlayerDeath>(OnPlayerDeath);
         
         _core.GameEvent.HookPre<EventPlayerHurt>(OnPlayerHurtInfect);
@@ -160,7 +161,6 @@ public partial class HZPEvents
             _globals.SafeRoundStart = false;
             _globals.RestartRoundPendingForMinPlayers = false;
 
-            _helpers.SwitchAllPlayerTeam();
             _commands.RoundCvar();
             _helpers.BuildSpawnCache();
             _helpers.RemoveHostage();
@@ -250,6 +250,8 @@ public partial class HZPEvents
 
     private HookResult OnTimerStart(EventRoundStart @event)
     {
+        _globals.RoundClosing = false;
+        _globals.RoundResetInProgress = false;
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
         _mapVoteService.OnRoundStart();
@@ -271,26 +273,26 @@ public partial class HZPEvents
 
     private HookResult OnRoundEnd(EventRoundEnd @event)
     {
-        
+        _globals.RoundResetInProgress = true;
+        _globals.GameStart = false;
+        _globals.WaitingForPlayers = false;
+        _globals.RestartRoundPendingForMinPlayers = false;
+        _globals.RoundPrepActive = false;
+        _globals.OutbreakAtUnixMs = 0;
+        _globals.LastAnnouncedCountdown = int.MinValue;
+        _globals.g_hRoundEndTimer?.Cancel();
+        _globals.g_hRoundEndTimer = null;
+        _globals.g_hCountdown?.Cancel();
+        _globals.g_hCountdown = null;
         _helpers.ClearAllBurns();
         _helpers.ClearAllLights();
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
         _mapVoteService.OnRoundEnd();
         _globals.GameInfiniteClipMode = false;
-        _core.Scheduler.DelayBySeconds(2.0f, () =>
+
+        _core.Scheduler.NextWorldUpdate(() =>
         {
-            _globals.RoundVoxGroup = null;
-            _globals.GameStart = false;
-            _globals.WaitingForPlayers = false;
-            _globals.RestartRoundPendingForMinPlayers = false;
-            _globals.RoundPrepActive = false;
-            _globals.OutbreakAtUnixMs = 0;
-            _globals.LastAnnouncedCountdown = int.MinValue;
-            _globals.g_hRoundEndTimer?.Cancel();
-            _globals.g_hRoundEndTimer = null;
-            _globals.g_hCountdown?.Cancel();
-            _globals.g_hCountdown = null;
             var allplayer = _core.PlayerManager.GetAllPlayers();
             foreach (var player in allplayer)
             {
@@ -314,13 +316,23 @@ public partial class HZPEvents
                 _service.StopAssassinTimer();
                 _helpers.SetUnInvisibility(player);
 
-                player.SwitchTeam(Team.CT);
                 _helpers.ChangeKnife(player, false, false);
                 _helpers.SetFov(player, 90);
 
             }
+
+            _globals.RoundVoxGroup = null;
         });
         
+        return HookResult.Continue;
+    }
+
+    private HookResult OnPreRestart(EventCsPreRestart @event)
+    {
+        if (!_globals.RoundClosing && !_globals.RestartRoundPendingForMinPlayers)
+            return HookResult.Continue;
+
+        _service.NormalizeAliveTPlayersForPreRestart();
         return HookResult.Continue;
     }
     private void Event_OnPrecacheResource(IOnPrecacheResourceEvent @event)
@@ -466,6 +478,9 @@ public partial class HZPEvents
             _loadoutState.ResetLifeState(Id);
             _storeState.ResetLifeState(Id);
 
+            if (_globals.RoundClosing || _globals.RoundResetInProgress)
+                return HookResult.Continue;
+
             _core.Scheduler.NextWorldUpdate(() =>
             {
                 try
@@ -581,6 +596,9 @@ public partial class HZPEvents
 
     private HookResult OnPlayerDeath(EventPlayerDeath @event)
     {
+        if (_globals.RoundClosing || _globals.RoundResetInProgress)
+            return HookResult.Handled;
+
         var player = @event.UserIdPlayer;
         if(player == null || !player.IsValid)
             return HookResult.Continue;
@@ -1306,6 +1324,9 @@ public partial class HZPEvents
 
     private HookResult CheckRoundWinDeath(EventPlayerDeath @event)
     {
+        if (_globals.RoundClosing || _globals.RoundResetInProgress)
+            return HookResult.Handled;
+
         var player = @event.UserIdPlayer;
         if (player == null || !player.IsValid)
             return HookResult.Continue;
@@ -1320,6 +1341,9 @@ public partial class HZPEvents
 
     private HookResult CheckRoundWinSpawn(EventPlayerSpawn @event)
     {
+        if (_globals.RoundClosing || _globals.RoundResetInProgress)
+            return HookResult.Continue;
+
         var player = @event.UserIdPlayer;
         if (player == null || !player.IsValid)
             return HookResult.Continue;

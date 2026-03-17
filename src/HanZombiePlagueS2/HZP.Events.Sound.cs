@@ -107,6 +107,9 @@ public partial class HZPEvents
 
     private HookResult OnPlayerSoundDeath(EventPlayerDeath @event)
     {
+        if (_globals.RoundClosing || _globals.RoundResetInProgress)
+            return HookResult.Handled;
+
         var player = @event.UserIdPlayer;
         if (player == null || !player.IsValid)
             return HookResult.Continue;

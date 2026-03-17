@@ -15,6 +15,8 @@ public class HZPGlobals
     public bool RestartRoundPendingForMinPlayers { get; set; }
     public bool FreshRestartAfterEmptyPending { get; set; }
     public bool RoundPrepActive { get; set; }
+    public bool RoundClosing { get; set; }
+    public bool RoundResetInProgress { get; set; }
     public long OutbreakAtUnixMs { get; set; }
     public int LastAnnouncedCountdown { get; set; } = int.MinValue;
     public int? RuntimeMinPlayersToStart { get; set; }

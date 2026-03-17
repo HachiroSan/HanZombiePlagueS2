@@ -309,44 +309,73 @@ public partial class HZPServices
 
     public void FakeHumanWins()
     {
-        _globals.GameStart = false;
-
-        if (_globals.RoundVoxGroup != null)
-        {
-            PlayerSelectSoundtoAll(_globals.RoundVoxGroup.HumanWinVox, _globals.RoundVoxGroup.Volume);
-        }
-
-        _helpers.SendCenterToAllT("ServerGameHumanWin");
-        _helpers.SetTeamScore(Team.CT);
-        _helpers.TerminateRound(RoundEndReason.CTsWin, 5.0f);
+        BeginRoundClosing(RoundEndReason.CTsWin, true);
 
         if (_api != null)
             _api.NotifyHumanWin(true);
     }
 
-    
-    
     public void FakeZombieWins()
     {
-        _globals.GameStart = false;
-
-        if (_globals.RoundVoxGroup != null)
-        {
-            PlayerSelectSoundtoAll(_globals.RoundVoxGroup.ZombieWinVox, _globals.RoundVoxGroup.Volume);
-        }
-        _helpers.SendCenterToAllT("ServerGameZombieWin");
-        _helpers.SetTeamScore(Team.T);
-        _helpers.TerminateRound(RoundEndReason.TerroristsWin, 5.0f);
+        BeginRoundClosing(RoundEndReason.TerroristsWin, false);
 
         if (_api != null)
             _api.NotifyHumanWin(false);
+    }
+
+    private void BeginRoundClosing(RoundEndReason reason, bool humansWin)
+    {
+        if (_globals.RoundClosing || _globals.RoundResetInProgress)
+            return;
+
+        _globals.RoundClosing = true;
+        _globals.GameStart = false;
+        _globals.WaitingForPlayers = false;
+        _globals.RestartRoundPendingForMinPlayers = false;
+        _globals.RoundPrepActive = false;
+        _globals.OutbreakAtUnixMs = 0;
+        _globals.LastAnnouncedCountdown = int.MinValue;
+        _globals.g_hCountdown?.Cancel();
+        _globals.g_hCountdown = null;
+        _globals.g_hRoundEndTimer?.Cancel();
+        _globals.g_hRoundEndTimer = null;
+
+        if (_globals.RoundVoxGroup != null)
+        {
+            string sound = humansWin ? _globals.RoundVoxGroup.HumanWinVox : _globals.RoundVoxGroup.ZombieWinVox;
+            PlayerSelectSoundtoAll(sound, _globals.RoundVoxGroup.Volume);
+        }
+
+        _helpers.SendCenterToAllT(humansWin ? "ServerGameHumanWin" : "ServerGameZombieWin");
+        _helpers.SetTeamScore(humansWin ? Team.CT : Team.T);
+
+        _helpers.TerminateRound(reason, 5.0f);
+    }
+
+    public void NormalizeAliveTPlayersForPreRestart()
+    {
+        var allPlayers = _core.PlayerManager.GetAllPlayers();
+        foreach (var player in allPlayers)
+        {
+            if (player == null || !player.IsValid)
+                continue;
+
+            var controller = player.Controller;
+            if (controller == null || !controller.IsValid)
+                continue;
+
+            if (controller.TeamNum != (byte)Team.T)
+                continue;
+
+            player.SwitchTeam(Team.CT);
+        }
     }
 
     public void posszombie(IPlayer zombie, ZombieClass Zclass, bool isMother)
     {
         try
         {
-            if(!_globals.GameStart)
+            if(!_globals.GameStart || _globals.RoundClosing || _globals.RoundResetInProgress)
                 return;
 
             if (zombie == null || !zombie.IsValid)
@@ -379,65 +408,84 @@ public partial class HZPServices
             _helpers.RemoveInfiniteAmmo(zombie);
             
             _globals.IsZombie[Id] = true;
-            zombie.SwitchTeam(Team.T);
-
-            _helpers.ShakeZombie(zombie);
-
-            _zombieState.SetPlayerZombieClass(Id, Zclass.Name);
-
-            string path = Zclass.Models.ModelPath;
             _core.Scheduler.NextWorldUpdate(() =>
             {
-                pawn.SetModel(path);
-            });
-            
-            _helpers.DropAllWeapon(zombie);
-
-            bool CustomKinfe = !string.IsNullOrEmpty(Zclass.Models.CustomKinfeModelPath);
-            _helpers.ChangeKnife(zombie, true, CustomKinfe);
-
-
-            int ZHealth;
-            if (isMother)
-            {
-                ZHealth = Zclass.Stats.MotherZombieHealth > 0 ? ZHealth = Zclass.Stats.MotherZombieHealth : ZHealth = 8000;
-            }
-            else
-            {
-                ZHealth = Zclass.Stats.Health > 0 ? ZHealth = Zclass.Stats.Health : ZHealth = 3000;
-            }
-            pawn.MaxHealth = ZHealth;
-            pawn.MaxHealthUpdated();
-            pawn.Health = ZHealth;
-            pawn.HealthUpdated();
-
-            pawn.ActualGravityScale = Zclass.Stats.Gravity;
-
-            int fov = Zclass.Stats.Fov;
-            _helpers.SetFov(zombie, fov);
-
-            float zSpeed = Zclass.Stats.Speed > 0 ? zSpeed = Zclass.Stats.Speed : zSpeed = 1.0f;
-            pawn.VelocityModifier = zSpeed;
-            pawn.VelocityModifierUpdated();
-
-            if (Zclass.Stats.EnableRegen)
-            {
-                var now = Environment.TickCount / 1000f;
-                _globals.g_ZombieRegenStates[Id] = new ZombieRegenState
+                try
                 {
-                    PlayerID = Id,
-                    RegenAmount = Zclass.Stats.HpRegenHp,
-                    RegenInterval = Zclass.Stats.HpRegenSec,
-                    NextRegenTime = now + Zclass.Stats.HpRegenSec 
-                };
-            }
+                    if (zombie == null || !zombie.IsValid)
+                        return;
 
-            var origin = pawn.AbsOrigin;
-            if (origin == null)
-                return;
+                    var nextController = zombie.Controller;
+                    if (nextController == null || !nextController.IsValid)
+                        return;
 
-            Vector offsetPos = new(origin.Value.X, origin.Value.Y, origin.Value.Z + 50);
-            var particle = _helpers.CreateParticleAtPos(pawn, offsetPos, "particles/explosions_fx/explosion_hegrenade_water_intial_trail.vpcf");
+                    zombie.SwitchTeam(Team.T);
+                    _helpers.ShakeZombie(zombie);
+                    _zombieState.SetPlayerZombieClass(Id, Zclass.Name);
+
+                    var nextPawn = zombie.PlayerPawn;
+                    if (nextPawn == null || !nextPawn.IsValid)
+                        return;
+
+                    string path = Zclass.Models.ModelPath;
+                    nextPawn.SetModel(path);
+
+                    _helpers.DropAllWeapon(zombie);
+
+                    bool CustomKinfe = !string.IsNullOrEmpty(Zclass.Models.CustomKinfeModelPath);
+                    _helpers.ChangeKnife(zombie, true, CustomKinfe);
+
+                    int ZHealth;
+                    if (isMother)
+                    {
+                        ZHealth = Zclass.Stats.MotherZombieHealth > 0 ? Zclass.Stats.MotherZombieHealth : 8000;
+                    }
+                    else
+                    {
+                        ZHealth = Zclass.Stats.Health > 0 ? Zclass.Stats.Health : 3000;
+                    }
+
+                    nextPawn.MaxHealth = ZHealth;
+                    nextPawn.MaxHealthUpdated();
+                    nextPawn.Health = ZHealth;
+                    nextPawn.HealthUpdated();
+
+                    nextPawn.ActualGravityScale = Zclass.Stats.Gravity;
+
+                    int fov = Zclass.Stats.Fov;
+                    _helpers.SetFov(zombie, fov);
+
+                    float zSpeed = Zclass.Stats.Speed > 0 ? Zclass.Stats.Speed : 1.0f;
+                    nextPawn.VelocityModifier = zSpeed;
+                    nextPawn.VelocityModifierUpdated();
+
+                    if (Zclass.Stats.EnableRegen)
+                    {
+                        var now = Environment.TickCount / 1000f;
+                        _globals.g_ZombieRegenStates[Id] = new ZombieRegenState
+                        {
+                            PlayerID = Id,
+                            RegenAmount = Zclass.Stats.HpRegenHp,
+                            RegenInterval = Zclass.Stats.HpRegenSec,
+                            NextRegenTime = now + Zclass.Stats.HpRegenSec
+                        };
+                    }
+
+                    var origin = nextPawn.AbsOrigin;
+                    if (origin == null)
+                        return;
+
+                    Vector offsetPos = new(origin.Value.X, origin.Value.Y, origin.Value.Z + 50);
+                    _helpers.CreateParticleAtPos(nextPawn, offsetPos, "particles/explosions_fx/explosion_hegrenade_water_intial_trail.vpcf");
+                }
+                catch (Exception ex)
+                {
+                    var nextController = zombie.Controller;
+                    var playerName = nextController != null && nextController.IsValid ? nextController.PlayerName : $"#{Id}";
+                    _logger.LogError($"posszombie deferred exception [{playerName}]: {ex.Message}");
+                    _logger.LogError($"deferred stack trace: {ex.StackTrace}");
+                }
+            });
             //_logger.LogInformation($"posszombie 完成 [{controller.PlayerName}]");
         }
         catch (Exception ex)
@@ -743,6 +791,9 @@ public partial class HZPServices
 
     public void CheckRoundWinConditions()
     {
+        if (_globals.RoundClosing || _globals.RoundResetInProgress)
+            return;
+
         if (_globals.RestartRoundPendingForMinPlayers)
             return;
 
