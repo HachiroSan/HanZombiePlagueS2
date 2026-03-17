@@ -75,6 +75,11 @@ public class HZPCommands
             _core.Command.RegisterCommand(CFG.ZombieInfoCommand, ShowZombieInfo, true);
         }
 
+        if (!string.IsNullOrWhiteSpace(CFG.FlashlightCommand))
+        {
+            _core.Command.RegisterCommand(CFG.FlashlightCommand, ToggleFlashlight, true);
+        }
+
         _core.Command.RegisterCommand(CFG.AdminMenuItemCommand, UseItemMenu, true);
 
         var loadoutCommand = _loadoutCFG.CurrentValue.LoadoutCommand;
@@ -177,6 +182,36 @@ public class HZPCommands
             return;
 
         _ = _storeMenu.OpenStoreMenuAsync(player);
+    }
+
+    public void ToggleFlashlight(ICommandContext context)
+    {
+        var player = context.Sender;
+        if (player == null || !player.IsValid)
+            return;
+
+        var cfg = _mainCFG.CurrentValue;
+        if (!cfg.EnableFlashlight)
+            return;
+
+        int playerId = player.PlayerID;
+        if (!_helpers.CanPlayerToggleFlashlight(playerId))
+            return;
+
+        if (!_helpers.CanUseFlashlight(player, cfg))
+        {
+            _helpers.RemovePlayerFlashlight(playerId);
+            _helpers.SendChatRaw(player, "[olive]Flashlight is available to living humans only.");
+            return;
+        }
+
+        bool enabled = _helpers.TogglePlayerFlashlight(player, cfg);
+        _helpers.SetFlashlightToggleState(playerId, false);
+        _core.Scheduler.DelayBySeconds(0.25f, () => _helpers.SetFlashlightToggleState(playerId, true));
+
+        _helpers.SendChatRaw(player, enabled
+            ? $"[olive]Flashlight enabled. Bind [gold]F[olive] with [gold]bind f \"{cfg.FlashlightCommand}\"[olive] if needed."
+            : "[olive]Flashlight disabled.");
     }
 
     public void ShowCash(ICommandContext context)

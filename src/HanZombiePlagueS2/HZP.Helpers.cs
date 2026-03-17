@@ -121,6 +121,189 @@ public partial class HZPHelpers
         pawn.ArmorValueUpdated();
     }
 
+    public bool CanUseFlashlight(IPlayer player, HZPMainCFG cfg)
+    {
+        if (player == null || !player.IsValid || player.IsFakeClient)
+            return false;
+
+        var controller = player.Controller;
+        if (controller == null || !controller.IsValid || controller.LifeState != (byte)LifeState_t.LIFE_ALIVE)
+            return false;
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null || !pawn.IsValid)
+            return false;
+
+        if (cfg.FlashlightHumansOnly)
+        {
+            _globals.IsZombie.TryGetValue(player.PlayerID, out bool isZombie);
+            if (isZombie)
+                return false;
+        }
+
+        return true;
+    }
+
+    public void SetFlashlightToggleState(int playerId, bool canToggle)
+    {
+        _globals.FlashlightCanToggle[playerId] = canToggle;
+    }
+
+    public bool CanPlayerToggleFlashlight(int playerId)
+    {
+        if (!_globals.FlashlightCanToggle.TryGetValue(playerId, out bool canToggle))
+            return true;
+
+        return canToggle;
+    }
+
+    public void ResetPlayerFlashlightState(int playerId)
+    {
+        _globals.FlashlightEnabled[playerId] = false;
+        _globals.FlashlightCanToggle[playerId] = true;
+    }
+
+    public void RemovePlayerFlashlight(int playerId)
+    {
+        _globals.FlashlightEnabled[playerId] = false;
+
+        if (_globals.PlayerFlashlights.TryGetValue(playerId, out var light))
+        {
+            if (light != null && light.IsValid && light.IsValidEntity)
+                light.AcceptInput("Kill", 0);
+
+            _globals.PlayerFlashlights.Remove(playerId);
+        }
+    }
+
+    public void ClearAllPlayerFlashlights()
+    {
+        foreach (var playerId in _globals.PlayerFlashlights.Keys.ToList())
+        {
+            RemovePlayerFlashlight(playerId);
+        }
+
+        _globals.FlashlightEnabled.Clear();
+        _globals.FlashlightCanToggle.Clear();
+    }
+
+    public void UpdatePlayerFlashlight(IPlayer player, HZPMainCFG cfg)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        int playerId = player.PlayerID;
+        if (!_globals.FlashlightEnabled.TryGetValue(playerId, out bool enabled) || !enabled)
+        {
+            RemovePlayerFlashlight(playerId);
+            return;
+        }
+
+        if (!CanUseFlashlight(player, cfg))
+        {
+            RemovePlayerFlashlight(playerId);
+            return;
+        }
+
+        var pawn = player.PlayerPawn;
+        if (pawn == null || !pawn.IsValid || pawn.AbsOrigin == null)
+        {
+            RemovePlayerFlashlight(playerId);
+            return;
+        }
+
+        var light = EnsurePlayerFlashlight(player, cfg);
+        if (light == null || !light.IsValid || !light.IsValidEntity)
+        {
+            RemovePlayerFlashlight(playerId);
+            return;
+        }
+
+        var eyeAngles = pawn.EyeAngles;
+        var origin = pawn.AbsOrigin.Value;
+        Vector forward = GetForwardVector(eyeAngles);
+        var position = new Vector(
+            origin.X + (forward.X * cfg.FlashlightDistance),
+            origin.Y + (forward.Y * cfg.FlashlightDistance),
+            origin.Z + 64.0f + (forward.Z * cfg.FlashlightDistance)
+        );
+
+        light.AcceptInput("ClearParent", 0);
+        light.Teleport(position, eyeAngles, Vector.Zero);
+        light.AcceptInput("SetParent", "!activator", pawn, light);
+        light.AcceptInput("SetParentAttachmentMaintainOffset", "axis_of_intent", pawn, light);
+    }
+
+    public bool TogglePlayerFlashlight(IPlayer player, HZPMainCFG cfg)
+    {
+        if (player == null || !player.IsValid)
+            return false;
+
+        int playerId = player.PlayerID;
+
+        if (!CanUseFlashlight(player, cfg))
+        {
+            RemovePlayerFlashlight(playerId);
+            return false;
+        }
+
+        bool nextEnabled = !_globals.FlashlightEnabled.TryGetValue(playerId, out bool enabled) || !enabled;
+        _globals.FlashlightEnabled[playerId] = nextEnabled;
+
+        if (!nextEnabled)
+        {
+            RemovePlayerFlashlight(playerId);
+            return false;
+        }
+
+        UpdatePlayerFlashlight(player, cfg);
+        return true;
+    }
+
+    private CBarnLight? EnsurePlayerFlashlight(IPlayer player, HZPMainCFG cfg)
+    {
+        int playerId = player.PlayerID;
+        if (_globals.PlayerFlashlights.TryGetValue(playerId, out var existing)
+            && existing != null && existing.IsValid && existing.IsValidEntity)
+            return existing;
+
+        var light = _core.EntitySystem.CreateEntityByDesignerName<CBarnLight>("light_barn");
+        if (light == null || !light.IsValid)
+            return null;
+
+        light.Enabled = true;
+        light.DirectLight = 3;
+        light.CastShadows = cfg.FlashlightShadows ? 1 : 0;
+        light.Brightness = cfg.FlashlightBrightness;
+        light.Range = cfg.FlashlightRange;
+        light.SoftX = 1.0f;
+        light.SoftY = 1.0f;
+        light.Skirt = 0.5f;
+        light.SkirtNear = 1.0f;
+        light.ColorMode = 0;
+        light.Color = new Color(cfg.FlashlightColorR, cfg.FlashlightColorG, cfg.FlashlightColorB, 255);
+        light.SizeParams.X = cfg.FlashlightAngle;
+        light.SizeParams.Y = cfg.FlashlightAngle;
+        light.SizeParams.Z = 0.02f;
+        light.LightStyleString = "None";
+        light.DispatchSpawn();
+
+        _globals.PlayerFlashlights[playerId] = light;
+        return light;
+    }
+
+    private static Vector GetForwardVector(QAngle angle)
+    {
+        float pitch = angle.X * (MathF.PI / 180.0f);
+        float yaw = angle.Y * (MathF.PI / 180.0f);
+        float cp = MathF.Cos(pitch);
+        float sp = MathF.Sin(pitch);
+        float cy = MathF.Cos(yaw);
+        float sy = MathF.Sin(yaw);
+
+        return new Vector(cp * cy, cp * sy, -sp);
+    }
+
     public void TerminateRound(RoundEndReason reason, float delay)
     {
         var gameRules = _core.EntitySystem.GetGameRules();

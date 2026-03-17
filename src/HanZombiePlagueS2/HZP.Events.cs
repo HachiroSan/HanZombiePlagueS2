@@ -108,6 +108,7 @@ public partial class HZPEvents
         _core.Event.OnTick += Event_OnTickSpeed;
         _core.Event.OnTick += Event_OnTickNoRecoil;
         _core.Event.OnTick += Event_OnTickBroadcast;
+        _core.Event.OnTick += Event_OnTickFlashlight;
 
         _core.GameEvent.HookPre<EventWeaponFire>(OnHumanWeaponFire);
         _core.Event.OnEntityTakeDamage += Event_OnHumanTakeDamage;
@@ -286,6 +287,7 @@ public partial class HZPEvents
         _globals.g_hCountdown = null;
         _helpers.ClearAllBurns();
         _helpers.ClearAllLights();
+        _helpers.ClearAllPlayerFlashlights();
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
         _mapVoteService.OnRoundEnd();
@@ -477,6 +479,8 @@ public partial class HZPEvents
             ulong steamId = player.SteamID;
             _loadoutState.ResetLifeState(Id);
             _storeState.ResetLifeState(Id);
+            _helpers.RemovePlayerFlashlight(Id);
+            _helpers.ResetPlayerFlashlightState(Id);
 
             if (_globals.RoundClosing || _globals.RoundResetInProgress)
                 return HookResult.Continue;
@@ -599,6 +603,7 @@ public partial class HZPEvents
 
         _helpers.SetFov(player, 90);
         _helpers.RemoveGlow(player);
+        _helpers.RemovePlayerFlashlight(player.PlayerID);
 
         var Id = player.PlayerID;
         var steamId = player.SteamID;
@@ -986,6 +991,26 @@ public partial class HZPEvents
         _broadcastService.ProcessPendingWelcomes();
     }
 
+    private void Event_OnTickFlashlight()
+    {
+        var cfg = _mainCFG.CurrentValue;
+        if (!cfg.EnableFlashlight)
+        {
+            if (_globals.PlayerFlashlights.Count > 0)
+                _helpers.ClearAllPlayerFlashlights();
+
+            return;
+        }
+
+        foreach (var player in _core.PlayerManager.GetAllPlayers())
+        {
+            if (player == null || !player.IsValid || player.IsFakeClient)
+                continue;
+
+            _helpers.UpdatePlayerFlashlight(player, cfg);
+        }
+    }
+
     private void Event_OnClientDisconnected(SwiftlyS2.Shared.Events.IOnClientDisconnectedEvent @event)
     {
         if (_globals.GameStart)
@@ -996,6 +1021,9 @@ public partial class HZPEvents
         var id = @event.PlayerId;
 
         _helpers.ClearPlayerBurn(id);
+        _helpers.RemovePlayerFlashlight(id);
+        _globals.FlashlightEnabled.Remove(id);
+        _globals.FlashlightCanToggle.Remove(id);
         _globals.IsZombie.Remove(id);
         _globals.IsMother.Remove(id);
         _globals.IsSurvivor.Remove(id);

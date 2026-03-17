@@ -63,6 +63,9 @@ public class HZPGlobals
 
     public Dictionary<uint, COmniLight> activeLights = new Dictionary<uint, COmniLight>();
     public Dictionary<uint, CancellationTokenSource> lightTimers = new Dictionary<uint, CancellationTokenSource>();
+    public Dictionary<int, bool> FlashlightEnabled = new Dictionary<int, bool>();
+    public Dictionary<int, bool> FlashlightCanToggle = new Dictionary<int, bool>();
+    public Dictionary<int, CBarnLight> PlayerFlashlights = new Dictionary<int, CBarnLight>();
 
     public readonly Dictionary<SpawnType, List<SpawnPointData>> spawnCache= new();
 

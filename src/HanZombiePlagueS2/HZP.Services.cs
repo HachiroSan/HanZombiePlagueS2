@@ -286,6 +286,8 @@ public partial class HZPServices
         _helpers.SetFov(player, 90);
         _helpers.ClearPlayerBurn(Id);
         _helpers.ClearFreezeStaten(player);
+        _helpers.RemovePlayerFlashlight(Id);
+        _helpers.ResetPlayerFlashlightState(Id);
 
 
         string Default = "characters/models/ctm_st6/ctm_st6_variante.vmdl";
@@ -406,6 +408,8 @@ public partial class HZPServices
             _helpers.RemoveScbaSuit(zombie, CFG.ScbaSuitBrokenSound);
             _helpers.RemoveGodState(zombie);
             _helpers.RemoveInfiniteAmmo(zombie);
+            _helpers.RemovePlayerFlashlight(Id);
+            _helpers.ResetPlayerFlashlightState(Id);
             
             _globals.IsZombie[Id] = true;
             _core.Scheduler.NextWorldUpdate(() =>

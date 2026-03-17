@@ -172,6 +172,17 @@ public class HZPMainCFG
     public string ZombieInfoCommand { get; set; } = "sw_zinfo";
     public string AdminMenuItemCommand { get; set; } = "sw_admin";
     public string AdminMenuPermission { get; set; } = "";
+    public bool EnableFlashlight { get; set; } = true;
+    public bool FlashlightHumansOnly { get; set; } = true;
+    public string FlashlightCommand { get; set; } = "sw_flashlight";
+    public float FlashlightBrightness { get; set; } = 1.0f;
+    public float FlashlightRange { get; set; } = 2048.0f;
+    public float FlashlightAngle { get; set; } = 45.0f;
+    public bool FlashlightShadows { get; set; } = false;
+    public float FlashlightDistance { get; set; } = 54.0f;
+    public int FlashlightColorR { get; set; } = 255;
+    public int FlashlightColorG { get; set; } = 255;
+    public int FlashlightColorB { get; set; } = 255;
     public string AmbSound { get; set; } = string.Empty;
     public float AmbSoundLoopTime { get; set; } = 60.0f;
     public float AmbSoundVolume { get; set; } = 0.6f;
