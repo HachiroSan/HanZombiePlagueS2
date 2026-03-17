@@ -31,6 +31,7 @@ public partial class HZPServices
     private readonly HZPLoadoutMenu _loadoutMenu;
     private readonly HZPLoadoutState _loadoutState;
     private readonly HZPStoreState _storeState;
+    private readonly HZPPlayerDataService _playerDataService;
 
     private readonly HanZombiePlagueAPI _api;
     public HZPServices(ISwiftlyCore core, ILogger<HZPServices> logger,
@@ -41,6 +42,7 @@ public partial class HZPServices
         HZPLoadoutMenu loadoutMenu,
         HZPLoadoutState loadoutState,
         HZPStoreState storeState,
+        HZPPlayerDataService playerDataService,
         IOptionsMonitor<HZPSpecialClassCFG> specialClassCFG,
         HanZombiePlagueAPI api)
     {
@@ -55,6 +57,7 @@ public partial class HZPServices
         _loadoutMenu = loadoutMenu;
         _loadoutState = loadoutState;
         _storeState = storeState;
+        _playerDataService = playerDataService;
         _specialClassCFG = specialClassCFG;
         _api = api;
     }
@@ -115,6 +118,7 @@ public partial class HZPServices
         var attackerId = attacker.PlayerID;
         var victimId = victim.PlayerID;
         var victimsteamId = victim.SteamID;
+        float now = _core.Engine.GlobalVars.CurrentTime;
 
         var CFG = _mainCFG.CurrentValue;
 
@@ -122,6 +126,11 @@ public partial class HZPServices
         _globals.IsZombie.TryGetValue(victimId, out bool victimIsZombie);
         if (attackerIsZombie && !victimIsZombie)
         {
+            if (_globals.InfectionLocksUntil.TryGetValue(victimId, out var lockedUntil) && lockedUntil > now)
+                return;
+
+            _globals.InfectionLocksUntil[victimId] = now + 0.25f;
+
             _globals.ScbaSuit.TryGetValue(victimId, out bool IsHaveScbaSuit);
             if (IsHaveScbaSuit && CFG.CanUseScbaSuit)
             {
@@ -147,14 +156,16 @@ public partial class HZPServices
 
             if (selectedClass != null)
             {
+                _globals.IsZombie[victimId] = true;
+                UpdatePopulationSnapshot(victim);
                 PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
-                posszombie(victim, selectedClass, false);
-                SendZombieClassReveal(victim, selectedClass);
-                CreateFakeKill(attacker, victim, grenade);
-                CheckRoundWinConditions();
+                posszombie(victim, selectedClass, false, success =>
+                {
+                    if (!success)
+                        return;
 
-                if (_api != null)
-                    _api.NotifyInfect(attacker, victim, grenade, selectedClass.Name);
+                    FinalizeInfection(attacker, victim, selectedClass, grenade);
+                });
             }
         }
 
@@ -202,14 +213,16 @@ public partial class HZPServices
 
         if (selectedClass != null)
         {
+            _globals.IsZombie[InfecterId] = true;
+            UpdatePopulationSnapshot(Infecter);
             PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
-            posszombie(Infecter, selectedClass, false);
-            SendZombieClassReveal(Infecter, selectedClass);
-            CreateFakeKill(Infecter, Infecter, false);
-            CheckRoundWinConditions();
+            posszombie(Infecter, selectedClass, false, success =>
+            {
+                if (!success)
+                    return;
 
-            if (_api != null)
-                _api.NotifyInfect(Infecter, Infecter, false, selectedClass.Name);
+                FinalizeInfection(Infecter, Infecter, selectedClass, false);
+            });
         }
         
 
@@ -250,11 +263,16 @@ public partial class HZPServices
 
             if (selectedClass != null)
             {
+                _globals.IsZombie[Id] = true;
+                UpdatePopulationSnapshot(player);
                 PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
-                posszombie(player, selectedClass, false);
-                SendZombieClassReveal(player, selectedClass);
-                CreateFakeKill(player, player, false);
-                CheckRoundWinConditions();
+                posszombie(player, selectedClass, false, success =>
+                {
+                    if (!success)
+                        return;
+
+                    FinalizeInfection(player, player, selectedClass, false);
+                });
             }
         }
 
@@ -305,7 +323,25 @@ public partial class HZPServices
         pawn.VelocityModifierUpdated();
 
         _helpers.EmitSoundFormPlayer(player, CFG.TVaccineSound, 1.0f);
+        UpdatePopulationSnapshot(player);
         CheckRoundWinConditions();
+    }
+
+    private void FinalizeInfection(IPlayer attacker, IPlayer victim, ZombieClass selectedClass, bool grenade)
+    {
+        if (attacker == null || !attacker.IsValid)
+            return;
+
+        if (victim == null || !victim.IsValid)
+            return;
+
+        SendZombieClassReveal(victim, selectedClass);
+        CreateFakeKill(attacker, victim, grenade);
+        _playerDataService.RecordFakeInfectionDeath(attacker, victim);
+        CheckRoundWinConditions();
+
+        if (_api != null)
+            _api.NotifyInfect(attacker, victim, grenade, selectedClass.Name);
     }
 
 
@@ -341,6 +377,7 @@ public partial class HZPServices
         _globals.g_hCountdown = null;
         _globals.g_hRoundEndTimer?.Cancel();
         _globals.g_hRoundEndTimer = null;
+        ResetPopulationSnapshots();
 
         if (_globals.RoundVoxGroup != null)
         {
@@ -380,11 +417,93 @@ public partial class HZPServices
         _globals.g_ZombieRegenStates.Remove(playerId);
         _globals.StopZombieTimers.Remove(playerId);
         _globals.ThrowerIsZombie.Remove(playerId);
+        _globals.InfectionLocksUntil.Remove(playerId);
         _globals.InSwing[playerId] = false;
+        _globals.MovementSnapshots.Remove(playerId);
+    }
+
+    public void ResetPopulationSnapshots()
+    {
+        _globals.AliveHumanCount = 0;
+        _globals.AliveZombieCount = 0;
+        _globals.PopulationSnapshots.Clear();
+        _globals.PopulationDirty = false;
+    }
+
+    public void MarkPopulationDirty()
+    {
+        _globals.PopulationDirty = true;
+    }
+
+    public void RebuildPopulationSnapshots()
+    {
+        ResetPopulationSnapshots();
+
+        foreach (var player in _core.PlayerManager.GetAllPlayers())
+        {
+            UpdatePopulationSnapshot(player);
+        }
+    }
+
+    public void RemovePopulationSnapshot(int playerId)
+    {
+        if (_globals.PopulationSnapshots.TryGetValue(playerId, out var snapshot))
+        {
+            if (snapshot.IsAlive)
+            {
+                if (snapshot.IsZombie)
+                    _globals.AliveZombieCount = Math.Max(0, _globals.AliveZombieCount - 1);
+                else
+                    _globals.AliveHumanCount = Math.Max(0, _globals.AliveHumanCount - 1);
+            }
+
+            _globals.PopulationSnapshots.Remove(playerId);
+        }
+    }
+
+    public void UpdatePopulationSnapshot(IPlayer? player)
+    {
+        if (player == null || !player.IsValid)
+            return;
+
+        int playerId = player.PlayerID;
+        if (_globals.PopulationSnapshots.TryGetValue(playerId, out var previous) && previous.IsAlive)
+        {
+            if (previous.IsZombie)
+                _globals.AliveZombieCount = Math.Max(0, _globals.AliveZombieCount - 1);
+            else
+                _globals.AliveHumanCount = Math.Max(0, _globals.AliveHumanCount - 1);
+        }
+
+        bool isAlive = player.Controller is { IsValid: true, PawnIsAlive: true }
+            && player.PlayerPawn is { IsValid: true };
+
+        _globals.IsZombie.TryGetValue(playerId, out bool isZombie);
+
+        var next = new PopulationSnapshot(isAlive, isZombie);
+        _globals.PopulationSnapshots[playerId] = next;
+
+        if (next.IsAlive)
+        {
+            if (next.IsZombie)
+                _globals.AliveZombieCount++;
+            else
+                _globals.AliveHumanCount++;
+        }
+
+        _globals.PopulationDirty = false;
+    }
+
+    public void ClearRuntimePlayerState(int playerId)
+    {
+        _globals.InfectionLocksUntil.Remove(playerId);
+        _globals.MovementSnapshots.Remove(playerId);
     }
 
     public void NormalizePlayersForRoundPrestart()
     {
+        ResetPopulationSnapshots();
+
         foreach (var player in _core.PlayerManager.GetAllPlayers())
         {
             if (player == null || !player.IsValid)
@@ -401,6 +520,8 @@ public partial class HZPServices
 
             if (controller.TeamNum == (byte)Team.T)
                 player.SwitchTeam(Team.CT);
+
+            UpdatePopulationSnapshot(player);
         }
     }
 
@@ -450,6 +571,7 @@ public partial class HZPServices
             _helpers.ChangeKnife(player, false, false);
             _helpers.SetFov(player, 90);
             GiveSpawnGrenade(player, cfg);
+            UpdatePopulationSnapshot(player);
         });
     }
 
@@ -479,28 +601,43 @@ public partial class HZPServices
         }
     }
 
-    public void posszombie(IPlayer zombie, ZombieClass Zclass, bool isMother)
+    public void posszombie(IPlayer zombie, ZombieClass Zclass, bool isMother, Action<bool>? onApplied = null)
     {
         try
         {
             if(!_globals.GameStart || _globals.RoundClosing || _globals.RoundResetInProgress)
+            {
+                onApplied?.Invoke(false);
                 return;
+            }
 
             if (zombie == null || !zombie.IsValid)
+            {
+                onApplied?.Invoke(false);
                 return;
+            }
 
             var controller = zombie.Controller;
             if (controller == null || !controller.IsValid)
+            {
+                onApplied?.Invoke(false);
                 return;
+            }
 
             //_logger.LogInformation($"posszombie 开始 [{controller.PlayerName}]: {Zclass.Name}");
 
             if (Zclass == null)
+            {
+                onApplied?.Invoke(false);
                 return;
+            }
 
             var pawn = zombie.PlayerPawn;
             if (pawn == null || !pawn.IsValid)
+            {
+                onApplied?.Invoke(false);
                 return;
+            }
 
             //_logger.LogInformation($"生成丧尸 {Zclass.Name}");
 
@@ -518,6 +655,7 @@ public partial class HZPServices
             _helpers.ResetPlayerFlashlightState(Id);
             
             _globals.IsZombie[Id] = true;
+            UpdatePopulationSnapshot(zombie);
             _core.Scheduler.NextWorldUpdate(() =>
             {
                 try
@@ -525,19 +663,29 @@ public partial class HZPServices
                     if (_globals.RoundClosing || _globals.RoundResetInProgress || !_globals.GameStart)
                     {
                         _globals.IsZombie[Id] = false;
+                        UpdatePopulationSnapshot(zombie);
+                        onApplied?.Invoke(false);
                         return;
                     }
 
                     if (zombie == null || !zombie.IsValid)
+                    {
+                        onApplied?.Invoke(false);
                         return;
+                    }
 
                     var nextController = zombie.Controller;
                     if (nextController == null || !nextController.IsValid)
+                    {
+                        onApplied?.Invoke(false);
                         return;
+                    }
 
                     if (!nextController.PawnIsAlive)
                     {
                         _globals.IsZombie[Id] = false;
+                        UpdatePopulationSnapshot(zombie);
+                        onApplied?.Invoke(false);
                         return;
                     }
 
@@ -547,7 +695,10 @@ public partial class HZPServices
 
                     var nextPawn = zombie.PlayerPawn;
                     if (nextPawn == null || !nextPawn.IsValid)
+                    {
+                        onApplied?.Invoke(false);
                         return;
+                    }
 
                     string path = Zclass.Models.ModelPath;
                     nextPawn.SetModel(path);
@@ -596,10 +747,16 @@ public partial class HZPServices
 
                     var origin = nextPawn.AbsOrigin;
                     if (origin == null)
+                    {
+                        UpdatePopulationSnapshot(zombie);
+                        onApplied?.Invoke(true);
                         return;
+                    }
 
                     Vector offsetPos = new(origin.Value.X, origin.Value.Y, origin.Value.Z + 50);
                     _helpers.CreateParticleAtPos(nextPawn, offsetPos, "particles/explosions_fx/explosion_hegrenade_water_intial_trail.vpcf");
+                    UpdatePopulationSnapshot(zombie);
+                    onApplied?.Invoke(true);
                 }
                 catch (Exception ex)
                 {
@@ -607,6 +764,7 @@ public partial class HZPServices
                     var playerName = nextController != null && nextController.IsValid ? nextController.PlayerName : $"#{Id}";
                     _logger.LogError($"posszombie deferred exception [{playerName}]: {ex.Message}");
                     _logger.LogError($"deferred stack trace: {ex.StackTrace}");
+                    onApplied?.Invoke(false);
                 }
             });
             //_logger.LogInformation($"posszombie 完成 [{controller.PlayerName}]");
@@ -620,6 +778,7 @@ public partial class HZPServices
             _logger.LogError($"posszombie 异常 [{controller.PlayerName}]: {ex.Message}");
             _logger.LogError($"异常堆栈: {ex.StackTrace}");
             _logger.LogError($"僵尸类模型: {Zclass?.Models}");
+            onApplied?.Invoke(false);
         }
     }
 
@@ -655,12 +814,42 @@ public partial class HZPServices
             return;
 
         string weapon = grenade ? "hegrenade" : "knife";
+        UpdateFakeInfectionScoreboard(attacker, victim);
+        _globals.FakeInfectionDeaths.Add(victim.PlayerID);
         _core.GameEvent.Fire<EventPlayerDeath>(@event =>
         {
             @event.Attacker = attacker.PlayerID;
             @event.UserId = victim.PlayerID;
             @event.Weapon = weapon;
         });
+
+        _core.Scheduler.NextTick(() =>
+        {
+            _globals.FakeInfectionDeaths.Remove(victim.PlayerID);
+        });
+    }
+
+    private static void UpdateFakeInfectionScoreboard(IPlayer attacker, IPlayer victim)
+    {
+        var attackerController = attacker.Controller;
+        if (attackerController != null && attackerController.IsValid)
+        {
+            var attackerTracking = attackerController.ActionTrackingServices;
+            if (attackerTracking != null && attackerTracking.IsValid && attacker.PlayerID != victim.PlayerID)
+            {
+                attackerTracking.MatchStats.Kills += 1;
+            }
+        }
+
+        var victimController = victim.Controller;
+        if (victimController != null && victimController.IsValid)
+        {
+            var victimTracking = victimController.ActionTrackingServices;
+            if (victimTracking != null && victimTracking.IsValid)
+            {
+                victimTracking.MatchStats.Deaths += 1;
+            }
+        }
     }
 
 
@@ -934,29 +1123,11 @@ public partial class HZPServices
 
         _globals.WaitingForPlayers = false;
 
-        var allPlayers = _core.PlayerManager.GetAlive();
-        int zombieCount = 0;
-        int humanCount = 0;
+        if (_globals.PopulationDirty)
+            RebuildPopulationSnapshots();
 
-        foreach (var p in allPlayers)
-        {
-            if (p == null || !p.IsValid)
-                continue;
-
-            if (p.PlayerPawn == null || !p.PlayerPawn.IsValid)
-                continue;
-
-            if (!p.Controller.PawnIsAlive)
-                continue;
-
-            var Id = p.PlayerID;
-            _globals.IsZombie.TryGetValue(Id, out bool IsZombie);
-
-            if (IsZombie)
-                zombieCount++;
-            else
-                humanCount++;
-        }
+        int zombieCount = _globals.AliveZombieCount;
+        int humanCount = _globals.AliveHumanCount;
 
         if (zombieCount == 0)
             FakeHumanWins();
@@ -989,6 +1160,7 @@ public partial class HZPServices
         _globals.RoundPrepActive = false;
         _globals.OutbreakAtUnixMs = 0;
         _globals.LastAnnouncedCountdown = int.MinValue;
+        ResetPopulationSnapshots();
         _globals.g_hCountdown?.Cancel();
         _globals.g_hCountdown = null;
 

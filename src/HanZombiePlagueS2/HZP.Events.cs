@@ -255,6 +255,7 @@ public partial class HZPEvents
     {
         _globals.RoundClosing = false;
         _globals.RoundResetInProgress = false;
+        _service.RebuildPopulationSnapshots();
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
         _mapVoteService.OnRoundStart();
@@ -297,6 +298,7 @@ public partial class HZPEvents
         _helpers.ClearAllBurns();
         _helpers.ClearAllLights();
         _helpers.ClearAllPlayerFlashlights();
+        _service.ResetPopulationSnapshots();
         _loadoutState.ResetAllLifeStates();
         _storeState.ResetRoundState();
         _mapVoteService.OnRoundEnd();
@@ -576,6 +578,9 @@ public partial class HZPEvents
         if(player == null || !player.IsValid)
             return HookResult.Continue;
 
+        if (_globals.FakeInfectionDeaths.Contains(player.PlayerID))
+            return HookResult.Continue;
+
         var Pawn = player.PlayerPawn;
         if (Pawn == null || !Pawn.IsValid)
             return HookResult.Continue;
@@ -621,6 +626,7 @@ public partial class HZPEvents
         _helpers.ClearPlayerBurn(Id);
         _helpers.RemoveSHumanClass(Id);
         _helpers.RemoveSZombieClass(Id);
+        _service.ClearRuntimePlayerState(Id);
 
         _globals.IsMother.Remove(Id);
         _globals.ScbaSuit.Remove(Id);
@@ -631,6 +637,8 @@ public partial class HZPEvents
             return HookResult.Continue;
 
         _globals.IsZombie.TryGetValue(Id, out bool isVictimZombie_Spawn);
+        _service.UpdatePopulationSnapshot(player);
+
         if (isVictimZombie_Spawn && _gameMode.CanZombieReborn())
         {
 
@@ -648,97 +656,12 @@ public partial class HZPEvents
                 player.Respawn();
             });
         }
-        if (!isVictimZombie_Spawn && _gameMode.CanZombieReborn())
-        {
-            _core.Scheduler.DelayBySeconds(1.0f, () =>
-            {
-                if (!_globals.GameStart || _globals.RoundClosing || _globals.RoundResetInProgress)
-                    return;
-
-                var player = _core.PlayerManager.GetPlayer(Id);
-                if (player == null || !player.IsValid)
-                    return;
-
-                player.Respawn();
-
-                _core.Scheduler.NextWorldUpdate(() =>
-                {
-                    if (!_globals.GameStart || _globals.RoundClosing || _globals.RoundResetInProgress)
-                        return;
-
-                    if (player == null || !player.IsValid)
-                        return;
-
-                    var zombieConfig = _zombieClassCFG.CurrentValue;
-                    var zombieClasses = zombieConfig.ZombieClassList;
-                    var preference = _zombieState.GetPlayerPreference(Id, steamId);
-                    ZombieClass? selectedClass;
-
-                    if (preference != null && preference.Preference == ZombiePreference.Fixed)
-                    {
-                        selectedClass = zombieClasses.FirstOrDefault(c => c.Name == preference.FixedZombieName);
-                    }
-                    else
-                    {
-                        selectedClass = _zombieState.PickRandomZombieClass(zombieClasses);
-                    }
-
-                    if (selectedClass != null)
-                    {
-                        _service.posszombie(player, selectedClass, false);
-                        _service.PlayerSelectSoundtoAll(selectedClass.Sounds.SoundInfect, selectedClass.Stats.ZombieSoundVolume);
-                    }
-                });
-
-            });
-        }
 
         return HookResult.Continue;
     }
 
     private HookResult OnPlayerHurtInfect(EventPlayerHurt @event)
     {
-        var mode = _gameMode.CurrentMode;
-        if (mode != GameModeType.Normal && mode != GameModeType.NormalInfection && mode != GameModeType.MultiInfection
-            && mode != GameModeType.Hero)
-            return HookResult.Continue;
-
-        var victim = @event.UserIdPlayer;
-        if (victim == null || !victim.IsValid)
-            return HookResult.Continue;
-
-        var attackerId = @event.Attacker;
-
-        var attacker = _core.PlayerManager.GetPlayer(attackerId);
-        if (attacker == null || !attacker.IsValid)
-            return HookResult.Continue;
-
-        var vId = victim.PlayerID;
-        var aId = attacker.PlayerID;
-
-        var CFG = _mainCFG.CurrentValue;
-
-        int Dmg = @event.DmgHealth;
-        int Health = @event.Health;
-        string waepon = @event.Weapon;
-        _globals.IsZombie.TryGetValue(aId, out bool attackerIsZombie);
-        _globals.IsZombie.TryGetValue(vId, out bool victimIsZombie);
-        _globals.GodState.TryGetValue(vId, out bool IsGodState);
-        if (attackerIsZombie && !victimIsZombie)
-        {
-            _globals.IsHero.TryGetValue(vId, out bool victimIsIsHero);
-            if (victimIsIsHero)
-                return HookResult.Continue;
-
-            if (waepon != "knife")
-                return HookResult.Continue;
-
-            if(IsGodState)
-                return HookResult.Continue;
-
-            _service.Infect(attacker, victim, false);
-        }
-
         return HookResult.Continue;
     }
 
@@ -945,20 +868,17 @@ public partial class HZPEvents
             }
             else
             {
-                @event.Info.Damage += zombie.Stats.Damage;
-
                 if (isKnifeAttack && isInfectionMode)
                 {
-                    int victimHealth = VictimPawn.Health;
-                    if (victimHealth <= 1)
+                    @event.Info.Damage = 0;
+                    _core.Scheduler.NextWorldUpdate(() =>
                     {
-                        @event.Info.Damage = 0;
                         _service.Infect(AttackerPlayer, VictimPlayer, false);
-                    }
-                    else if (@event.Info.Damage >= victimHealth)
-                    {
-                        @event.Info.Damage = victimHealth - 1;
-                    }
+                    });
+                }
+                else
+                {
+                    @event.Info.Damage += zombie.Stats.Damage;
                 }
             }
         }
@@ -987,6 +907,7 @@ public partial class HZPEvents
         }
 
         _globals.IsZombie[id] = _globals.GameStart;
+        _service.MarkPopulationDirty();
 
         _core.Scheduler.DelayBySeconds(_banService.ConnectCheckDelaySeconds, async () =>
         {
@@ -1014,6 +935,12 @@ public partial class HZPEvents
 
     private void Event_OnTickFlashlight()
     {
+        float now = _core.Engine.GlobalVars.CurrentTime;
+        if (now < _globals.NextFlashlightSyncTime)
+            return;
+
+        _globals.NextFlashlightSyncTime = now + 0.10f;
+
         var cfg = _mainCFG.CurrentValue;
         if (!cfg.EnableFlashlight)
         {
@@ -1062,6 +989,8 @@ public partial class HZPEvents
         _globals.StopZombieTimers.Remove(id);
         _globals.g_IsInvisible.Remove(id);
         _globals.ThrowerIsZombie.Remove(id);
+        _service.ClearRuntimePlayerState(id);
+        _service.RemovePopulationSnapshot(id);
         if (_globals.SpawnNoBlockTimers.TryGetValue(id, out var spawnNoBlockTimer))
         {
             spawnNoBlockTimer.Cancel();
@@ -1091,6 +1020,15 @@ public partial class HZPEvents
 
     private void Event_OnTickSpeed()
     {
+        float now = _core.Engine.GlobalVars.CurrentTime;
+        if (now < _globals.NextSpeedSyncTime)
+            return;
+
+        _globals.NextSpeedSyncTime = now + 0.25f;
+
+        var mainCfg = _mainCFG.CurrentValue;
+        var zombieConfig = _zombieClassCFG.CurrentValue;
+        var specialConfig = _SpecialClassCFG.CurrentValue;
         var allplayer = _core.PlayerManager.GetAlive();
         foreach (var player in allplayer)
         {
@@ -1106,57 +1044,50 @@ public partial class HZPEvents
             _globals.IsSurvivor.TryGetValue(Id, out bool IsSurvivor);
             _globals.IsSniper.TryGetValue(Id, out bool IsSniper);
             _globals.IsHero.TryGetValue(Id, out bool IsHero);
+            float speed;
+            float gravity;
+
             if (IsZombie)
             {
-                var zombieConfig = _zombieClassCFG.CurrentValue;
-                var specialConfig = _SpecialClassCFG.CurrentValue;
                 var zombie = _zombieState.GetZombieClass(Id, zombieConfig.ZombieClassList, specialConfig.SpecialClassList);
                 if (zombie == null)
                     continue;
 
-                float zSpeed = zombie.Stats.Speed > 0 ? zombie.Stats.Speed : 1.0f;
-                pawn.VelocityModifier = zSpeed;
-                pawn.VelocityModifierUpdated();
-
-                float zGravity = zombie.Stats.Gravity;
-                pawn.ActualGravityScale = zGravity;
+                speed = zombie.Stats.Speed > 0 ? zombie.Stats.Speed : 1.0f;
+                gravity = zombie.Stats.Gravity;
             }
             else if (IsSurvivor)
             {
-                float Speed = _mainCFG.CurrentValue.Survivor.SurvivorSpeed > 0 ? _mainCFG.CurrentValue.Survivor.SurvivorSpeed : 3.0f;
-                pawn.VelocityModifier = Speed;
-                pawn.VelocityModifierUpdated();
-
-                float Gravity = _mainCFG.CurrentValue.Survivor.SurvivorGravity;
-                pawn.ActualGravityScale = Gravity;
+                speed = mainCfg.Survivor.SurvivorSpeed > 0 ? mainCfg.Survivor.SurvivorSpeed : 3.0f;
+                gravity = mainCfg.Survivor.SurvivorGravity;
             }
             else if (IsSniper)
             {
-                float Speed = _mainCFG.CurrentValue.Sniper.SniperSpeed > 0 ? _mainCFG.CurrentValue.Sniper.SniperSpeed : 2.0f;
-                pawn.VelocityModifier = Speed;
-                pawn.VelocityModifierUpdated();
-
-                float Gravity = _mainCFG.CurrentValue.Sniper.SniperGravity;
-                pawn.ActualGravityScale = Gravity;
+                speed = mainCfg.Sniper.SniperSpeed > 0 ? mainCfg.Sniper.SniperSpeed : 2.0f;
+                gravity = mainCfg.Sniper.SniperGravity;
             }
             else if (IsHero)
             {
-                float Speed = _mainCFG.CurrentValue.Hero.HeroSpeed > 0 ? _mainCFG.CurrentValue.Hero.HeroSpeed : 2.0f;
-                pawn.VelocityModifier = Speed;
-                pawn.VelocityModifierUpdated();
-
-                float Gravity = _mainCFG.CurrentValue.Hero.HeroGravity;
-                pawn.ActualGravityScale = Gravity;
+                speed = mainCfg.Hero.HeroSpeed > 0 ? mainCfg.Hero.HeroSpeed : 2.0f;
+                gravity = mainCfg.Hero.HeroGravity;
             }
             else
             {
-                float Speed = _mainCFG.CurrentValue.HumanInitialSpeed > 0 ? _mainCFG.CurrentValue.HumanInitialSpeed : 1.0f;
-                pawn.VelocityModifier = Speed;
-                pawn.VelocityModifierUpdated();
-
-                float Gravity = _mainCFG.CurrentValue.HumanInitialGravity;
-                pawn.ActualGravityScale = Gravity;
+                speed = mainCfg.HumanInitialSpeed > 0 ? mainCfg.HumanInitialSpeed : 1.0f;
+                gravity = mainCfg.HumanInitialGravity;
             }
+
+            if (_globals.MovementSnapshots.TryGetValue(Id, out var snapshot)
+                && Math.Abs(snapshot.Speed - speed) < 0.001f
+                && Math.Abs(snapshot.Gravity - gravity) < 0.001f)
+            {
+                continue;
+            }
+
+            pawn.VelocityModifier = speed;
+            pawn.VelocityModifierUpdated();
+            pawn.ActualGravityScale = gravity;
+            _globals.MovementSnapshots[Id] = new MovementSnapshot(speed, gravity);
         }
 
     }
@@ -1166,6 +1097,12 @@ public partial class HZPEvents
         var CFG = _mainCFG.CurrentValue;
         if (!CFG.EnableWeaponNoRecoil)
             return;
+
+        float now = _core.Engine.GlobalVars.CurrentTime;
+        if (now < _globals.NextNoRecoilSyncTime)
+            return;
+
+        _globals.NextNoRecoilSyncTime = now + 0.05f;
 
         foreach (var player in _core.PlayerManager.GetAllPlayers())
         {
@@ -1368,6 +1305,9 @@ public partial class HZPEvents
 
         var player = @event.UserIdPlayer;
         if (player == null || !player.IsValid)
+            return HookResult.Continue;
+
+        if (_globals.FakeInfectionDeaths.Contains(player.PlayerID))
             return HookResult.Continue;
 
         if(!_globals.GameStart)

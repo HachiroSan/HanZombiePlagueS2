@@ -76,6 +76,16 @@ public class HZPGlobals
     public Dictionary<int, bool> InfiniteAmmoState = new Dictionary<int, bool>();
     public Dictionary<int, CancellationTokenSource> SpawnNoBlockTimers = new Dictionary<int, CancellationTokenSource>();
     public bool ExtraSpawnsGenerated { get; set; }
+    public int AliveHumanCount { get; set; }
+    public int AliveZombieCount { get; set; }
+    public bool PopulationDirty { get; set; } = true;
+    public Dictionary<int, PopulationSnapshot> PopulationSnapshots { get; } = new();
+    public Dictionary<int, float> InfectionLocksUntil { get; } = new();
+    public HashSet<int> FakeInfectionDeaths { get; } = new();
+    public float NextSpeedSyncTime { get; set; }
+    public float NextFlashlightSyncTime { get; set; }
+    public float NextNoRecoilSyncTime { get; set; }
+    public Dictionary<int, MovementSnapshot> MovementSnapshots { get; } = new();
 
 
 }
@@ -112,5 +122,9 @@ public class GlowEntity
     public CBaseModelEntity? Glow { get; set; } = null;
 
 }
+
+public readonly record struct PopulationSnapshot(bool IsAlive, bool IsZombie);
+
+public readonly record struct MovementSnapshot(float Speed, float Gravity);
 
 

@@ -250,10 +250,7 @@ public partial class HZPHelpers
             origin.Z + 64.0f + (forward.Z * cfg.FlashlightDistance)
         );
 
-        light.AcceptInput("ClearParent", 0);
         light.Teleport(position, eyeAngles, Vector.Zero);
-        light.AcceptInput("SetParent", "!activator", pawn, light);
-        light.AcceptInput("SetParentAttachmentMaintainOffset", "axis_of_intent", pawn, light);
     }
 
     public bool TogglePlayerFlashlight(IPlayer player, HZPMainCFG cfg)
@@ -309,6 +306,12 @@ public partial class HZPHelpers
         light.SizeParams.Z = 0.02f;
         light.LightStyleString = "None";
         light.DispatchSpawn();
+        var pawn = player.PlayerPawn;
+        if (pawn != null && pawn.IsValid)
+        {
+            light.AcceptInput("SetParent", "!activator", pawn, light);
+            light.AcceptInput("SetParentAttachmentMaintainOffset", "axis_of_intent", pawn, light);
+        }
 
         _globals.PlayerFlashlights[playerId] = light;
         return light;
@@ -938,7 +941,7 @@ public partial class HZPHelpers
         particle.AcceptInput("SetParent", "!activator", pawn, particle);
         return particle;
     }
-    public void DrawExpandingRing(Vector position, float maxRadius, int R, int G, int B, int A, float duration = 0.4f, int segments = 16, float thickness = 18.0f)
+    public void DrawExpandingRing(Vector position, float maxRadius, int R, int G, int B, int A, float duration = 0.35f, int segments = 8, float thickness = 12.0f)
     {
         CBeam?[] beams = new CBeam?[segments];
         float startTime = _core.Engine.GlobalVars.CurrentTime;
@@ -969,7 +972,7 @@ public partial class HZPHelpers
 
         CancellationTokenSource? timer = null;
 
-        timer = _core.Scheduler.RepeatBySeconds(0.01f, () =>
+        timer = _core.Scheduler.RepeatBySeconds(0.05f, () =>
         {
             float now = _core.Engine.GlobalVars.CurrentTime;
             float progress = MathF.Min((now - startTime) / duration, 1.0f);

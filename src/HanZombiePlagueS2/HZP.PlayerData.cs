@@ -183,6 +183,28 @@ public sealed class HZPPlayerDataService(
         _ = GrantKillRewardAsync(attacker.SteamID, reward, reason, messageKey);
     }
 
+    public void RecordFakeInfectionDeath(IPlayer? attacker, IPlayer? victim)
+    {
+        if (victim == null || !victim.IsValid || victim.SteamID == 0)
+        {
+            return;
+        }
+
+        RecordDeath(victim);
+
+        if (attacker == null || !attacker.IsValid || attacker.SteamID == 0)
+        {
+            return;
+        }
+
+        if (attacker.PlayerID == victim.PlayerID)
+        {
+            return;
+        }
+
+        RecordKill(attacker, victim);
+    }
+
     public void RecordRoundOutcome(bool humanWon)
     {
         if (!_roundActive || _roundOutcomeRecorded)

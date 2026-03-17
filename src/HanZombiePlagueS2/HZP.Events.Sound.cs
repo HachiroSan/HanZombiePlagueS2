@@ -27,6 +27,9 @@ public partial class HZPEvents
         if (player == null || !player.IsValid)
             return HookResult.Continue;
 
+        if (_globals.FakeInfectionDeaths.Contains(player.PlayerID))
+            return HookResult.Continue;
+
         var Id = player.PlayerID;
         _globals.IsZombie.TryGetValue(Id, out bool IsZombie);
 
