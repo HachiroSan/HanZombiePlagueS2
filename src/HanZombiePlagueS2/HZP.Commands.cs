@@ -391,36 +391,42 @@ public class HZPCommands
         if (player == null || !player.IsValid)
             return HookResult.Continue;
 
-        if (!player.IsFakeClient)
+        if (player.IsFakeClient)
+            return HookResult.Continue;
+
+        bool isJoinTeamCommand = commandLine.StartsWith("jointeam", StringComparison.OrdinalIgnoreCase)
+            || commandLine.StartsWith("chooseteam", StringComparison.OrdinalIgnoreCase)
+            || commandLine.StartsWith("autoteam", StringComparison.OrdinalIgnoreCase);
+
+        if (!isJoinTeamCommand)
+            return HookResult.Continue;
+
+        _globals.IsZombie.TryGetValue(playerId, out bool isZombie);
+
+        if (_globals.GameStart)
         {
-            if (commandLine.StartsWith("jointeam 2"))
-            {
-                player.SwitchTeam(Team.CT);
-                _core.Scheduler.DelayBySeconds(1.0f, () =>
-                {
-                    _services.JoinTeamCheck(player);
-                });
-            }
-            else if (commandLine.StartsWith("jointeam 3"))
-            {
-                player.SwitchTeam(Team.CT);
-                _core.Scheduler.DelayBySeconds(1.0f, () =>
-                {
-                    _services.JoinTeamCheck(player);
-                });
-
-            }
-            else if (commandLine.StartsWith("jointeam 1"))
-            {
-                player.SwitchTeam(Team.CT);
-                _core.Scheduler.DelayBySeconds(1.0f, () =>
-                {
-                    _services.JoinTeamCheck(player);
-                });
-                return HookResult.Stop;
-            }
-
+            _services.JoinTeamCheck(player);
+            _helpers.SendChatRaw(player, isZombie
+                ? "[olive]Zombies cannot switch to CT during an active round."
+                : "[olive]Humans cannot switch teams during an active round.");
+            return HookResult.Stop;
         }
+
+        if (commandLine.StartsWith("jointeam 2", StringComparison.OrdinalIgnoreCase)
+            || commandLine.StartsWith("jointeam 3", StringComparison.OrdinalIgnoreCase)
+            || commandLine.StartsWith("jointeam 1", StringComparison.OrdinalIgnoreCase)
+            || commandLine.StartsWith("autoteam", StringComparison.OrdinalIgnoreCase)
+            || commandLine.StartsWith("chooseteam", StringComparison.OrdinalIgnoreCase))
+        {
+            Team desiredTeam = isZombie ? Team.T : Team.CT;
+            player.SwitchTeam(desiredTeam);
+            _core.Scheduler.DelayBySeconds(0.1f, () =>
+            {
+                _services.JoinTeamCheck(player);
+            });
+            return HookResult.Stop;
+        }
+
         return HookResult.Continue;
     }
 

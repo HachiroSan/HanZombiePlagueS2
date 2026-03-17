@@ -858,13 +858,31 @@ public partial class HZPServices
         if (player is not { IsValid: true } || player.Controller is not { IsValid: true } ctrl)
             return;
 
+        _globals.IsZombie.TryGetValue(player.PlayerID, out bool isZombie);
+
         if (!_globals.GameStart)
         {
+            if (isZombie && ctrl.TeamNum != (byte)Team.T)
+            {
+                player.SwitchTeam(Team.T);
+            }
+            else if (!isZombie && ctrl.TeamNum == (byte)Team.T)
+            {
+                player.SwitchTeam(Team.CT);
+            }
+
             if (!ctrl.PawnIsAlive)
             {
                 ctrl.Respawn();
             }
+
             return;
+        }
+
+        Team expectedTeam = isZombie ? Team.T : Team.CT;
+        if (ctrl.TeamNum != (byte)expectedTeam)
+        {
+            player.SwitchTeam(expectedTeam);
         }
     }
 
