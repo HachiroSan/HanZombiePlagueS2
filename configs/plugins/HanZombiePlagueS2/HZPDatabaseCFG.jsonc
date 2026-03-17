@@ -1,6 +1,6 @@
 {
   "HZPDatabaseCFG": {
-    "ConnectionKey": "zm_mysql",
+    "ConnectionKey": "zombies",
     "BootstrapSchema": true
   }
 }
